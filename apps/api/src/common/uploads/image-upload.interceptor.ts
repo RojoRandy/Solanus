@@ -2,7 +2,12 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 import { CommonErrors } from '../errors/common.errors';
 
-const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+const ALLOWED_MIME_TYPES = [
+  'image/jpeg',
+  'image/jpg',
+  'image/png',
+  'image/webp',
+];
 const DEFAULT_MAX_SIZE_MB = 5;
 
 /**
@@ -11,13 +16,21 @@ const DEFAULT_MAX_SIZE_MB = 5;
  * físicamente. No usar diskStorage aquí: mezclaría la política de almacenamiento
  * de multer con la de StorageService.
  */
-export function ImageUploadInterceptor(fieldName: string, maxSizeMb: number = DEFAULT_MAX_SIZE_MB) {
+export function ImageUploadInterceptor(
+  fieldName: string,
+  maxSizeMb: number = DEFAULT_MAX_SIZE_MB,
+) {
   return FileInterceptor(fieldName, {
     storage: memoryStorage(),
     limits: { fileSize: maxSizeMb * 1024 * 1024 },
     fileFilter: (_req, file, callback) => {
       if (!ALLOWED_MIME_TYPES.includes(file.mimetype)) {
-        callback(CommonErrors.Exceptions.TIPO_ARCHIVO_NO_PERMITIDO({ mimetype: file.mimetype }), false);
+        callback(
+          CommonErrors.Exceptions.TIPO_ARCHIVO_NO_PERMITIDO({
+            mimetype: file.mimetype,
+          }),
+          false,
+        );
         return;
       }
       callback(null, true);

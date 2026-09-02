@@ -22,6 +22,16 @@ const Exceptions = {
     new InternalServerErrorException(
       Responses.ERROR_REGISTRANDO_MOVIMIENTO(data),
     ),
+  CATEGORIA_NOT_FOUND: (data?: any) =>
+    new NotFoundException(Responses.CATEGORIA_NOT_FOUND(data)),
+  UNIDAD_NOT_FOUND: (data?: any) =>
+    new NotFoundException(Responses.UNIDAD_NOT_FOUND(data)),
+  UBICACION_NOT_FOUND: (data?: any) =>
+    new NotFoundException(Responses.UBICACION_NOT_FOUND(data)),
+  BIENHECHOR_REQUERIDO: (data?: any) =>
+    new BadRequestException(Responses.BIENHECHOR_REQUERIDO(data)),
+  ITEM_O_ITEM_NUEVO_REQUERIDO: (data?: any) =>
+    new BadRequestException(Responses.ITEM_O_ITEM_NUEVO_REQUERIDO(data)),
 };
 
 const Responses = {
@@ -65,6 +75,36 @@ const Responses = {
     new ErrorResponseDto(
       'ERROR_REGISTRANDO_MOVIMIENTO',
       'No se pudo registrar el movimiento de inventario',
+      data,
+    ),
+  CATEGORIA_NOT_FOUND: (data?: any) =>
+    new ErrorResponseDto(
+      'CATEGORIA_NOT_FOUND',
+      'No se encontró la categoría de inventario',
+      data,
+    ),
+  UNIDAD_NOT_FOUND: (data?: any) =>
+    new ErrorResponseDto(
+      'UNIDAD_NOT_FOUND',
+      'No se encontró la unidad de medida',
+      data,
+    ),
+  UBICACION_NOT_FOUND: (data?: any) =>
+    new ErrorResponseDto(
+      'UBICACION_NOT_FOUND',
+      'No se encontró la ubicación',
+      data,
+    ),
+  BIENHECHOR_REQUERIDO: (data?: any) =>
+    new ErrorResponseDto(
+      'BIENHECHOR_REQUERIDO',
+      'Debe indicar el bienhechor cuando el origen del lote es una donación',
+      data,
+    ),
+  ITEM_O_ITEM_NUEVO_REQUERIDO: (data?: any) =>
+    new ErrorResponseDto(
+      'ITEM_O_ITEM_NUEVO_REQUERIDO',
+      'Debe indicar un producto existente (itemId) o los datos de un producto nuevo (itemNuevo)',
       data,
     ),
 };

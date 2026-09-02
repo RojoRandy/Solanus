@@ -7,6 +7,10 @@ import { StorageModule } from './common/storage/storage.module';
 import { PdfModule } from './common/pdf/pdf.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { UsuariosModule } from './modules/usuarios/usuarios.module';
+import { ComensalesModule } from './modules/comensales/comensales.module';
+import { InventarioModule } from './modules/inventario/inventario.module';
+import { BienhechoresModule } from './modules/bienhechores/bienhechores.module';
+import { VoluntariosModule } from './modules/voluntarios/voluntarios.module';
 
 @Module({
   imports: [
@@ -29,6 +33,10 @@ import { UsuariosModule } from './modules/usuarios/usuarios.module';
     PdfModule,
     AuthModule,
     UsuariosModule,
+    ComensalesModule,
+    InventarioModule,
+    BienhechoresModule,
+    VoluntariosModule,
   ],
 })
 export class AppModule {}

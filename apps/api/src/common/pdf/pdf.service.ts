@@ -12,8 +12,11 @@ export class PdfService implements OnModuleDestroy {
   private browserPromise: Promise<Browser> | null = null;
 
   private getBrowser(): Promise<Browser> {
-    if (!this.browserPromise) {
-      this.browserPromise = puppeteer.launch({ headless: true, args: ['--no-sandbox'] });
+    if (this.browserPromise === null) {
+      this.browserPromise = puppeteer.launch({
+        headless: true,
+        args: ['--no-sandbox'],
+      });
     }
     return this.browserPromise;
   }
@@ -35,7 +38,7 @@ export class PdfService implements OnModuleDestroy {
   }
 
   async onModuleDestroy() {
-    if (this.browserPromise) {
+    if (this.browserPromise !== null) {
       const browser = await this.browserPromise;
       await browser.close();
     }

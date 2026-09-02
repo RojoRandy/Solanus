@@ -1,17 +1,15 @@
-import { HeartHandshake } from 'lucide-react';
-import { EmptyState } from '@/components/shared/EmptyState';
+import { Route, Routes } from 'react-router-dom';
+import { VoluntariosListView } from './VoluntariosListView';
+import { VoluntarioFormView } from './VoluntarioFormView';
+import { VoluntarioDetalleView } from './VoluntarioDetalleView';
 
 export function VoluntariosPage() {
   return (
-    <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Voluntarios</h1>
-      </div>
-      <EmptyState
-        icon={HeartHandshake}
-        title="Módulo en construcción"
-        description="Registro y listado de voluntarios llega en la Fase 2."
-      />
-    </div>
+    <Routes>
+      <Route index element={<VoluntariosListView />} />
+      <Route path="nuevo" element={<VoluntarioFormView />} />
+      <Route path=":id" element={<VoluntarioDetalleView />} />
+      <Route path=":id/editar" element={<VoluntarioFormView />} />
+    </Routes>
   );
 }

@@ -1,17 +1,16 @@
-import { HandHeart } from 'lucide-react';
-import { EmptyState } from '@/components/shared/EmptyState';
+import { Navigate, Route, Routes } from 'react-router-dom';
+import { BienhechoresListPage } from './BienhechoresListPage';
+import { BienhechorFormPage } from './BienhechorFormPage';
+import { BienhechorDetallePage } from './BienhechorDetallePage';
 
 export function BienhechoresPage() {
   return (
-    <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Bienhechores</h1>
-      </div>
-      <EmptyState
-        icon={HandHeart}
-        title="Módulo en construcción"
-        description="Registro de bienhechores llega en la Fase 2."
-      />
-    </div>
+    <Routes>
+      <Route index element={<BienhechoresListPage />} />
+      <Route path="nuevo" element={<BienhechorFormPage />} />
+      <Route path=":id" element={<BienhechorDetallePage />} />
+      <Route path=":id/editar" element={<BienhechorFormPage />} />
+      <Route path="*" element={<Navigate to="." replace />} />
+    </Routes>
   );
 }

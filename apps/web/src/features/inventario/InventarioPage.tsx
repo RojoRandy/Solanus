@@ -1,17 +1,20 @@
-import { Package } from 'lucide-react';
-import { EmptyState } from '@/components/shared/EmptyState';
+import { Navigate, Route, Routes } from 'react-router-dom';
+import { ProductosPage } from './ProductosPage';
+import { ProductoFormPage } from './ProductoFormPage';
+import { ProductoDetallePage } from './ProductoDetallePage';
+import { RegistrarEntradaPage } from './RegistrarEntradaPage';
+import { MovimientosPage } from './MovimientosPage';
 
 export function InventarioPage() {
   return (
-    <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Inventario</h1>
-      </div>
-      <EmptyState
-        icon={Package}
-        title="Módulo en construcción"
-        description="Catálogo, lotes y movimientos de inventario llegan en la Fase 2."
-      />
-    </div>
+    <Routes>
+      <Route index element={<ProductosPage />} />
+      <Route path="nuevo" element={<ProductoFormPage />} />
+      <Route path="movimientos" element={<MovimientosPage />} />
+      <Route path="registrar-entrada" element={<RegistrarEntradaPage />} />
+      <Route path=":id" element={<ProductoDetallePage />} />
+      <Route path=":id/editar" element={<ProductoFormPage />} />
+      <Route path="*" element={<Navigate to="." replace />} />
+    </Routes>
   );
 }
