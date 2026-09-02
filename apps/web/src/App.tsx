@@ -24,16 +24,16 @@ export function App() {
             <Route path="/asistencia" element={<AsistenciaPage />} />
           </Route>
           <Route element={<ProtectedRoute modulo="comensales" />}>
-            <Route path="/comensales" element={<ComensalesPage />} />
+            <Route path="/comensales/*" element={<ComensalesPage />} />
           </Route>
           <Route element={<ProtectedRoute modulo="inventario" />}>
-            <Route path="/inventario" element={<InventarioPage />} />
+            <Route path="/inventario/*" element={<InventarioPage />} />
           </Route>
           <Route element={<ProtectedRoute modulo="bienhechores" />}>
-            <Route path="/bienhechores" element={<BienhechoresPage />} />
+            <Route path="/bienhechores/*" element={<BienhechoresPage />} />
           </Route>
           <Route element={<ProtectedRoute modulo="voluntarios" />}>
-            <Route path="/voluntarios" element={<VoluntariosPage />} />
+            <Route path="/voluntarios/*" element={<VoluntariosPage />} />
           </Route>
           <Route element={<ProtectedRoute modulo="reportes" />}>
             <Route path="/reportes" element={<ReportesPage />} />
