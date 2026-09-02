@@ -21,7 +21,8 @@
       "@prisma/engines",
       "@scarf/scarf",
       "bcrypt",
-      "prisma"
+      "prisma",
+      "puppeteer"
     ]
   }
 }

@@ -4,6 +4,7 @@ import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import { PrismaModule } from './prisma/prisma.module';
 import { StorageModule } from './common/storage/storage.module';
+import { PdfModule } from './common/pdf/pdf.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { UsuariosModule } from './modules/usuarios/usuarios.module';
 
@@ -25,6 +26,7 @@ import { UsuariosModule } from './modules/usuarios/usuarios.module';
     }),
     PrismaModule,
     StorageModule,
+    PdfModule,
     AuthModule,
     UsuariosModule,
   ],
