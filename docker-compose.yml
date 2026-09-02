@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: comedor-solanus-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: comedor
+      POSTGRES_PASSWORD: comedor
+      POSTGRES_DB: comedor_solanus
+    ports:
+      - "5442:5432"
+    volumes:
+      - comedor_solanus_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U comedor -d comedor_solanus"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  comedor_solanus_pgdata:

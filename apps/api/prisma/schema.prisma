@@ -1,0 +1,294 @@
+// Comedor Solanus — schema de base de datos
+// Punto de sincronización único: no editar en paralelo (ver docs del plan, sección 3.1).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────────────────────────
+// Sistema y personas
+// ─────────────────────────────────────────────────────────────
+
+enum RolUsuario {
+  ADMINISTRADOR
+  USUARIO
+  USUARIO_SIMPLE
+}
+
+model Usuario {
+  id        Int        @id @default(autoincrement())
+  username  String     @unique
+  password  String
+  nombre    String
+  rol       RolUsuario
+  activo    Boolean    @default(true)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  turnosRegistrados      TurnoComida[]         @relation("TurnoRegistradoPor")
+  asistenciasRegistradas Asistencia[]          @relation("AsistenciaRegistradaPor")
+  movimientosRegistrados MovimientoInventario[] @relation("MovimientoRegistradoPor")
+
+  @@map("usuarios")
+}
+
+model Comensal {
+  id              Int       @id @default(autoincrement())
+  folio           Int       @unique @default(autoincrement())
+  nombres         String
+  apellidos       String
+  fechaNacimiento DateTime
+  curp            String?
+  ineFrontPath    String?
+  ineBackPath     String?
+  fotoPath        String?
+  tutorId         Int?
+  tutor           Comensal? @relation("TutorMenores", fields: [tutorId], references: [id])
+  menores         Comensal[] @relation("TutorMenores")
+  activo          Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  cartaUsoImagen CartaUsoImagen?
+  asistencias    Asistencia[]
+
+  @@index([apellidos, nombres])
+  @@map("comensales")
+}
+
+model CartaUsoImagen {
+  id           Int       @id @default(autoincrement())
+  comensalId   Int       @unique
+  comensal     Comensal  @relation(fields: [comensalId], references: [id])
+  // Quien firma: el propio comensal si es mayor de edad, o su tutor si es menor.
+  firmanteId   Int?
+  autoriza     Boolean   @default(false)
+  fechaFirma   DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@map("cartas_uso_imagen")
+}
+
+model Voluntario {
+  id        Int      @id @default(autoincrement())
+  nombres   String
+  apellidos String
+  telefono  String
+  fotoPath  String?
+  activo    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  turnos TurnoVoluntario[]
+
+  @@index([apellidos, nombres])
+  @@map("voluntarios")
+}
+
+model Bienhechor {
+  id        Int      @id @default(autoincrement())
+  nombre    String
+  contacto  String?
+  rfc       String?
+  activo    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  lotes LoteInventario[]
+
+  @@map("bienhechores")
+}
+
+// ─────────────────────────────────────────────────────────────
+// Turno de comida — sustituye la hoja de papel diaria
+// ─────────────────────────────────────────────────────────────
+
+enum HorarioComida {
+  DESAYUNO
+  COMIDA
+  CENA
+}
+
+model TurnoComida {
+  id              Int           @id @default(autoincrement())
+  fecha           DateTime      @db.Date
+  horario         HorarioComida
+  menu            String?
+  notas           String?
+  registradoPorId Int
+  registradoPor   Usuario       @relation("TurnoRegistradoPor", fields: [registradoPorId], references: [id])
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  asistencias  Asistencia[]
+  voluntarios  TurnoVoluntario[]
+  movimientos  MovimientoInventario[]
+
+  @@unique([fecha, horario])
+  @@map("turnos_comida")
+}
+
+model TurnoVoluntario {
+  id           Int        @id @default(autoincrement())
+  turnoId      Int
+  turno        TurnoComida @relation(fields: [turnoId], references: [id])
+  voluntarioId Int
+  voluntario   Voluntario  @relation(fields: [voluntarioId], references: [id])
+  createdAt    DateTime    @default(now())
+
+  @@unique([turnoId, voluntarioId])
+  @@map("turno_voluntarios")
+}
+
+enum MetodoCaptura {
+  FOLIO
+  NOMBRE
+  QR
+  FACIAL
+}
+
+model Asistencia {
+  id              Int           @id @default(autoincrement())
+  comensalId      Int
+  comensal        Comensal      @relation(fields: [comensalId], references: [id])
+  turnoId         Int
+  turno           TurnoComida   @relation(fields: [turnoId], references: [id])
+  metodoCaptura   MetodoCaptura @default(FOLIO)
+  registradoPorId Int
+  registradoPor   Usuario       @relation("AsistenciaRegistradaPor", fields: [registradoPorId], references: [id])
+  createdAt       DateTime      @default(now())
+
+  @@unique([comensalId, turnoId])
+  @@map("asistencias")
+}
+
+// ─────────────────────────────────────────────────────────────
+// Inventario
+// ─────────────────────────────────────────────────────────────
+
+model CategoriaInventario {
+  id     Int    @id @default(autoincrement())
+  nombre String @unique
+  activo Boolean @default(true)
+
+  items InventarioItem[]
+
+  @@map("categorias_inventario")
+}
+
+model UnidadMedida {
+  id       Int    @id @default(autoincrement())
+  nombre   String @unique
+  abrevia  String
+
+  items InventarioItem[]
+
+  @@map("unidades_medida")
+}
+
+model Ubicacion {
+  id     Int    @id @default(autoincrement())
+  nombre String @unique
+  activo Boolean @default(true)
+
+  items InventarioItem[]
+
+  @@map("ubicaciones")
+}
+
+model InventarioItem {
+  id            Int                  @id @default(autoincrement())
+  nombre        String
+  marca         String?
+  codigoBarras  String?
+  categoriaId   Int
+  categoria     CategoriaInventario  @relation(fields: [categoriaId], references: [id])
+  unidadId      Int
+  unidad        UnidadMedida         @relation(fields: [unidadId], references: [id])
+  presentacion  String?
+  ubicacionId   Int?
+  ubicacion     Ubicacion?           @relation(fields: [ubicacionId], references: [id])
+  stockMinimo   Decimal              @default(0) @db.Decimal(12, 3)
+  activo        Boolean              @default(true)
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+
+  lotes       LoteInventario[]
+  movimientos MovimientoInventario[]
+
+  @@index([nombre])
+  @@map("inventario_items")
+}
+
+enum OrigenLote {
+  COMPRADO
+  DONADO
+}
+
+model LoteInventario {
+  id                Int             @id @default(autoincrement())
+  itemId            Int
+  item              InventarioItem  @relation(fields: [itemId], references: [id])
+  cantidadInicial   Decimal         @db.Decimal(12, 3)
+  cantidadDisponible Decimal        @db.Decimal(12, 3)
+  fechaCaducidad    DateTime?       @db.Date
+  fechaIngreso      DateTime        @db.Date
+  costoUnitario     Decimal?        @db.Decimal(12, 2)
+  costoTotal        Decimal?        @db.Decimal(12, 2)
+  origen            OrigenLote
+  bienhechorId      Int?
+  bienhechor        Bienhechor?     @relation(fields: [bienhechorId], references: [id])
+  numeroFactura     String?
+  cfdi              String?
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  movimientos MovimientoInventario[]
+
+  @@index([itemId, fechaCaducidad])
+  @@map("lotes_inventario")
+}
+
+// Catálogo abierto de motivos: permite agregar "despensa" en fase futura sin rediseñar el modelo.
+model MotivoMovimiento {
+  id     Int    @id @default(autoincrement())
+  nombre String @unique
+  activo Boolean @default(true)
+
+  movimientos MovimientoInventario[]
+
+  @@map("motivos_movimiento")
+}
+
+enum TipoMovimiento {
+  ENTRADA
+  SALIDA
+  AJUSTE
+}
+
+model MovimientoInventario {
+  id              Int               @id @default(autoincrement())
+  itemId          Int
+  item            InventarioItem    @relation(fields: [itemId], references: [id])
+  loteId          Int?
+  lote            LoteInventario?   @relation(fields: [loteId], references: [id])
+  tipo            TipoMovimiento
+  motivoId        Int
+  motivo          MotivoMovimiento  @relation(fields: [motivoId], references: [id])
+  cantidad        Decimal           @db.Decimal(12, 3)
+  turnoId         Int?
+  turno           TurnoComida?      @relation(fields: [turnoId], references: [id])
+  registradoPorId Int
+  registradoPor   Usuario           @relation("MovimientoRegistradoPor", fields: [registradoPorId], references: [id])
+  fecha           DateTime          @default(now())
+  notas           String?
+
+  @@index([itemId, fecha])
+  @@map("movimientos_inventario")
+}
