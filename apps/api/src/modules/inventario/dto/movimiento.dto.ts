@@ -10,6 +10,12 @@ export class ListarMovimientosQueryDto {
   @IsInt()
   itemId?: number;
 
+  @ApiProperty({ required: false, description: 'Filtra los insumos registrados en un turno de comida' })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  turnoId?: number;
+
   @ApiProperty({
     required: false,
     enum: TipoMovimiento,

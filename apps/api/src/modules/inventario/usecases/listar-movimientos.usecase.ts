@@ -19,6 +19,7 @@ export class ListarMovimientosUseCase implements UseCase<
   ): Promise<MovimientoResponseDto[]> {
     const where: Prisma.MovimientoInventarioWhereInput = {
       itemId: query.itemId,
+      turnoId: query.turnoId,
       tipo: query.tipo,
       fecha: {
         gte: query.desde ? new Date(query.desde) : undefined,

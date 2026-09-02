@@ -23,6 +23,7 @@ const QK = {
   item: (id: number) => ['inventario', 'items', id] as const,
   movimientos: (params?: {
     itemId?: number;
+    turnoId?: number;
     tipo?: TipoMovimiento;
     desde?: string;
     hasta?: string;
@@ -121,6 +122,7 @@ export function useRegistrarSalida() {
 
 export function useMovimientos(params?: {
   itemId?: number;
+  turnoId?: number;
   tipo?: TipoMovimiento;
   desde?: string;
   hasta?: string;

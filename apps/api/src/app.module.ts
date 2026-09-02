@@ -11,6 +11,7 @@ import { ComensalesModule } from './modules/comensales/comensales.module';
 import { InventarioModule } from './modules/inventario/inventario.module';
 import { BienhechoresModule } from './modules/bienhechores/bienhechores.module';
 import { VoluntariosModule } from './modules/voluntarios/voluntarios.module';
+import { AsistenciaModule } from './modules/asistencia/asistencia.module';
 
 @Module({
   imports: [
@@ -37,6 +38,7 @@ import { VoluntariosModule } from './modules/voluntarios/voluntarios.module';
     InventarioModule,
     BienhechoresModule,
     VoluntariosModule,
+    AsistenciaModule,
   ],
 })
 export class AppModule {}
