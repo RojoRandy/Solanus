@@ -41,6 +41,10 @@ import {
   ],
   // RegistrarSalidaInventarioUseCase: lo reutiliza Asistencia para descontar al servir comidas.
   // ProximosAVencerUseCase / StockBajoUseCase: los reutiliza Dashboard (Fase 4) para sus indicadores.
-  exports: [RegistrarSalidaInventarioUseCase, ProximosAVencerUseCase, StockBajoUseCase],
+  exports: [
+    RegistrarSalidaInventarioUseCase,
+    ProximosAVencerUseCase,
+    StockBajoUseCase,
+  ],
 })
 export class InventarioModule {}

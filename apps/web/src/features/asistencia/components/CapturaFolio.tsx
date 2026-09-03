@@ -7,7 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent } from '@/components/ui/card';
 import { useComensales } from '@/features/comensales/api';
 import type { Comensal } from '@/features/comensales/types';
-import { ApiError } from '@/lib/api-client';
+import { api, ApiError } from '@/lib/api-client';
 import { useRegistrarAsistencia } from '../api';
 import { resolverFoto, useDebouncedValue } from '../utils';
 
@@ -34,9 +34,9 @@ export function CapturaFolio({ turnoId }: { turnoId: number }) {
 
   const sugerencias = (resultados ?? []).slice(0, 6);
 
-  function confirmarRegistro(comensal: Comensal) {
+  function confirmarRegistro(comensal: Comensal, metodoCaptura: 'FOLIO' | 'NOMBRE') {
     registrar.mutate(
-      { turnoId, comensalId: comensal.id, metodoCaptura: esFolio ? 'FOLIO' : 'NOMBRE' },
+      { turnoId, comensalId: comensal.id, metodoCaptura },
       {
         onSuccess: () => {
           setUltimoRegistrado(comensal);
@@ -50,23 +50,36 @@ export function CapturaFolio({ turnoId }: { turnoId: number }) {
     );
   }
 
-  function handleKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
+  async function handleKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
     if (event.key !== 'Enter') return;
-    if (!busqueda) return;
 
-    if (esFolio) {
-      const folioNum = Number(busqueda);
-      const match = (resultados ?? []).find((c) => c.folio === folioNum);
+    // Se usa `texto` (el valor recién tecleado) en vez de `busqueda` (la versión
+    // debounced a 250ms): un Enter inmediatamente después de escribir el folio
+    // — típico al capturar rápido, o al automatizar con Playwright — puede
+    // llegar antes de que el debounce se actualice, y con `busqueda` el
+    // registro se perdía en silencio.
+    const valor = texto.trim();
+    if (!valor) return;
+
+    if (/^\d+$/.test(valor)) {
+      const folioNum = Number(valor);
+      // Búsqueda directa e inmediata (no la lista `resultados`, que puede
+      // seguir reflejando la búsqueda debounced anterior) para no depender
+      // de que el debounce ya haya alcanzado a `texto`.
+      const coincidencias = await api.get<Comensal[]>(
+        `/comensales?busqueda=${encodeURIComponent(valor)}&activo=true`,
+      );
+      const match = coincidencias.find((c) => c.folio === folioNum);
       if (match) {
-        confirmarRegistro(match);
+        confirmarRegistro(match, 'FOLIO');
       } else {
-        toast.error(`No se encontró ningún comensal con el folio ${busqueda}.`);
+        toast.error(`No se encontró ningún comensal con el folio ${valor}.`);
       }
       return;
     }
 
     if (sugerencias.length === 1) {
-      confirmarRegistro(sugerencias[0]);
+      confirmarRegistro(sugerencias[0], 'NOMBRE');
     }
   }
 
@@ -99,7 +112,7 @@ export function CapturaFolio({ turnoId }: { turnoId: number }) {
               <button
                 key={comensal.id}
                 type="button"
-                onClick={() => confirmarRegistro(comensal)}
+                onClick={() => confirmarRegistro(comensal, 'NOMBRE')}
                 className="flex items-center gap-3 px-3 py-2.5 text-left hover:bg-muted"
               >
                 <Avatar className="h-9 w-9">

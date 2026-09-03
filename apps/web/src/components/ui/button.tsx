@@ -44,12 +44,19 @@ function Button({
   className,
   variant = "default",
   size = "default",
+  render,
+  nativeButton,
   ...props
 }: ButtonPrimitive.Props & VariantProps<typeof buttonVariants>) {
   return (
     <ButtonPrimitive
       data-slot="button"
       className={cn(buttonVariants({ variant, size, className }))}
+      render={render}
+      // Un `render` a un elemento que no es <button> (p. ej. <Link>) ya no es
+      // un botón nativo — sin esto, Base UI asume que sí lo es y advierte en
+      // consola por perder la semántica de botón real.
+      nativeButton={nativeButton ?? !render}
       {...props}
     />
   )
