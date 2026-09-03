@@ -12,6 +12,8 @@ import { InventarioModule } from './modules/inventario/inventario.module';
 import { BienhechoresModule } from './modules/bienhechores/bienhechores.module';
 import { VoluntariosModule } from './modules/voluntarios/voluntarios.module';
 import { AsistenciaModule } from './modules/asistencia/asistencia.module';
+import { DashboardModule } from './modules/dashboard/dashboard.module';
+import { ReportesModule } from './modules/reportes/reportes.module';
 
 @Module({
   imports: [
@@ -39,6 +41,8 @@ import { AsistenciaModule } from './modules/asistencia/asistencia.module';
     BienhechoresModule,
     VoluntariosModule,
     AsistenciaModule,
+    DashboardModule,
+    ReportesModule,
   ],
 })
 export class AppModule {}

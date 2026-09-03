@@ -39,8 +39,8 @@ import {
     ListarUbicacionesUseCase,
     ListarMotivosUseCase,
   ],
-  // RegistrarSalidaInventarioUseCase se exporta para que el módulo de Asistencia (Fase 3)
-  // pueda inyectarlo y descontar inventario automáticamente al servir comidas.
-  exports: [RegistrarSalidaInventarioUseCase],
+  // RegistrarSalidaInventarioUseCase: lo reutiliza Asistencia para descontar al servir comidas.
+  // ProximosAVencerUseCase / StockBajoUseCase: los reutiliza Dashboard (Fase 4) para sus indicadores.
+  exports: [RegistrarSalidaInventarioUseCase, ProximosAVencerUseCase, StockBajoUseCase],
 })
 export class InventarioModule {}
