@@ -6,16 +6,16 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { EmptyState } from '@/components/shared/EmptyState';
-import { useInventarioItem, useMovimientos } from './api';
-import { formatFechaCorta } from './format';
+import { useProducto, useVariantes } from './api';
+import { ETIQUETA_ESTADO } from './types';
 
 export function ProductoDetallePage() {
   const navigate = useNavigate();
   const { id } = useParams();
-  const itemId = Number(id);
+  const productoId = Number(id);
 
-  const { data: item, isLoading, isError } = useInventarioItem(itemId);
-  const { data: movimientos, isLoading: cargandoMovimientos } = useMovimientos({ itemId });
+  const { data: producto, isLoading, isError } = useProducto(productoId);
+  const { data: variantes, isLoading: cargandoVariantes } = useVariantes({ productoId, incluirInactivas: true, limit: 100 });
 
   if (isLoading) {
     return (
@@ -26,13 +26,13 @@ export function ProductoDetallePage() {
     );
   }
 
-  if (isError || !item) {
+  if (isError || !producto) {
     return (
       <EmptyState
         icon={Package}
         title="No se encontró el producto"
         description="Puede que haya sido dado de baja o el enlace ya no sea válido."
-        action={<Button render={<Link to="/inventario" />}>Volver al catálogo</Button>}
+        action={<Button render={<Link to="/inventario/productos" />}>Volver al catálogo</Button>}
       />
     );
   }
@@ -45,50 +45,14 @@ export function ProductoDetallePage() {
             <ArrowLeft />
           </Button>
           <div>
-            <h1 className="text-2xl font-semibold tracking-tight">{item.nombre}</h1>
-            <p className="text-sm text-muted-foreground">
-              {item.categoria.nombre} · {item.unidad.nombre}
-            </p>
+            <h1 className="text-2xl font-semibold tracking-tight">{producto.nombre}</h1>
+            <p className="text-sm text-muted-foreground">{producto.categoria.nombre}</p>
           </div>
         </div>
-        <Button variant="outline" render={<Link to={`/inventario/${item.id}/editar`} />}>
+        <Button variant="outline" render={<Link to={`/inventario/productos/${producto.id}/editar`} />}>
           <Pencil />
           Editar
         </Button>
-      </div>
-
-      <div className="grid gap-4 sm:grid-cols-3">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm text-muted-foreground">Existencia actual</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-semibold">
-              {item.stockActual} <span className="text-sm font-normal text-muted-foreground">{item.unidad.abrevia}</span>
-            </p>
-            {item.stockBajo && (
-              <Badge variant="destructive" className="mt-2 bg-warning text-warning-foreground">
-                Por debajo del mínimo
-              </Badge>
-            )}
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm text-muted-foreground">Stock mínimo</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-semibold">{item.stockMinimo}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm text-muted-foreground">Ubicación</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-semibold">{item.ubicacion?.nombre ?? '—'}</p>
-          </CardContent>
-        </Card>
       </div>
 
       <Card>
@@ -98,20 +62,12 @@ export function ProductoDetallePage() {
         <CardContent>
           <dl className="grid gap-3 text-sm sm:grid-cols-2">
             <div>
-              <dt className="text-muted-foreground">Marca</dt>
-              <dd>{item.marca ?? '—'}</dd>
-            </div>
-            <div>
-              <dt className="text-muted-foreground">Presentación</dt>
-              <dd>{item.presentacion ?? '—'}</dd>
-            </div>
-            <div>
               <dt className="text-muted-foreground">Código de barras</dt>
-              <dd>{item.codigoBarras ?? '—'}</dd>
+              <dd>{producto.codigoBarras ?? '—'}</dd>
             </div>
             <div>
               <dt className="text-muted-foreground">Estado</dt>
-              <dd>{item.activo ? 'Activo' : 'Dado de baja'}</dd>
+              <dd>{producto.activo ? 'Activo' : 'Dado de baja'}</dd>
             </div>
           </dl>
         </CardContent>
@@ -119,46 +75,44 @@ export function ProductoDetallePage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Movimientos recientes</CardTitle>
+          <CardTitle>Existencias por unidad y estado</CardTitle>
         </CardHeader>
         <CardContent>
-          {cargandoMovimientos && <Skeleton className="h-24 w-full" />}
-          {!cargandoMovimientos && (!movimientos || movimientos.length === 0) && (
-            <p className="text-sm text-muted-foreground">Este producto todavía no tiene movimientos registrados.</p>
+          {cargandoVariantes && <Skeleton className="h-24 w-full" />}
+          {!cargandoVariantes && (!variantes || variantes.items.length === 0) && (
+            <p className="text-sm text-muted-foreground">
+              Este producto aún no tiene entradas registradas — sus variantes se crean al registrar una entrada.
+            </p>
           )}
-          {!cargandoMovimientos && movimientos && movimientos.length > 0 && (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Fecha</TableHead>
-                    <TableHead>Tipo</TableHead>
-                    <TableHead>Motivo</TableHead>
-                    <TableHead className="text-right">Cantidad</TableHead>
-                    <TableHead>Registró</TableHead>
+          {!cargandoVariantes && variantes && variantes.items.length > 0 && (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Unidad</TableHead>
+                  <TableHead>Estado</TableHead>
+                  <TableHead className="text-right">Existencia</TableHead>
+                  <TableHead className="text-right">Stock mínimo</TableHead>
+                  <TableHead />
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {variantes.items.map((variante) => (
+                  <TableRow key={variante.id}>
+                    <TableCell>{variante.unidad.nombre} ({variante.unidad.abrevia})</TableCell>
+                    <TableCell>
+                      <Badge variant="secondary">{ETIQUETA_ESTADO[variante.estado]}</Badge>
+                    </TableCell>
+                    <TableCell className="text-right">{variante.stockActual}</TableCell>
+                    <TableCell className="text-right text-muted-foreground">{variante.stockMinimo}</TableCell>
+                    <TableCell className="text-right">
+                      <Link to={`/inventario/variantes/${variante.id}`} className="text-sm text-primary hover:underline">
+                        Ver detalle
+                      </Link>
+                    </TableCell>
                   </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {movimientos.slice(0, 20).map((movimiento) => (
-                    <TableRow key={movimiento.id}>
-                      <TableCell>{formatFechaCorta(movimiento.fecha)}</TableCell>
-                      <TableCell>
-                        <Badge variant={movimiento.tipo === 'SALIDA' ? 'destructive' : 'secondary'}>
-                          {movimiento.tipo === 'ENTRADA'
-                            ? 'Entrada'
-                            : movimiento.tipo === 'SALIDA'
-                              ? 'Salida'
-                              : 'Ajuste'}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>{movimiento.motivo.nombre}</TableCell>
-                      <TableCell className="text-right">{movimiento.cantidad}</TableCell>
-                      <TableCell className="text-muted-foreground">{movimiento.registradoPor.nombre}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+                ))}
+              </TableBody>
+            </Table>
           )}
         </CardContent>
       </Card>

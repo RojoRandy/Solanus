@@ -1,12 +1,15 @@
 import {
+  keepPreviousData,
   useMutation,
   useQuery,
   useQueryClient,
   type UseMutationResult,
 } from '@tanstack/react-query';
 import { api, ApiError, getToken } from '@/lib/api-client';
+import type { Paginated } from '@/lib/pagination';
 import type {
   ActualizarComensalPayload,
+  AsistenciaComensal,
   Comensal,
   ComensalDetalle,
   CrearComensalPayload,
@@ -30,6 +33,8 @@ function construirQueryString(params: ListarComensalesParams): string {
   const query = new URLSearchParams();
   if (params.busqueda) query.set('busqueda', params.busqueda);
   if (params.activo) query.set('activo', params.activo);
+  if (params.page) query.set('page', String(params.page));
+  if (params.limit) query.set('limit', String(params.limit));
   const texto = query.toString();
   return texto ? `?${texto}` : '';
 }
@@ -37,7 +42,21 @@ function construirQueryString(params: ListarComensalesParams): string {
 export function useComensales(params: ListarComensalesParams) {
   return useQuery({
     queryKey: queryKeys.lista(params),
-    queryFn: () => api.get<Comensal[]>(`/comensales${construirQueryString(params)}`),
+    queryFn: () => api.get<Paginated<Comensal>>(`/comensales${construirQueryString(params)}`),
+    placeholderData: keepPreviousData,
+  });
+}
+
+export function useAsistenciasComensal(id: number | undefined, params: { page?: number; limit?: number } = {}) {
+  const query = new URLSearchParams();
+  if (params.page) query.set('page', String(params.page));
+  if (params.limit) query.set('limit', String(params.limit));
+  const qs = query.toString();
+  return useQuery({
+    queryKey: ['comensales', 'asistencias', id, params],
+    queryFn: () => api.get<Paginated<AsistenciaComensal>>(`/comensales/${id}/asistencias${qs ? `?${qs}` : ''}`),
+    enabled: id !== undefined,
+    placeholderData: keepPreviousData,
   });
 }
 

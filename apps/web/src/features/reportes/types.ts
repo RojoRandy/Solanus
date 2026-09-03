@@ -15,25 +15,35 @@ export interface ReporteAsistencia {
 }
 
 export interface ExistenciaReporte {
-  itemId: number;
+  varianteId: number;
   nombre: string;
   categoria: string;
   unidad: string;
+  estado: 'CRUDO' | 'COCIDO';
   stockActual: number;
   stockMinimo: number;
   stockBajo: boolean;
 }
 
 export interface MovimientoResumen {
-  itemNombre: string;
+  productoNombre: string;
+  unidad: string;
   cantidad: number;
   motivo: string;
   fecha: string;
 }
 
+export interface MovimientosPorTipo {
+  entradas: number;
+  salidas: number;
+  ajustesPositivos: number;
+  ajustesNegativos: number;
+  ajusteNeto: number;
+}
+
 export interface ReporteInventario {
   existencias: ExistenciaReporte[];
-  movimientosPorTipo: { ENTRADA: number; SALIDA: number; AJUSTE: number };
+  movimientosPorTipo: MovimientosPorTipo;
   mermas: MovimientoResumen[];
   caducados: MovimientoResumen[];
 }

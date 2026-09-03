@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
+  IsBoolean,
   IsDateString,
   IsEnum,
   IsInt,
@@ -10,9 +11,14 @@ import {
   IsString,
   ValidateNested,
 } from 'class-validator';
-import { OrigenLote } from '@prisma/client';
-import { CrearInventarioItemDto } from './item.dto';
+import { EstadoProducto, OrigenLote } from '@prisma/client';
+import { CrearProductoDto } from './producto.dto';
 
+/**
+ * El orden de los campos aquí refleja el orden de captura en la pantalla
+ * "Registrar entrada": estado → cantidad → costo unitario → costo total →
+ * unidad → marca → cfdi → caducidad → ingreso → origen → bienhechor.
+ */
 export class RegistrarEntradaDto {
   @ApiProperty({
     required: false,
@@ -20,28 +26,64 @@ export class RegistrarEntradaDto {
   })
   @IsOptional()
   @IsInt()
-  itemId?: number;
+  productoId?: number;
 
   @ApiProperty({
     required: false,
-    type: CrearInventarioItemDto,
+    type: CrearProductoDto,
     description:
-      'Datos para dar de alta el producto al vuelo cuando no existe todavía en el catálogo',
+      'Datos para dar de alta el producto al vuelo cuando no existe todavía',
   })
   @IsOptional()
   @ValidateNested()
-  @Type(() => CrearInventarioItemDto)
-  itemNuevo?: CrearInventarioItemDto;
+  @Type(() => CrearProductoDto)
+  productoNuevo?: CrearProductoDto;
+
+  @ApiProperty({ enum: EstadoProducto, enumName: 'EstadoProducto' })
+  @IsEnum(EstadoProducto)
+  estado: EstadoProducto;
 
   @ApiProperty({ example: 20 })
   @IsNumber()
   @IsPositive()
   cantidadInicial: number;
 
+  @ApiProperty()
+  @IsNumber()
+  @IsPositive()
+  costoUnitario: number;
+
+  @ApiProperty({
+    required: false,
+    description: 'Cantidad × costo unitario; si no se envía, se calcula',
+  })
+  @IsOptional()
+  @IsNumber()
+  costoTotal?: number;
+
+  @ApiProperty()
+  @IsInt()
+  unidadId: number;
+
+  @ApiProperty({ required: false, description: 'No aplica si el lote es cocido' })
+  @IsOptional()
+  @IsString()
+  marca?: string;
+
+  @ApiProperty({ required: false, description: 'CFDI / número de factura' })
+  @IsOptional()
+  @IsString()
+  cfdi?: string;
+
   @ApiProperty({ required: false, description: 'Fecha de caducidad (ISO)' })
   @IsOptional()
   @IsDateString()
   fechaCaducidad?: string;
+
+  @ApiProperty({ required: false, default: false })
+  @IsOptional()
+  @IsBoolean()
+  noCaduca?: boolean;
 
   @ApiProperty({
     required: false,
@@ -50,16 +92,6 @@ export class RegistrarEntradaDto {
   @IsOptional()
   @IsDateString()
   fechaIngreso?: string;
-
-  @ApiProperty({ required: false })
-  @IsOptional()
-  @IsNumber()
-  costoUnitario?: number;
-
-  @ApiProperty({ required: false })
-  @IsOptional()
-  @IsNumber()
-  costoTotal?: number;
 
   @ApiProperty({ enum: OrigenLote, enumName: 'OrigenLote' })
   @IsEnum(OrigenLote)
@@ -76,19 +108,23 @@ export class RegistrarEntradaDto {
   @ApiProperty({ required: false })
   @IsOptional()
   @IsString()
-  numeroFactura?: string;
+  presentacion?: string;
 
   @ApiProperty({ required: false })
   @IsOptional()
   @IsString()
-  cfdi?: string;
+  ubicacion?: string;
 }
 
-class LoteItemRefDto {
+class LoteVarianteRefDto {
   @ApiProperty()
   id: number;
   @ApiProperty()
-  nombre: string;
+  productoNombre: string;
+  @ApiProperty()
+  unidadAbrevia: string;
+  @ApiProperty({ enum: EstadoProducto, enumName: 'EstadoProducto' })
+  estado: EstadoProducto;
 }
 
 class LoteBienhechorRefDto {
@@ -101,8 +137,14 @@ class LoteBienhechorRefDto {
 export class LoteResponseDto {
   @ApiProperty()
   id: number;
-  @ApiProperty({ type: LoteItemRefDto })
-  item: LoteItemRefDto;
+  @ApiProperty({ type: LoteVarianteRefDto })
+  variante: LoteVarianteRefDto;
+  @ApiProperty({ required: false, nullable: true })
+  marca: string | null;
+  @ApiProperty({ required: false, nullable: true })
+  presentacion: string | null;
+  @ApiProperty({ required: false, nullable: true })
+  ubicacion: string | null;
   @ApiProperty()
   cantidadInicial: number;
   @ApiProperty()
@@ -119,8 +161,6 @@ export class LoteResponseDto {
   origen: OrigenLote;
   @ApiProperty({ type: LoteBienhechorRefDto, nullable: true })
   bienhechor: LoteBienhechorRefDto | null;
-  @ApiProperty({ nullable: true })
-  numeroFactura: string | null;
   @ApiProperty({ nullable: true })
   cfdi: string | null;
 }

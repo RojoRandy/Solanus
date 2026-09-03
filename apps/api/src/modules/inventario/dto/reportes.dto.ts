@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { EstadoProducto } from '@prisma/client';
 import { IsInt, IsOptional, Min } from 'class-validator';
 import { Type } from 'class-transformer';
 
@@ -19,9 +20,13 @@ export class ProximoAVencerResponseDto {
   @ApiProperty()
   loteId: number;
   @ApiProperty()
-  itemId: number;
+  varianteId: number;
   @ApiProperty()
-  itemNombre: string;
+  productoNombre: string;
+  @ApiProperty()
+  unidad: string;
+  @ApiProperty({ enum: EstadoProducto, enumName: 'EstadoProducto' })
+  estado: EstadoProducto;
   @ApiProperty()
   cantidadDisponible: number;
   @ApiProperty()
@@ -30,18 +35,22 @@ export class ProximoAVencerResponseDto {
 
 export class StockBajoResponseDto {
   @ApiProperty()
-  itemId: number;
+  varianteId: number;
   @ApiProperty()
-  nombre: string;
+  productoNombre: string;
+  @ApiProperty()
+  unidad: string;
+  @ApiProperty({ enum: EstadoProducto, enumName: 'EstadoProducto' })
+  estado: EstadoProducto;
   @ApiProperty()
   stockActual: number;
   @ApiProperty()
   stockMinimo: number;
 }
 
-export class StockItemResponseDto {
+export class StockVarianteResponseDto {
   @ApiProperty()
-  itemId: number;
+  varianteId: number;
   @ApiProperty()
   stockActual: number;
 }

@@ -19,7 +19,7 @@ function buildDeps(overrides: {
   } as unknown as PrismaService;
 
   const execute = jest.fn().mockResolvedValue({
-    itemId: 2,
+    varianteId: 2,
     cantidadDescontada: 3,
     lotesAfectados: [],
   });
@@ -31,7 +31,7 @@ function buildDeps(overrides: {
 }
 
 describe('RegistrarInsumoTurnoUseCase', () => {
-  const args = { turnoId: 1, itemId: 2, cantidad: 3, registradoPorId: 99 };
+  const args = { turnoId: 1, varianteId: 2, cantidad: 3, registradoPorId: 99 };
 
   it('resuelve el motivo "Consumo en comida" por defecto y delega el descuento a RegistrarSalidaInventarioUseCase', async () => {
     const { prisma, registrarSalida, execute } = buildDeps({});
@@ -41,7 +41,7 @@ describe('RegistrarInsumoTurnoUseCase', () => {
 
     expect(execute).toHaveBeenCalledWith(
       expect.objectContaining({
-        itemId: 2,
+        varianteId: 2,
         cantidad: 3,
         motivoId: 5,
         turnoId: 1,

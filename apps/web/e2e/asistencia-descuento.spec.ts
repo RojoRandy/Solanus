@@ -8,6 +8,12 @@ async function loginComoAdmin(page: import('@playwright/test').Page) {
   await expect(page).toHaveURL(/\/$/);
 }
 
+/** Confirma el modal de fecha/horario que ahora bloquea la captura al entrar a /asistencia. */
+async function irATurnoComida(page: import('@playwright/test').Page) {
+  await page.goto('/asistencia');
+  await page.getByRole('button', { name: 'Empezar captura' }).click();
+}
+
 async function leerExistencia(page: import('@playwright/test').Page, producto: string): Promise<number> {
   await page.goto('/inventario');
   const fila = page.getByRole('row', { name: new RegExp(producto) });
@@ -37,7 +43,7 @@ test.describe('Turno de comida: asistencia con descuento automático de inventar
     const folioTexto = await page.getByText(/^Folio \d+$/).innerText();
     const folio = folioTexto.replace('Folio ', '');
 
-    await page.goto('/asistencia');
+    await irATurnoComida(page);
     await page.getByRole('tab', { name: 'Comida' }).click();
 
     const contador = page.getByText('Comensales de este turno').locator('..').getByText(/^\d+$/);
@@ -65,7 +71,7 @@ test.describe('Turno de comida: asistencia con descuento automático de inventar
 
     const existenciaAntes = await leerExistencia(page, 'Arroz');
 
-    await page.goto('/asistencia');
+    await irATurnoComida(page);
     await page.getByRole('tab', { name: 'Comida' }).click();
 
     await page.getByRole('combobox', { name: 'Producto…' }).click();
@@ -82,19 +88,22 @@ test.describe('Turno de comida: asistencia con descuento automático de inventar
   test('rechaza un descuento mayor a la existencia disponible', async ({ page }) => {
     await loginComoAdmin(page);
 
-    const existenciaActual = await leerExistencia(page, 'Frijol');
+    // Se usa Arroz (una sola variante) en vez de Frijol: Frijol existe en dos
+    // combinaciones (kg·crudo y pz·cocido), lo que vuelve ambiguos tanto el
+    // renglón de existencias como la opción del combobox.
+    const existenciaActual = await leerExistencia(page, 'Arroz');
 
-    await page.goto('/asistencia');
+    await irATurnoComida(page);
     await page.getByRole('tab', { name: 'Comida' }).click();
 
     await page.getByRole('combobox', { name: 'Producto…' }).click();
-    await page.getByRole('option', { name: /^Frijol/ }).click();
+    await page.getByRole('option', { name: /^Arroz/ }).click();
     await page.getByPlaceholder('Cantidad').fill(String(existenciaActual + 1000));
     await page.getByRole('button', { name: 'Descontar' }).click();
 
     await expect(page.getByText(/existencia suficiente/i)).toBeVisible();
 
-    const existenciaSinCambio = await leerExistencia(page, 'Frijol');
+    const existenciaSinCambio = await leerExistencia(page, 'Arroz');
     expect(existenciaSinCambio).toBe(existenciaActual);
   });
 });

@@ -7,9 +7,10 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent } from '@/components/ui/card';
 import { useComensales } from '@/features/comensales/api';
 import type { Comensal } from '@/features/comensales/types';
-import { api, ApiError } from '@/lib/api-client';
+import { ApiError } from '@/lib/api-client';
 import { useRegistrarAsistencia } from '../api';
 import { resolverFoto, useDebouncedValue } from '../utils';
+import type { Turno } from '../types';
 
 function iniciales(nombres: string, apellidos: string): string {
   return `${nombres[0] ?? ''}${apellidos[0] ?? ''}`.toUpperCase();
@@ -17,26 +18,29 @@ function iniciales(nombres: string, apellidos: string): string {
 
 /**
  * Captura ágil del punto de servicio: se teclea el folio y Enter registra al
- * instante (igual que anotarlo en la hoja de papel). Si se teclea texto, se
- * muestra una lista de coincidencias por nombre para elegir con un clic —
- * el respaldo para cuando el comensal no recuerda su folio.
+ * instante (igual que anotarlo en la hoja de papel). El listado de
+ * coincidencias por nombre o folio se mantiene visible en todo momento —
+ * también mientras se teclean dígitos — para poder elegir con un clic.
  */
-export function CapturaFolio({ turnoId }: { turnoId: number }) {
+export function CapturaFolio({ turno }: { turno: Turno }) {
   const [texto, setTexto] = React.useState('');
   const [ultimoRegistrado, setUltimoRegistrado] = React.useState<Comensal | null>(null);
   const inputRef = React.useRef<HTMLInputElement>(null);
 
   const busqueda = useDebouncedValue(texto.trim(), 250);
-  const esFolio = /^\d+$/.test(busqueda);
 
-  const { data: resultados } = useComensales({ busqueda, activo: 'true' });
+  const { data } = useComensales({ busqueda, activo: 'true', limit: 8 });
   const registrar = useRegistrarAsistencia();
 
-  const sugerencias = (resultados ?? []).slice(0, 6);
+  const yaRegistradosIds = React.useMemo(
+    () => new Set(turno.asistencias.map((a) => a.comensal.id)),
+    [turno.asistencias],
+  );
+  const sugerencias = (data?.items ?? []).filter((c) => !yaRegistradosIds.has(c.id)).slice(0, 6);
 
   function confirmarRegistro(comensal: Comensal, metodoCaptura: 'FOLIO' | 'NOMBRE') {
     registrar.mutate(
-      { turnoId, comensalId: comensal.id, metodoCaptura },
+      { turnoId: turno.id, comensalId: comensal.id, metodoCaptura },
       {
         onSuccess: () => {
           setUltimoRegistrado(comensal);
@@ -50,27 +54,20 @@ export function CapturaFolio({ turnoId }: { turnoId: number }) {
     );
   }
 
-  async function handleKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
+  function handleKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
     if (event.key !== 'Enter') return;
 
-    // Se usa `texto` (el valor recién tecleado) en vez de `busqueda` (la versión
-    // debounced a 250ms): un Enter inmediatamente después de escribir el folio
-    // — típico al capturar rápido, o al automatizar con Playwright — puede
-    // llegar antes de que el debounce se actualice, y con `busqueda` el
-    // registro se perdía en silencio.
     const valor = texto.trim();
     if (!valor) return;
 
     if (/^\d+$/.test(valor)) {
       const folioNum = Number(valor);
-      // Búsqueda directa e inmediata (no la lista `resultados`, que puede
-      // seguir reflejando la búsqueda debounced anterior) para no depender
-      // de que el debounce ya haya alcanzado a `texto`.
-      const coincidencias = await api.get<Comensal[]>(
-        `/comensales?busqueda=${encodeURIComponent(valor)}&activo=true`,
-      );
-      const match = coincidencias.find((c) => c.folio === folioNum);
+      const match = sugerencias.find((c) => c.folio === folioNum) ?? (data?.items ?? []).find((c) => c.folio === folioNum);
       if (match) {
+        if (yaRegistradosIds.has(match.id)) {
+          toast.error('El comensal ya tiene asistencia registrada en este turno.');
+          return;
+        }
         confirmarRegistro(match, 'FOLIO');
       } else {
         toast.error(`No se encontró ningún comensal con el folio ${valor}.`);
@@ -106,14 +103,14 @@ export function CapturaFolio({ turnoId }: { turnoId: number }) {
           </div>
         </div>
 
-        {texto.trim() && !esFolio && sugerencias.length > 0 && (
-          <div className="flex flex-col divide-y divide-border overflow-hidden rounded-lg border border-border">
+        {texto.trim() && sugerencias.length > 0 && (
+          <div className="flex flex-col divide-y divide-border overflow-hidden rounded-lg border border-border animate-in fade-in">
             {sugerencias.map((comensal) => (
               <button
                 key={comensal.id}
                 type="button"
                 onClick={() => confirmarRegistro(comensal, 'NOMBRE')}
-                className="flex items-center gap-3 px-3 py-2.5 text-left hover:bg-muted"
+                className="flex items-center gap-3 px-3 py-2.5 text-left transition-colors hover:bg-muted"
               >
                 <Avatar className="h-9 w-9">
                   <AvatarImage src={resolverFoto(comensal.fotoPath)} />
@@ -130,12 +127,12 @@ export function CapturaFolio({ turnoId }: { turnoId: number }) {
           </div>
         )}
 
-        {texto.trim() && !esFolio && sugerencias.length === 0 && (
+        {texto.trim() && sugerencias.length === 0 && (
           <p className="px-1 text-sm text-muted-foreground">Sin coincidencias.</p>
         )}
 
         {ultimoRegistrado && (
-          <div className="flex items-center gap-3 rounded-lg bg-success/10 px-4 py-3">
+          <div className="flex items-center gap-3 rounded-lg bg-success/10 px-4 py-3 animate-in fade-in slide-in-from-bottom-1">
             <Avatar className="h-11 w-11">
               <AvatarImage src={resolverFoto(ultimoRegistrado.fotoPath)} />
               <AvatarFallback>

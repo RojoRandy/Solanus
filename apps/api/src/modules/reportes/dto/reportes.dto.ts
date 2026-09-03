@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsDateString, IsOptional } from 'class-validator';
-import { TipoMovimiento } from '@prisma/client';
+import { EstadoProducto } from '@prisma/client';
 
 export class RangoFechaQueryDto {
   @ApiProperty({
@@ -41,26 +41,42 @@ export class ReporteAsistenciaResponseDto {
 // ── Reporte de Inventario ──
 
 class ExistenciaReporteDto {
-  @ApiProperty() itemId: number;
+  @ApiProperty() varianteId: number;
   @ApiProperty() nombre: string;
   @ApiProperty() categoria: string;
   @ApiProperty() unidad: string;
+  @ApiProperty({ enum: EstadoProducto, enumName: 'EstadoProducto' }) estado: EstadoProducto;
   @ApiProperty() stockActual: number;
   @ApiProperty() stockMinimo: number;
   @ApiProperty() stockBajo: boolean;
 }
 
 class MovimientoResumenDto {
-  @ApiProperty() itemNombre: string;
+  @ApiProperty() productoNombre: string;
+  @ApiProperty() unidad: string;
   @ApiProperty() cantidad: number;
   @ApiProperty() motivo: string;
   @ApiProperty() fecha: Date;
 }
 
+/**
+ * Entradas/salidas = suma de cantidades del periodo (compras+donaciones vs.
+ * consumo+mermas+caducados). Ajustes se desglosa porque un ajuste puede subir
+ * o bajar la existencia: `ajustesPositivos`/`ajustesNegativos` son sumas en
+ * valor absoluto y `ajusteNeto` es la diferencia.
+ */
+class MovimientosPorTipoDto {
+  @ApiProperty() entradas: number;
+  @ApiProperty() salidas: number;
+  @ApiProperty() ajustesPositivos: number;
+  @ApiProperty() ajustesNegativos: number;
+  @ApiProperty() ajusteNeto: number;
+}
+
 export class ReporteInventarioResponseDto {
   @ApiProperty({ type: [ExistenciaReporteDto] })
   existencias: ExistenciaReporteDto[];
-  @ApiProperty() movimientosPorTipo: Record<TipoMovimiento, number>;
+  @ApiProperty({ type: MovimientosPorTipoDto }) movimientosPorTipo: MovimientosPorTipoDto;
   @ApiProperty({ type: [MovimientoResumenDto] }) mermas: MovimientoResumenDto[];
   @ApiProperty({ type: [MovimientoResumenDto] })
   caducados: MovimientoResumenDto[];

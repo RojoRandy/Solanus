@@ -1,13 +1,22 @@
 import {
   BadRequestException,
+  ConflictException,
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
 import { ErrorResponseDto } from '../dto/response.dto';
 
 const Exceptions = {
-  ITEM_NOT_FOUND: (data?: any) =>
-    new NotFoundException(Responses.ITEM_NOT_FOUND(data)),
+  PRODUCTO_NOT_FOUND: (data?: any) =>
+    new NotFoundException(Responses.PRODUCTO_NOT_FOUND(data)),
+  PRODUCTO_DUPLICADO: (data?: any) =>
+    new ConflictException(Responses.PRODUCTO_DUPLICADO(data)),
+  VARIANTE_NOT_FOUND: (data?: any) =>
+    new NotFoundException(Responses.VARIANTE_NOT_FOUND(data)),
+  VARIANTE_DUPLICADA: (data?: any) =>
+    new ConflictException(Responses.VARIANTE_DUPLICADA(data)),
+  MARCA_NO_PERMITIDA_EN_COCIDO: (data?: any) =>
+    new BadRequestException(Responses.MARCA_NO_PERMITIDA_EN_COCIDO(data)),
   LOTE_NOT_FOUND: (data?: any) =>
     new NotFoundException(Responses.LOTE_NOT_FOUND(data)),
   BIENHECHOR_NOT_FOUND: (data?: any) =>
@@ -24,21 +33,63 @@ const Exceptions = {
     ),
   CATEGORIA_NOT_FOUND: (data?: any) =>
     new NotFoundException(Responses.CATEGORIA_NOT_FOUND(data)),
+  CATEGORIA_DUPLICADA: (data?: any) =>
+    new ConflictException(Responses.CATEGORIA_DUPLICADA(data)),
+  CATEGORIA_EN_USO: (data?: any) =>
+    new BadRequestException(Responses.CATEGORIA_EN_USO(data)),
   UNIDAD_NOT_FOUND: (data?: any) =>
     new NotFoundException(Responses.UNIDAD_NOT_FOUND(data)),
-  UBICACION_NOT_FOUND: (data?: any) =>
-    new NotFoundException(Responses.UBICACION_NOT_FOUND(data)),
+  UNIDAD_DUPLICADA: (data?: any) =>
+    new ConflictException(Responses.UNIDAD_DUPLICADA(data)),
+  UNIDAD_EN_USO: (data?: any) =>
+    new BadRequestException(Responses.UNIDAD_EN_USO(data)),
   BIENHECHOR_REQUERIDO: (data?: any) =>
     new BadRequestException(Responses.BIENHECHOR_REQUERIDO(data)),
-  ITEM_O_ITEM_NUEVO_REQUERIDO: (data?: any) =>
-    new BadRequestException(Responses.ITEM_O_ITEM_NUEVO_REQUERIDO(data)),
+  PRODUCTO_O_PRODUCTO_NUEVO_REQUERIDO: (data?: any) =>
+    new BadRequestException(
+      Responses.PRODUCTO_O_PRODUCTO_NUEVO_REQUERIDO(data),
+    ),
+  MOVIMIENTO_NOT_FOUND: (data?: any) =>
+    new NotFoundException(Responses.MOVIMIENTO_NOT_FOUND(data)),
+  MOVIMIENTO_CAMPO_NO_EDITABLE: (data?: any) =>
+    new BadRequestException(Responses.MOVIMIENTO_CAMPO_NO_EDITABLE(data)),
+  AJUSTE_REQUIERE_LOTE: (data?: any) =>
+    new BadRequestException(Responses.AJUSTE_REQUIERE_LOTE(data)),
+  AJUSTE_CANTIDAD_CERO: (data?: any) =>
+    new BadRequestException(Responses.AJUSTE_CANTIDAD_CERO(data)),
+  CADUCIDAD_REQUERIDA: (data?: any) =>
+    new BadRequestException(Responses.CADUCIDAD_REQUERIDA(data)),
 };
 
 const Responses = {
-  ITEM_NOT_FOUND: (data?: any) =>
+  PRODUCTO_NOT_FOUND: (data?: any) =>
     new ErrorResponseDto(
-      'ITEM_NOT_FOUND',
+      'PRODUCTO_NOT_FOUND',
       'No se encontró el producto en el catálogo de inventario',
+      data,
+    ),
+  PRODUCTO_DUPLICADO: (data?: any) =>
+    new ErrorResponseDto(
+      'PRODUCTO_DUPLICADO',
+      'Ya existe un producto con ese nombre en la misma categoría',
+      data,
+    ),
+  VARIANTE_NOT_FOUND: (data?: any) =>
+    new ErrorResponseDto(
+      'VARIANTE_NOT_FOUND',
+      'No se encontró la combinación de producto, unidad y estado indicada',
+      data,
+    ),
+  VARIANTE_DUPLICADA: (data?: any) =>
+    new ErrorResponseDto(
+      'VARIANTE_DUPLICADA',
+      'Ya existe esa combinación de producto, unidad y estado',
+      data,
+    ),
+  MARCA_NO_PERMITIDA_EN_COCIDO: (data?: any) =>
+    new ErrorResponseDto(
+      'MARCA_NO_PERMITIDA_EN_COCIDO',
+      'Un lote cocido no lleva marca',
       data,
     ),
   LOTE_NOT_FOUND: (data?: any) =>
@@ -83,16 +134,34 @@ const Responses = {
       'No se encontró la categoría de inventario',
       data,
     ),
+  CATEGORIA_DUPLICADA: (data?: any) =>
+    new ErrorResponseDto(
+      'CATEGORIA_DUPLICADA',
+      'Ya existe una categoría con ese nombre',
+      data,
+    ),
+  CATEGORIA_EN_USO: (data?: any) =>
+    new ErrorResponseDto(
+      'CATEGORIA_EN_USO',
+      'No se puede eliminar: hay productos que usan esta categoría',
+      data,
+    ),
   UNIDAD_NOT_FOUND: (data?: any) =>
     new ErrorResponseDto(
       'UNIDAD_NOT_FOUND',
       'No se encontró la unidad de medida',
       data,
     ),
-  UBICACION_NOT_FOUND: (data?: any) =>
+  UNIDAD_DUPLICADA: (data?: any) =>
     new ErrorResponseDto(
-      'UBICACION_NOT_FOUND',
-      'No se encontró la ubicación',
+      'UNIDAD_DUPLICADA',
+      'Ya existe una unidad de medida con ese nombre o abreviatura',
+      data,
+    ),
+  UNIDAD_EN_USO: (data?: any) =>
+    new ErrorResponseDto(
+      'UNIDAD_EN_USO',
+      'No se puede eliminar: hay variantes de inventario que usan esta unidad',
       data,
     ),
   BIENHECHOR_REQUERIDO: (data?: any) =>
@@ -101,10 +170,40 @@ const Responses = {
       'Debe indicar el bienhechor cuando el origen del lote es una donación',
       data,
     ),
-  ITEM_O_ITEM_NUEVO_REQUERIDO: (data?: any) =>
+  PRODUCTO_O_PRODUCTO_NUEVO_REQUERIDO: (data?: any) =>
     new ErrorResponseDto(
-      'ITEM_O_ITEM_NUEVO_REQUERIDO',
-      'Debe indicar un producto existente (itemId) o los datos de un producto nuevo (itemNuevo)',
+      'PRODUCTO_O_PRODUCTO_NUEVO_REQUERIDO',
+      'Debe indicar un producto existente (productoId) o los datos de un producto nuevo (productoNuevo)',
+      data,
+    ),
+  MOVIMIENTO_NOT_FOUND: (data?: any) =>
+    new ErrorResponseDto(
+      'MOVIMIENTO_NOT_FOUND',
+      'No se encontró el movimiento de inventario',
+      data,
+    ),
+  MOVIMIENTO_CAMPO_NO_EDITABLE: (data?: any) =>
+    new ErrorResponseDto(
+      'MOVIMIENTO_CAMPO_NO_EDITABLE',
+      'Solo se pueden editar la fecha, el motivo y las notas de un movimiento; para corregir la cantidad registra un ajuste',
+      data,
+    ),
+  AJUSTE_REQUIERE_LOTE: (data?: any) =>
+    new ErrorResponseDto(
+      'AJUSTE_REQUIERE_LOTE',
+      'Un ajuste que aumenta la existencia debe indicar a qué lote se aplica',
+      data,
+    ),
+  AJUSTE_CANTIDAD_CERO: (data?: any) =>
+    new ErrorResponseDto(
+      'AJUSTE_CANTIDAD_CERO',
+      'La cantidad del ajuste no puede ser cero',
+      data,
+    ),
+  CADUCIDAD_REQUERIDA: (data?: any) =>
+    new ErrorResponseDto(
+      'CADUCIDAD_REQUERIDA',
+      'Indica la fecha de caducidad o marca la casilla "No caduca"',
       data,
     ),
 };

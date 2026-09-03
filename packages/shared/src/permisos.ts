@@ -15,7 +15,8 @@ export type Modulo =
   | 'bienhechores'
   | 'voluntarios'
   | 'dashboard'
-  | 'reportes';
+  | 'reportes'
+  | 'configuracion';
 
 const TODOS_LOS_ROLES: UserRole[] = [UserRoles.ADMINISTRADOR, UserRoles.USUARIO, UserRoles.USUARIO_SIMPLE];
 
@@ -28,6 +29,7 @@ export const MODULOS_POR_ROL: Record<Modulo, UserRole[]> = {
   voluntarios: [UserRoles.ADMINISTRADOR, UserRoles.USUARIO],
   dashboard: [UserRoles.ADMINISTRADOR, UserRoles.USUARIO],
   reportes: [UserRoles.ADMINISTRADOR, UserRoles.USUARIO],
+  configuracion: [UserRoles.ADMINISTRADOR],
 };
 
 export function puedeAcceder(rol: UserRole, modulo: Modulo): boolean {

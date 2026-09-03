@@ -16,17 +16,19 @@ function buildQuery(params: Record<string, string | undefined>): string {
   return qs ? `?${qs}` : '';
 }
 
-export function useTurno(horario: HorarioComida, fecha?: string) {
+export function useTurno(horario: HorarioComida, fecha?: string, options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: QK.turno(fecha, horario),
     queryFn: () => api.get<Turno>(`/asistencia/turno${buildQuery({ fecha, horario })}`),
+    enabled: options?.enabled ?? true,
   });
 }
 
-export function useTurnosDelDia(fecha?: string) {
+export function useTurnosDelDia(fecha?: string, options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: QK.turnos(fecha),
     queryFn: () => api.get<TurnoResumen[]>(`/asistencia/turnos${buildQuery({ fecha })}`),
+    enabled: options?.enabled ?? true,
   });
 }
 
@@ -82,10 +84,11 @@ export function useQuitarVoluntario() {
 export function useRegistrarInsumoTurno() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ turnoId, itemId, cantidad, motivoId, notas }: { turnoId: number; itemId: number; cantidad: number; motivoId?: number; notas?: string }) =>
-      api.post(`/asistencia/turnos/${turnoId}/insumos`, { itemId, cantidad, motivoId, notas }),
+    mutationFn: ({ turnoId, varianteId, cantidad, motivoId, notas }: { turnoId: number; varianteId: number; cantidad: number; motivoId?: number; notas?: string }) =>
+      api.post(`/asistencia/turnos/${turnoId}/insumos`, { varianteId, cantidad, motivoId, notas }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['inventario'] });
+      void queryClient.invalidateQueries({ queryKey: ['inventario'] });
+      void queryClient.invalidateQueries({ queryKey: ['asistencia'] });
     },
   });
 }

@@ -1,4 +1,4 @@
-import { PrismaClient, OrigenLote, HorarioComida } from '@prisma/client';
+import { PrismaClient, OrigenLote, HorarioComida, EstadoProducto } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
@@ -36,13 +36,21 @@ async function main() {
       { nombre: 'Caja', abrevia: 'cja' },
     ].map((u) => prisma.unidadMedida.upsert({ where: { nombre: u.nombre }, update: {}, create: u })),
   );
-  const [almacen, cocina] = await Promise.all(
-    ['Almacén', 'Cocina'].map((nombre) => prisma.ubicacion.upsert({ where: { nombre }, update: {}, create: { nombre } })),
-  );
 
   await Promise.all(
-    ['Compra', 'Donación', 'Consumo en comida', 'Merma', 'Caducado', 'Ajuste'].map((nombre) =>
-      prisma.motivoMovimiento.upsert({ where: { nombre }, update: {}, create: { nombre } }),
+    [
+      { clave: 'COMPRA', nombre: 'Compra' },
+      { clave: 'DONACION', nombre: 'Donación' },
+      { clave: 'CONSUMO', nombre: 'Consumo en comida' },
+      { clave: 'MERMA', nombre: 'Merma', esMerma: true },
+      { clave: 'CADUCADO', nombre: 'Caducado', esMerma: true },
+      { clave: 'AJUSTE', nombre: 'Ajuste' },
+    ].map((m) =>
+      prisma.motivoMovimiento.upsert({
+        where: { clave: m.clave },
+        update: {},
+        create: { ...m, esSistema: true },
+      }),
     ),
   );
 
@@ -52,21 +60,24 @@ async function main() {
     create: { nombre: 'Público en General', contacto: null },
   });
 
-  const arroz = await prisma.inventarioItem.create({
+  // ── Arroz: una sola variante, comprado ───────────────────────
+  const arroz = await prisma.producto.create({
+    data: { nombre: 'Arroz', categoriaId: categorias[0].id },
+  });
+  const arrozKgCrudo = await prisma.varianteInventario.create({
     data: {
-      nombre: 'Arroz',
-      marca: 'MC Paiza',
-      categoriaId: categorias[0].id,
-      unidadId: unidades[1].id,
-      presentacion: '900 grs',
-      ubicacionId: almacen.id,
+      productoId: arroz.id,
+      unidadId: unidades[1].id, // Kilogramo
+      estado: EstadoProducto.CRUDO,
       stockMinimo: 20,
     },
   });
-
   await prisma.loteInventario.create({
     data: {
-      itemId: arroz.id,
+      varianteId: arrozKgCrudo.id,
+      marca: 'MC Paiza',
+      presentacion: '900 grs',
+      ubicacion: 'Almacén',
       cantidadInicial: 40,
       cantidadDisponible: 40,
       fechaIngreso: new Date(),
@@ -75,7 +86,52 @@ async function main() {
       costoTotal: 720,
       origen: OrigenLote.DONADO,
       bienhechorId: bienhechor.id,
-      numeroFactura: 'PF-376',
+      cfdi: 'PF-376',
+    },
+  });
+
+  // ── Frijol: dos variantes del mismo producto (kg crudo y pieza cocido) ──
+  // — así la pantalla de existencias agrupadas tiene qué mostrar de entrada.
+  const frijol = await prisma.producto.create({
+    data: { nombre: 'Frijol', categoriaId: categorias[0].id },
+  });
+  const frijolKgCrudo = await prisma.varianteInventario.create({
+    data: {
+      productoId: frijol.id,
+      unidadId: unidades[1].id, // Kilogramo
+      estado: EstadoProducto.CRUDO,
+      stockMinimo: 15,
+    },
+  });
+  const frijolPzCocido = await prisma.varianteInventario.create({
+    data: {
+      productoId: frijol.id,
+      unidadId: unidades[0].id, // Pieza (olla de porciones)
+      estado: EstadoProducto.COCIDO,
+      stockMinimo: 5,
+    },
+  });
+  await prisma.loteInventario.create({
+    data: {
+      varianteId: frijolKgCrudo.id,
+      marca: 'La Costeña',
+      cantidadInicial: 30,
+      cantidadDisponible: 30,
+      fechaIngreso: new Date(),
+      fechaCaducidad: new Date(Date.now() + 180 * 24 * 60 * 60 * 1000),
+      costoUnitario: 32,
+      costoTotal: 960,
+      origen: OrigenLote.COMPRADO,
+      cfdi: 'A-1029',
+    },
+  });
+  await prisma.loteInventario.create({
+    data: {
+      varianteId: frijolPzCocido.id,
+      cantidadInicial: 12,
+      cantidadDisponible: 12,
+      fechaIngreso: new Date(),
+      origen: OrigenLote.COMPRADO,
     },
   });
 

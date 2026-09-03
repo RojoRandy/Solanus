@@ -25,7 +25,7 @@ function buildPrismaMock(overrides: {
   const motivo = 'motivo' in overrides ? overrides.motivo : { id: 1 };
 
   const tx = {
-    inventarioItem: {
+    varianteInventario: {
       findUnique: jest.fn().mockResolvedValue(item),
     },
     motivoMovimiento: {
@@ -49,7 +49,7 @@ function buildPrismaMock(overrides: {
 
 describe('RegistrarSalidaInventarioUseCase', () => {
   const args = {
-    itemId: 1,
+    varianteId: 1,
     cantidad: 10,
     motivoId: 1,
     registradoPorId: 99,
@@ -145,7 +145,7 @@ describe('RegistrarSalidaInventarioUseCase', () => {
     );
   });
 
-  it('lanza ITEM_NOT_FOUND cuando el producto no existe', async () => {
+  it('lanza VARIANTE_NOT_FOUND cuando la variante no existe', async () => {
     const { prisma } = buildPrismaMock({ item: null });
     const useCase = new RegistrarSalidaInventarioUseCase(prisma);
 

@@ -10,20 +10,20 @@ import {
 
 export interface RegistrarInsumoTurnoArgs {
   turnoId: number;
-  itemId: number;
+  varianteId: number;
   cantidad: number;
   motivoId?: number;
   notas?: string;
   registradoPorId: number;
 }
 
-const MOTIVO_CONSUMO_DEFAULT = 'Consumo en comida';
+const CLAVE_MOTIVO_CONSUMO_DEFAULT = 'CONSUMO';
 
 /**
  * "Registro de insumos utilizados del almacén" de la hoja de papel — descuenta
  * inventario automáticamente al servir la comida. Reutiliza tal cual el caso de
- * uso transaccional de Inventario (Fase 2): no duplica la lógica FEFO de
- * descuento, solo resuelve el motivo por defecto y ata el turnoId.
+ * uso transaccional de Inventario: no duplica la lógica FEFO de descuento,
+ * solo resuelve el motivo por defecto y ata el turnoId.
  */
 @Injectable()
 export class RegistrarInsumoTurnoUseCase implements UseCase<
@@ -37,7 +37,7 @@ export class RegistrarInsumoTurnoUseCase implements UseCase<
 
   async execute({
     turnoId,
-    itemId,
+    varianteId,
     cantidad,
     motivoId,
     notas,
@@ -51,17 +51,17 @@ export class RegistrarInsumoTurnoUseCase implements UseCase<
     let motivoResuelto = motivoId;
     if (!motivoResuelto) {
       const motivo = await this.prisma.motivoMovimiento.findUnique({
-        where: { nombre: MOTIVO_CONSUMO_DEFAULT },
+        where: { clave: CLAVE_MOTIVO_CONSUMO_DEFAULT },
       });
       if (!motivo)
         throw InventarioErrors.Exceptions.MOTIVO_NOT_FOUND({
-          nombre: MOTIVO_CONSUMO_DEFAULT,
+          clave: CLAVE_MOTIVO_CONSUMO_DEFAULT,
         });
       motivoResuelto = motivo.id;
     }
 
     return this.registrarSalida.execute({
-      itemId,
+      varianteId,
       cantidad,
       motivoId: motivoResuelto,
       turnoId,

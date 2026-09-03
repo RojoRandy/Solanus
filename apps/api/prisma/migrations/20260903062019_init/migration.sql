@@ -8,6 +8,9 @@ CREATE TYPE "HorarioComida" AS ENUM ('DESAYUNO', 'COMIDA', 'CENA');
 CREATE TYPE "MetodoCaptura" AS ENUM ('FOLIO', 'NOMBRE', 'QR', 'FACIAL');
 
 -- CreateEnum
+CREATE TYPE "EstadoProducto" AS ENUM ('CRUDO', 'COCIDO');
+
+-- CreateEnum
 CREATE TYPE "OrigenLote" AS ENUM ('COMPRADO', 'DONADO');
 
 -- CreateEnum
@@ -136,41 +139,45 @@ CREATE TABLE "unidades_medida" (
     "id" SERIAL NOT NULL,
     "nombre" TEXT NOT NULL,
     "abrevia" TEXT NOT NULL,
+    "activo" BOOLEAN NOT NULL DEFAULT true,
 
     CONSTRAINT "unidades_medida_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
-CREATE TABLE "ubicaciones" (
+CREATE TABLE "productos" (
     "id" SERIAL NOT NULL,
     "nombre" TEXT NOT NULL,
+    "codigoBarras" TEXT,
+    "categoriaId" INTEGER NOT NULL,
     "activo" BOOLEAN NOT NULL DEFAULT true,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
 
-    CONSTRAINT "ubicaciones_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "productos_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
-CREATE TABLE "inventario_items" (
+CREATE TABLE "variantes_inventario" (
     "id" SERIAL NOT NULL,
-    "nombre" TEXT NOT NULL,
-    "marca" TEXT,
-    "codigoBarras" TEXT,
-    "categoriaId" INTEGER NOT NULL,
+    "productoId" INTEGER NOT NULL,
     "unidadId" INTEGER NOT NULL,
-    "presentacion" TEXT,
-    "ubicacionId" INTEGER,
+    "estado" "EstadoProducto" NOT NULL,
     "stockMinimo" DECIMAL(12,3) NOT NULL DEFAULT 0,
     "activo" BOOLEAN NOT NULL DEFAULT true,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
-    CONSTRAINT "inventario_items_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "variantes_inventario_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "lotes_inventario" (
     "id" SERIAL NOT NULL,
-    "itemId" INTEGER NOT NULL,
+    "varianteId" INTEGER NOT NULL,
+    "marca" TEXT,
+    "presentacion" TEXT,
+    "ubicacion" TEXT,
     "cantidadInicial" DECIMAL(12,3) NOT NULL,
     "cantidadDisponible" DECIMAL(12,3) NOT NULL,
     "fechaCaducidad" DATE,
@@ -179,7 +186,6 @@ CREATE TABLE "lotes_inventario" (
     "costoTotal" DECIMAL(12,2),
     "origen" "OrigenLote" NOT NULL,
     "bienhechorId" INTEGER,
-    "numeroFactura" TEXT,
     "cfdi" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
@@ -190,7 +196,10 @@ CREATE TABLE "lotes_inventario" (
 -- CreateTable
 CREATE TABLE "motivos_movimiento" (
     "id" SERIAL NOT NULL,
+    "clave" TEXT NOT NULL,
     "nombre" TEXT NOT NULL,
+    "esMerma" BOOLEAN NOT NULL DEFAULT false,
+    "esSistema" BOOLEAN NOT NULL DEFAULT false,
     "activo" BOOLEAN NOT NULL DEFAULT true,
 
     CONSTRAINT "motivos_movimiento_pkey" PRIMARY KEY ("id")
@@ -199,14 +208,16 @@ CREATE TABLE "motivos_movimiento" (
 -- CreateTable
 CREATE TABLE "movimientos_inventario" (
     "id" SERIAL NOT NULL,
-    "itemId" INTEGER NOT NULL,
+    "varianteId" INTEGER NOT NULL,
     "loteId" INTEGER,
     "tipo" "TipoMovimiento" NOT NULL,
     "motivoId" INTEGER NOT NULL,
     "cantidad" DECIMAL(12,3) NOT NULL,
     "turnoId" INTEGER,
     "registradoPorId" INTEGER NOT NULL,
+    "editadoPorId" INTEGER,
     "fecha" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "actualizadoEn" TIMESTAMP(3) NOT NULL,
     "notas" TEXT,
 
     CONSTRAINT "movimientos_inventario_pkey" PRIMARY KEY ("id")
@@ -243,19 +254,37 @@ CREATE UNIQUE INDEX "categorias_inventario_nombre_key" ON "categorias_inventario
 CREATE UNIQUE INDEX "unidades_medida_nombre_key" ON "unidades_medida"("nombre");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "ubicaciones_nombre_key" ON "ubicaciones"("nombre");
+CREATE UNIQUE INDEX "unidades_medida_abrevia_key" ON "unidades_medida"("abrevia");
 
 -- CreateIndex
-CREATE INDEX "inventario_items_nombre_idx" ON "inventario_items"("nombre");
+CREATE INDEX "productos_nombre_idx" ON "productos"("nombre");
 
 -- CreateIndex
-CREATE INDEX "lotes_inventario_itemId_fechaCaducidad_idx" ON "lotes_inventario"("itemId", "fechaCaducidad");
+CREATE UNIQUE INDEX "productos_nombre_categoriaId_key" ON "productos"("nombre", "categoriaId");
+
+-- CreateIndex
+CREATE INDEX "variantes_inventario_productoId_idx" ON "variantes_inventario"("productoId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "variantes_inventario_productoId_unidadId_estado_key" ON "variantes_inventario"("productoId", "unidadId", "estado");
+
+-- CreateIndex
+CREATE INDEX "lotes_inventario_varianteId_fechaCaducidad_idx" ON "lotes_inventario"("varianteId", "fechaCaducidad");
+
+-- CreateIndex
+CREATE INDEX "lotes_inventario_origen_fechaIngreso_idx" ON "lotes_inventario"("origen", "fechaIngreso");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "motivos_movimiento_clave_key" ON "motivos_movimiento"("clave");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "motivos_movimiento_nombre_key" ON "motivos_movimiento"("nombre");
 
 -- CreateIndex
-CREATE INDEX "movimientos_inventario_itemId_fecha_idx" ON "movimientos_inventario"("itemId", "fecha");
+CREATE INDEX "movimientos_inventario_varianteId_fecha_idx" ON "movimientos_inventario"("varianteId", "fecha");
+
+-- CreateIndex
+CREATE INDEX "movimientos_inventario_fecha_idx" ON "movimientos_inventario"("fecha");
 
 -- AddForeignKey
 ALTER TABLE "comensales" ADD CONSTRAINT "comensales_tutorId_fkey" FOREIGN KEY ("tutorId") REFERENCES "comensales"("id") ON DELETE SET NULL ON UPDATE CASCADE;
@@ -282,22 +311,22 @@ ALTER TABLE "asistencias" ADD CONSTRAINT "asistencias_turnoId_fkey" FOREIGN KEY 
 ALTER TABLE "asistencias" ADD CONSTRAINT "asistencias_registradoPorId_fkey" FOREIGN KEY ("registradoPorId") REFERENCES "usuarios"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "inventario_items" ADD CONSTRAINT "inventario_items_categoriaId_fkey" FOREIGN KEY ("categoriaId") REFERENCES "categorias_inventario"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "productos" ADD CONSTRAINT "productos_categoriaId_fkey" FOREIGN KEY ("categoriaId") REFERENCES "categorias_inventario"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "inventario_items" ADD CONSTRAINT "inventario_items_unidadId_fkey" FOREIGN KEY ("unidadId") REFERENCES "unidades_medida"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "variantes_inventario" ADD CONSTRAINT "variantes_inventario_productoId_fkey" FOREIGN KEY ("productoId") REFERENCES "productos"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "inventario_items" ADD CONSTRAINT "inventario_items_ubicacionId_fkey" FOREIGN KEY ("ubicacionId") REFERENCES "ubicaciones"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "variantes_inventario" ADD CONSTRAINT "variantes_inventario_unidadId_fkey" FOREIGN KEY ("unidadId") REFERENCES "unidades_medida"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "lotes_inventario" ADD CONSTRAINT "lotes_inventario_itemId_fkey" FOREIGN KEY ("itemId") REFERENCES "inventario_items"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "lotes_inventario" ADD CONSTRAINT "lotes_inventario_varianteId_fkey" FOREIGN KEY ("varianteId") REFERENCES "variantes_inventario"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "lotes_inventario" ADD CONSTRAINT "lotes_inventario_bienhechorId_fkey" FOREIGN KEY ("bienhechorId") REFERENCES "bienhechores"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "movimientos_inventario" ADD CONSTRAINT "movimientos_inventario_itemId_fkey" FOREIGN KEY ("itemId") REFERENCES "inventario_items"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "movimientos_inventario" ADD CONSTRAINT "movimientos_inventario_varianteId_fkey" FOREIGN KEY ("varianteId") REFERENCES "variantes_inventario"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "movimientos_inventario" ADD CONSTRAINT "movimientos_inventario_loteId_fkey" FOREIGN KEY ("loteId") REFERENCES "lotes_inventario"("id") ON DELETE SET NULL ON UPDATE CASCADE;
@@ -310,3 +339,6 @@ ALTER TABLE "movimientos_inventario" ADD CONSTRAINT "movimientos_inventario_turn
 
 -- AddForeignKey
 ALTER TABLE "movimientos_inventario" ADD CONSTRAINT "movimientos_inventario_registradoPorId_fkey" FOREIGN KEY ("registradoPorId") REFERENCES "usuarios"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "movimientos_inventario" ADD CONSTRAINT "movimientos_inventario_editadoPorId_fkey" FOREIGN KEY ("editadoPorId") REFERENCES "usuarios"("id") ON DELETE SET NULL ON UPDATE CASCADE;

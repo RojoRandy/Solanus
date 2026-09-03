@@ -26,7 +26,7 @@ export class AsignarVoluntarioDto {
 export class RegistrarInsumoTurnoDto {
   @ApiProperty({ example: 1 })
   @IsInt()
-  itemId: number;
+  varianteId: number;
 
   @ApiProperty({ example: 2 })
   @IsInt()

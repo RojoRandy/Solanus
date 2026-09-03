@@ -1,5 +1,6 @@
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { RotateCcw } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { DateRangePicker } from '@/components/ui/date-range-picker';
 import type { RangoFecha } from '../types';
 
 interface RangoFechaPickerProps {
@@ -7,29 +8,18 @@ interface RangoFechaPickerProps {
   onChange: (rango: RangoFecha) => void;
 }
 
+/** El rango vacío ({}) es "el default del backend" (mes en curso a hoy) — restablecer solo lo vuelve a vaciar. */
 export function RangoFechaPicker({ rango, onChange }: RangoFechaPickerProps) {
+  const hayRango = Boolean(rango.desde || rango.hasta);
+
   return (
-    <div className="flex items-end gap-3">
-      <div className="flex flex-col gap-1">
-        <Label htmlFor="reporte-desde">Desde</Label>
-        <Input
-          id="reporte-desde"
-          type="date"
-          value={rango.desde ?? ''}
-          onChange={(e) => onChange({ ...rango, desde: e.target.value || undefined })}
-          className="w-40"
-        />
-      </div>
-      <div className="flex flex-col gap-1">
-        <Label htmlFor="reporte-hasta">Hasta</Label>
-        <Input
-          id="reporte-hasta"
-          type="date"
-          value={rango.hasta ?? ''}
-          onChange={(e) => onChange({ ...rango, hasta: e.target.value || undefined })}
-          className="w-40"
-        />
-      </div>
+    <div className="flex items-end gap-2">
+      <DateRangePicker value={rango} onChange={onChange} placeholder="Este mes hasta hoy" />
+      {hayRango && (
+        <Button type="button" variant="ghost" size="icon" onClick={() => onChange({})} title="Restablecer periodo">
+          <RotateCcw />
+        </Button>
+      )}
     </div>
   );
 }

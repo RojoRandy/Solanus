@@ -52,4 +52,14 @@ export type ActualizarComensalPayload = Partial<CrearComensalPayload>;
 export interface ListarComensalesParams {
   busqueda?: string;
   activo?: 'true' | 'false';
+  page?: number;
+  limit?: number;
+}
+
+export interface AsistenciaComensal {
+  id: number;
+  fecha: string;
+  horario: 'DESAYUNO' | 'COMIDA' | 'CENA';
+  metodoCaptura: string;
+  registradoPor: { id: number; nombre: string };
 }

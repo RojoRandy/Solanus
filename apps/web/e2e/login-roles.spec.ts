@@ -12,26 +12,35 @@ async function login(page: import('@playwright/test').Page, usuario: string, pas
   await page.getByLabel('Contraseña').fill(password);
   await page.getByRole('button', { name: 'Entrar' }).click();
   await expect(page).toHaveURL(/\/(asistencia)?$/);
+
+  // usuario_simple aterriza directo en /asistencia, donde el modal de fecha/
+  // horario bloquea el resto de la página (correctamente, vía aria-modal)
+  // hasta confirmarlo — hay que cerrarlo antes de inspeccionar el menú.
+  const confirmar = page.getByRole('button', { name: 'Empezar captura' });
+  if (await confirmar.isVisible().catch(() => false)) {
+    await confirmar.click();
+  }
 }
 
 test.describe('Login y control de acceso por rol', () => {
   test('administrador ve todos los módulos y accede al panel general', async ({ page }) => {
     await login(page, CREDENCIALES.administrador.usuario, CREDENCIALES.administrador.password);
 
-    for (const modulo of ['Panel general', 'Turno de comida', 'Comensales', 'Inventario', 'Bienhechores', 'Voluntarios', 'Reportes', 'Usuarios del sistema']) {
+    for (const modulo of ['Panel general', 'Turno de comida', 'Comensales', 'Inventario', 'Bienhechores', 'Voluntarios', 'Reportes', 'Usuarios del sistema', 'Configuración']) {
       await expect(page.getByRole('link', { name: modulo })).toBeVisible();
     }
 
     await expect(page.getByRole('heading', { name: /^Hola,/ })).toBeVisible();
   });
 
-  test('usuario (operativo) ve todo salvo la administración de usuarios', async ({ page }) => {
+  test('usuario (operativo) ve todo salvo la administración de usuarios y configuración', async ({ page }) => {
     await login(page, CREDENCIALES.usuario.usuario, CREDENCIALES.usuario.password);
 
     for (const modulo of ['Panel general', 'Turno de comida', 'Comensales', 'Inventario', 'Bienhechores', 'Voluntarios', 'Reportes']) {
       await expect(page.getByRole('link', { name: modulo })).toBeVisible();
     }
     await expect(page.getByRole('link', { name: 'Usuarios del sistema' })).toHaveCount(0);
+    await expect(page.getByRole('link', { name: 'Configuración' })).toHaveCount(0);
   });
 
   test('usuario_simple (captura) solo ve Turno de comida y Comensales, incluso navegando directo a una URL restringida', async ({ page }) => {
@@ -40,7 +49,7 @@ test.describe('Login y control de acceso por rol', () => {
     await expect(page.getByRole('link', { name: 'Turno de comida' })).toBeVisible();
     await expect(page.getByRole('link', { name: 'Comensales' })).toBeVisible();
 
-    for (const modulo of ['Panel general', 'Inventario', 'Bienhechores', 'Voluntarios', 'Reportes', 'Usuarios del sistema']) {
+    for (const modulo of ['Panel general', 'Inventario', 'Bienhechores', 'Voluntarios', 'Reportes', 'Usuarios del sistema', 'Configuración']) {
       await expect(page.getByRole('link', { name: modulo })).toHaveCount(0);
     }
 
@@ -49,6 +58,9 @@ test.describe('Login y control de acceso por rol', () => {
     await expect(page).toHaveURL(/\/asistencia$/);
 
     await page.goto('/usuarios');
+    await expect(page).toHaveURL(/\/asistencia$/);
+
+    await page.goto('/configuracion');
     await expect(page).toHaveURL(/\/asistencia$/);
   });
 

@@ -8,6 +8,7 @@ import {
   HeartHandshake,
   FileBarChart,
   UserCog,
+  Settings,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -27,4 +28,5 @@ export const NAV_ITEMS: NavItem[] = [
   { modulo: 'voluntarios', label: 'Voluntarios', to: '/voluntarios', icon: HeartHandshake },
   { modulo: 'reportes', label: 'Reportes', to: '/reportes', icon: FileBarChart },
   { modulo: 'usuarios', label: 'Usuarios del sistema', to: '/usuarios', icon: UserCog },
+  { modulo: 'configuracion', label: 'Configuración', to: '/configuracion', icon: Settings },
 ];

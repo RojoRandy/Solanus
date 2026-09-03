@@ -33,6 +33,7 @@ model Usuario {
   turnosRegistrados      TurnoComida[]         @relation("TurnoRegistradoPor")
   asistenciasRegistradas Asistencia[]          @relation("AsistenciaRegistradaPor")
   movimientosRegistrados MovimientoInventario[] @relation("MovimientoRegistradoPor")
+  movimientosEditados    MovimientoInventario[] @relation("MovimientoEditadoPor")
 
   @@map("usuarios")
 }
@@ -173,57 +174,72 @@ model Asistencia {
 // ─────────────────────────────────────────────────────────────
 
 model CategoriaInventario {
-  id     Int    @id @default(autoincrement())
-  nombre String @unique
+  id     Int     @id @default(autoincrement())
+  nombre String  @unique
   activo Boolean @default(true)
 
-  items InventarioItem[]
+  productos Producto[]
 
   @@map("categorias_inventario")
 }
 
 model UnidadMedida {
-  id       Int    @id @default(autoincrement())
-  nombre   String @unique
-  abrevia  String
+  id      Int     @id @default(autoincrement())
+  nombre  String  @unique
+  abrevia String  @unique
+  activo  Boolean @default(true)
 
-  items InventarioItem[]
+  variantes VarianteInventario[]
 
   @@map("unidades_medida")
 }
 
-model Ubicacion {
-  id     Int    @id @default(autoincrement())
-  nombre String @unique
-  activo Boolean @default(true)
+// El producto es solo qué cosa es: nombre y categoría. Marca, presentación,
+// ubicación y unidad de medida cambian en cada compra o donación, así que
+// viven en el lote (ver LoteInventario), no aquí.
+model Producto {
+  id           Int                 @id @default(autoincrement())
+  nombre       String
+  codigoBarras String?
+  categoriaId  Int
+  categoria    CategoriaInventario @relation(fields: [categoriaId], references: [id])
+  activo       Boolean             @default(true)
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
 
-  items InventarioItem[]
+  variantes VarianteInventario[]
 
-  @@map("ubicaciones")
+  @@unique([nombre, categoriaId])
+  @@index([nombre])
+  @@map("productos")
 }
 
-model InventarioItem {
-  id            Int                  @id @default(autoincrement())
-  nombre        String
-  marca         String?
-  codigoBarras  String?
-  categoriaId   Int
-  categoria     CategoriaInventario  @relation(fields: [categoriaId], references: [id])
-  unidadId      Int
-  unidad        UnidadMedida         @relation(fields: [unidadId], references: [id])
-  presentacion  String?
-  ubicacionId   Int?
-  ubicacion     Ubicacion?           @relation(fields: [ubicacionId], references: [id])
-  stockMinimo   Decimal              @default(0) @db.Decimal(12, 3)
-  activo        Boolean              @default(true)
-  createdAt     DateTime             @default(now())
-  updatedAt     DateTime             @updatedAt
+enum EstadoProducto {
+  CRUDO
+  COCIDO
+}
+
+// Una variante es la combinación real que se cuenta en el almacén:
+// "Frijol · kg · crudo" y "Frijol · pieza · cocido" son existencias distintas
+// y no se descuentan entre sí. Es también donde se configura el stock mínimo.
+model VarianteInventario {
+  id          Int            @id @default(autoincrement())
+  productoId  Int
+  producto    Producto       @relation(fields: [productoId], references: [id])
+  unidadId    Int
+  unidad      UnidadMedida   @relation(fields: [unidadId], references: [id])
+  estado      EstadoProducto
+  stockMinimo Decimal        @default(0) @db.Decimal(12, 3)
+  activo      Boolean        @default(true)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
 
   lotes       LoteInventario[]
   movimientos MovimientoInventario[]
 
-  @@index([nombre])
-  @@map("inventario_items")
+  @@unique([productoId, unidadId, estado])
+  @@index([productoId])
+  @@map("variantes_inventario")
 }
 
 enum OrigenLote {
@@ -232,34 +248,43 @@ enum OrigenLote {
 }
 
 model LoteInventario {
-  id                Int             @id @default(autoincrement())
-  itemId            Int
-  item              InventarioItem  @relation(fields: [itemId], references: [id])
-  cantidadInicial   Decimal         @db.Decimal(12, 3)
-  cantidadDisponible Decimal        @db.Decimal(12, 3)
-  fechaCaducidad    DateTime?       @db.Date
-  fechaIngreso      DateTime        @db.Date
-  costoUnitario     Decimal?        @db.Decimal(12, 2)
-  costoTotal        Decimal?        @db.Decimal(12, 2)
-  origen            OrigenLote
-  bienhechorId      Int?
-  bienhechor        Bienhechor?     @relation(fields: [bienhechorId], references: [id])
-  numeroFactura     String?
-  cfdi              String?
-  createdAt         DateTime        @default(now())
-  updatedAt         DateTime        @updatedAt
+  id                 Int                @id @default(autoincrement())
+  varianteId         Int
+  variante           VarianteInventario @relation(fields: [varianteId], references: [id])
+  marca              String?
+  presentacion       String?
+  ubicacion          String?
+  cantidadInicial    Decimal            @db.Decimal(12, 3)
+  cantidadDisponible Decimal            @db.Decimal(12, 3)
+  fechaCaducidad     DateTime?          @db.Date
+  fechaIngreso       DateTime           @db.Date
+  costoUnitario      Decimal?           @db.Decimal(12, 2)
+  costoTotal         Decimal?           @db.Decimal(12, 2)
+  origen             OrigenLote
+  bienhechorId       Int?
+  bienhechor         Bienhechor?        @relation(fields: [bienhechorId], references: [id])
+  cfdi               String?
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
 
   movimientos MovimientoInventario[]
 
-  @@index([itemId, fechaCaducidad])
+  // FEFO: primero lo que caduca antes, dentro de la misma variante.
+  @@index([varianteId, fechaCaducidad])
+  @@index([origen, fechaIngreso])
   @@map("lotes_inventario")
 }
 
 // Catálogo abierto de motivos: permite agregar "despensa" en fase futura sin rediseñar el modelo.
+// `clave` es lo que consulta el código (el nombre es editable desde Configuración);
+// `esMerma` marca los motivos que cuentan como merma en el reporte de inventario.
 model MotivoMovimiento {
-  id     Int    @id @default(autoincrement())
-  nombre String @unique
-  activo Boolean @default(true)
+  id        Int     @id @default(autoincrement())
+  clave     String  @unique
+  nombre    String  @unique
+  esMerma   Boolean @default(false)
+  esSistema Boolean @default(false)
+  activo    Boolean @default(true)
 
   movimientos MovimientoInventario[]
 
@@ -273,22 +298,28 @@ enum TipoMovimiento {
 }
 
 model MovimientoInventario {
-  id              Int               @id @default(autoincrement())
-  itemId          Int
-  item            InventarioItem    @relation(fields: [itemId], references: [id])
+  id              Int                @id @default(autoincrement())
+  varianteId      Int
+  variante        VarianteInventario @relation(fields: [varianteId], references: [id])
   loteId          Int?
-  lote            LoteInventario?   @relation(fields: [loteId], references: [id])
+  lote            LoteInventario?    @relation(fields: [loteId], references: [id])
   tipo            TipoMovimiento
   motivoId        Int
-  motivo          MotivoMovimiento  @relation(fields: [motivoId], references: [id])
-  cantidad        Decimal           @db.Decimal(12, 3)
+  motivo          MotivoMovimiento   @relation(fields: [motivoId], references: [id])
+  // Positiva en ENTRADA y SALIDA; en AJUSTE lleva signo (delta sobre la existencia).
+  cantidad        Decimal            @db.Decimal(12, 3)
   turnoId         Int?
-  turno           TurnoComida?      @relation(fields: [turnoId], references: [id])
+  turno           TurnoComida?       @relation(fields: [turnoId], references: [id])
   registradoPorId Int
-  registradoPor   Usuario           @relation("MovimientoRegistradoPor", fields: [registradoPorId], references: [id])
-  fecha           DateTime          @default(now())
+  registradoPor   Usuario            @relation("MovimientoRegistradoPor", fields: [registradoPorId], references: [id])
+  // Solo se pueden editar fecha, motivo y notas; la cantidad se corrige con un AJUSTE.
+  editadoPorId    Int?
+  editadoPor      Usuario?           @relation("MovimientoEditadoPor", fields: [editadoPorId], references: [id])
+  fecha           DateTime           @default(now())
+  actualizadoEn   DateTime           @updatedAt
   notas           String?
 
-  @@index([itemId, fecha])
+  @@index([varianteId, fecha])
+  @@index([fecha])
   @@map("movimientos_inventario")
 }

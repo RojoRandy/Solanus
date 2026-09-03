@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { AlertTriangle, ClipboardList, Package, PackagePlus, Plus, Search } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { ArrowLeft, Package, Plus, Search } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '@/lib/auth-context';
 import { ApiError } from '@/lib/api-client';
@@ -8,6 +8,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { SpinnerOverlay } from '@/components/ui/spinner';
+import { PaginationControls } from '@/components/ui/pagination';
 import {
   Table,
   TableBody,
@@ -28,20 +30,26 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { EmptyState } from '@/components/shared/EmptyState';
-import { useEliminarInventarioItem, useInventarioItems } from './api';
-import type { InventarioItem } from './types';
+import { useDebouncedValue } from '@/features/voluntarios/use-debounced-value';
+import { usePaginacion } from '@/lib/pagination';
+import { useEliminarProducto, useProductos } from './api';
+import type { Producto } from './types';
 
 export function ProductosPage() {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const esAdministrador = user?.rol === 'ADMINISTRADOR';
-  const [buscar, setBuscar] = useState('');
-  const { data: items, isLoading, isError, refetch } = useInventarioItems({ buscar: buscar || undefined });
-  const eliminarItem = useEliminarInventarioItem();
+  const [buscarInput, setBuscarInput] = useState('');
+  const buscar = useDebouncedValue(buscarInput.trim(), 300);
+  const { page, limit, setPage, resetPagina } = usePaginacion();
 
-  async function handleEliminar(item: InventarioItem) {
+  const { data, isLoading, isFetching, isError, refetch } = useProductos({ buscar: buscar || undefined, page, limit });
+  const eliminarProducto = useEliminarProducto();
+
+  async function handleEliminar(producto: Producto) {
     try {
-      await eliminarItem.mutateAsync(item.id);
-      toast.success(`"${item.nombre}" se dio de baja del catálogo`);
+      await eliminarProducto.mutateAsync(producto.id);
+      toast.success(`"${producto.nombre}" se dio de baja del catálogo`);
     } catch (error) {
       toast.error(error instanceof ApiError ? error.message : 'No se pudo dar de baja el producto');
     }
@@ -50,32 +58,30 @@ export function ProductosPage() {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Inventario</h1>
-          <p className="text-sm text-muted-foreground">Catálogo de productos y existencia disponible</p>
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" size="icon" onClick={() => void navigate(-1)}>
+            <ArrowLeft />
+          </Button>
+          <div>
+            <h1 className="text-2xl font-semibold tracking-tight">Catálogo de productos</h1>
+            <p className="text-sm text-muted-foreground">Nombre y categoría — marca, unidad y presentación se capturan en cada entrada</p>
+          </div>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <Button variant="outline" render={<Link to="movimientos" />}>
-            <ClipboardList />
-            Movimientos
-          </Button>
-          <Button variant="outline" render={<Link to="registrar-entrada" />}>
-            <PackagePlus />
-            Registrar entrada
-          </Button>
-          <Button render={<Link to="nuevo" />}>
-            <Plus />
-            Nuevo producto
-          </Button>
-        </div>
+        <Button render={<Link to="nuevo" />}>
+          <Plus />
+          Nuevo producto
+        </Button>
       </div>
 
       <div className="relative max-w-sm">
         <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
         <Input
-          value={buscar}
-          onChange={(event) => setBuscar(event.target.value)}
-          placeholder="Buscar por nombre o marca…"
+          value={buscarInput}
+          onChange={(event) => {
+            setBuscarInput(event.target.value);
+            resetPagina();
+          }}
+          placeholder="Buscar por nombre…"
           className="pl-8"
         />
       </div>
@@ -92,12 +98,12 @@ export function ProductosPage() {
         <EmptyState
           icon={Package}
           title="No se pudo cargar el catálogo"
-          description="Ocurrió un problema al consultar el inventario. Intenta de nuevo."
+          description="Ocurrió un problema al consultar los productos. Intenta de nuevo."
           action={<Button onClick={() => void refetch()}>Reintentar</Button>}
         />
       )}
 
-      {!isLoading && !isError && items && items.length === 0 && (
+      {!isLoading && !isError && data && data.items.length === 0 && (
         <EmptyState
           icon={Package}
           title={buscar ? 'Sin resultados' : 'Aún no hay productos registrados'}
@@ -117,49 +123,33 @@ export function ProductosPage() {
         />
       )}
 
-      {!isLoading && !isError && items && items.length > 0 && (
-        <div className="overflow-hidden rounded-xl border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Producto</TableHead>
-                <TableHead>Categoría</TableHead>
-                <TableHead>Unidad</TableHead>
-                <TableHead>Ubicación</TableHead>
-                <TableHead className="text-right">Existencia</TableHead>
-                <TableHead className="text-right">Stock mínimo</TableHead>
-                <TableHead />
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {items.map((item) => (
-                <TableRow key={item.id}>
-                  <TableCell>
-                    <Link to={String(item.id)} className="font-medium hover:underline">
-                      {item.nombre}
-                    </Link>
-                    {item.marca && <p className="text-xs text-muted-foreground">{item.marca}</p>}
-                  </TableCell>
-                  <TableCell>{item.categoria.nombre}</TableCell>
-                  <TableCell>{item.unidad.abrevia}</TableCell>
-                  <TableCell>{item.ubicacion?.nombre ?? '—'}</TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex items-center justify-end gap-1.5">
-                      {item.stockBajo && <AlertTriangle className="size-3.5 text-warning" />}
-                      <span className={item.stockBajo ? 'font-medium text-warning-foreground' : undefined}>
-                        {item.stockActual}
-                      </span>
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-right text-muted-foreground">{item.stockMinimo}</TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex items-center justify-end gap-1">
-                      {item.stockBajo && (
-                        <Badge variant="destructive" className="bg-warning text-warning-foreground">
-                          Stock bajo
-                        </Badge>
-                      )}
-                      {esAdministrador && (
+      {!isLoading && !isError && data && data.items.length > 0 && (
+        <div className="flex flex-col gap-3">
+          <div className="relative overflow-hidden rounded-xl border">
+            {isFetching && !isLoading && <SpinnerOverlay className="absolute inset-0 z-10 bg-background/70 py-0" />}
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Producto</TableHead>
+                  <TableHead>Categoría</TableHead>
+                  <TableHead>Estado</TableHead>
+                  <TableHead />
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {data.items.map((producto) => (
+                  <TableRow key={producto.id} className="animate-in fade-in">
+                    <TableCell>
+                      <Link to={String(producto.id)} className="font-medium transition-colors hover:underline">
+                        {producto.nombre}
+                      </Link>
+                    </TableCell>
+                    <TableCell>{producto.categoria.nombre}</TableCell>
+                    <TableCell>
+                      {producto.activo ? <Badge variant="secondary">Activo</Badge> : <Badge variant="outline">Dado de baja</Badge>}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {esAdministrador && producto.activo && (
                         <AlertDialog>
                           <AlertDialogTrigger render={<Button variant="ghost" size="sm" />}>
                             Dar de baja
@@ -168,25 +158,26 @@ export function ProductosPage() {
                             <AlertDialogHeader>
                               <AlertDialogTitle>¿Dar de baja este producto?</AlertDialogTitle>
                               <AlertDialogDescription>
-                                &quot;{item.nombre}&quot; dejará de aparecer en el catálogo activo. Su historial de
-                                lotes y movimientos se conserva.
+                                &quot;{producto.nombre}&quot; dejará de aparecer en el catálogo activo. Su historial de
+                                variantes, lotes y movimientos se conserva.
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
                               <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                              <AlertDialogAction onClick={() => void handleEliminar(item)}>
+                              <AlertDialogAction onClick={() => void handleEliminar(producto)}>
                                 Dar de baja
                               </AlertDialogAction>
                             </AlertDialogFooter>
                           </AlertDialogContent>
                         </AlertDialog>
                       )}
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+          <PaginationControls meta={data.meta} onPageChange={setPage} />
         </div>
       )}
     </div>

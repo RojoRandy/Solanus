@@ -7,6 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { SpinnerOverlay } from '@/components/ui/spinner';
+import { PaginationControls } from '@/components/ui/pagination';
 import {
   Table,
   TableBody,
@@ -16,6 +18,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { EmptyState } from '@/components/shared/EmptyState';
+import { usePaginacion } from '@/lib/pagination';
 import { useComensales } from './api';
 import type { Comensal } from './types';
 
@@ -29,15 +32,23 @@ export function ComensalesListView() {
   const [busquedaInput, setBusquedaInput] = React.useState('');
   const [busqueda, setBusqueda] = React.useState('');
   const [activo, setActivo] = React.useState<'true' | 'false'>('true');
+  const { page, limit, setPage, resetPagina } = usePaginacion();
 
   React.useEffect(() => {
     const timeout = setTimeout(() => setBusqueda(busquedaInput.trim()), DEBOUNCE_MS);
     return () => clearTimeout(timeout);
   }, [busquedaInput]);
 
-  const { data: comensales, isLoading, isError, refetch } = useComensales({
+  React.useEffect(() => {
+    resetPagina();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- resetear página solo cuando cambian los filtros, no en cada render
+  }, [busqueda, activo]);
+
+  const { data, isLoading, isFetching, isError, refetch } = useComensales({
     busqueda: busqueda || undefined,
     activo,
+    page,
+    limit,
   });
 
   return (
@@ -102,7 +113,7 @@ export function ComensalesListView() {
         />
       )}
 
-      {!isLoading && !isError && comensales && comensales.length === 0 && (
+      {!isLoading && !isError && data && data.items.length === 0 && (
         <EmptyState
           icon={Users}
           title={busqueda ? 'Sin resultados' : 'Todavía no hay comensales registrados'}
@@ -119,24 +130,28 @@ export function ComensalesListView() {
         />
       )}
 
-      {!isLoading && !isError && comensales && comensales.length > 0 && (
-        <div className="rounded-xl border border-border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Folio</TableHead>
-                <TableHead>Nombre</TableHead>
-                <TableHead>Edad</TableHead>
-                <TableHead>Tutor</TableHead>
-                <TableHead>Estado</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {comensales.map((comensal) => (
-                <FilaComensal key={comensal.id} comensal={comensal} />
-              ))}
-            </TableBody>
-          </Table>
+      {!isLoading && !isError && data && data.items.length > 0 && (
+        <div className="flex flex-col gap-3">
+          <div className="relative overflow-hidden rounded-xl border border-border">
+            {isFetching && !isLoading && <SpinnerOverlay className="absolute inset-0 z-10 bg-background/70 py-0" />}
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Folio</TableHead>
+                  <TableHead>Nombre</TableHead>
+                  <TableHead>Edad</TableHead>
+                  <TableHead>Tutor</TableHead>
+                  <TableHead>Estado</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {data.items.map((comensal) => (
+                  <FilaComensal key={comensal.id} comensal={comensal} />
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+          <PaginationControls meta={data.meta} onPageChange={setPage} />
         </div>
       )}
     </div>
@@ -147,7 +162,7 @@ function FilaComensal({ comensal }: { comensal: Comensal }) {
   const navigate = useNavigate();
   return (
     <TableRow
-      className="cursor-pointer"
+      className="animate-in fade-in cursor-pointer transition-colors"
       onClick={() => navigate(`/comensales/${comensal.id}`)}
     >
       <TableCell className="font-medium">{comensal.folio}</TableCell>

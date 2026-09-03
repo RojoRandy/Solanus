@@ -3,35 +3,39 @@ import { UseCase } from '@/common/interfaces/use-case.interface';
 import { PrismaService } from '@/prisma/prisma.service';
 import { StockBajoResponseDto } from '../dto/reportes.dto';
 
-/** Lo usa el Dashboard (Fase 4) para alertar sobre productos por debajo de su stock mínimo. */
+/** Lo usa el Dashboard para alertar sobre variantes por debajo de su stock mínimo. */
 @Injectable()
 export class StockBajoUseCase implements UseCase<void, StockBajoResponseDto[]> {
   constructor(private readonly prisma: PrismaService) {}
 
   async execute(): Promise<StockBajoResponseDto[]> {
-    const items = await this.prisma.inventarioItem.findMany({
+    const variantes = await this.prisma.varianteInventario.findMany({
       where: { activo: true },
       select: {
         id: true,
-        nombre: true,
+        estado: true,
         stockMinimo: true,
+        producto: { select: { nombre: true } },
+        unidad: { select: { abrevia: true } },
         lotes: { select: { cantidadDisponible: true } },
       },
     });
 
-    return items
-      .map((item) => {
-        const stockActual = item.lotes.reduce(
+    return variantes
+      .map((variante) => {
+        const stockActual = variante.lotes.reduce(
           (total, lote) => total + Number(lote.cantidadDisponible),
           0,
         );
         return {
-          itemId: item.id,
-          nombre: item.nombre,
+          varianteId: variante.id,
+          productoNombre: variante.producto.nombre,
+          unidad: variante.unidad.abrevia,
+          estado: variante.estado,
           stockActual,
-          stockMinimo: Number(item.stockMinimo),
+          stockMinimo: Number(variante.stockMinimo),
         };
       })
-      .filter((item) => item.stockActual < item.stockMinimo);
+      .filter((variante) => variante.stockActual < variante.stockMinimo);
   }
 }

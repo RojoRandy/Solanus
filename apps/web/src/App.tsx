@@ -10,6 +10,7 @@ import { BienhechoresPage } from '@/features/bienhechores/BienhechoresPage';
 import { VoluntariosPage } from '@/features/voluntarios/VoluntariosPage';
 import { ReportesPage } from '@/features/reportes/ReportesPage';
 import { UsuariosPage } from '@/features/usuarios/UsuariosPage';
+import { ConfiguracionPage } from '@/features/configuracion/ConfiguracionPage';
 
 export function App() {
   return (
@@ -40,6 +41,9 @@ export function App() {
           </Route>
           <Route element={<ProtectedRoute modulo="usuarios" />}>
             <Route path="/usuarios" element={<UsuariosPage />} />
+          </Route>
+          <Route element={<ProtectedRoute modulo="configuracion" />}>
+            <Route path="/configuracion" element={<ConfiguracionPage />} />
           </Route>
         </Route>
       </Route>

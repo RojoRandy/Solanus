@@ -10,9 +10,6 @@ export interface ReporteInventarioArgs {
   hasta?: string;
 }
 
-const MOTIVO_MERMA = 'Merma';
-const MOTIVO_CADUCADO = 'Caducado';
-
 @Injectable()
 export class ReporteInventarioUseCase implements UseCase<
   ReporteInventarioArgs,
@@ -26,14 +23,14 @@ export class ReporteInventarioUseCase implements UseCase<
   }: ReporteInventarioArgs): Promise<ReporteInventarioResponseDto> {
     const rango = resolverRangoFecha(desde, hasta);
 
-    const [items, movimientos] = await Promise.all([
-      this.prisma.inventarioItem.findMany({
+    const [variantes, movimientos] = await Promise.all([
+      this.prisma.varianteInventario.findMany({
         where: { activo: true },
         select: {
           id: true,
-          nombre: true,
+          estado: true,
           stockMinimo: true,
-          categoria: { select: { nombre: true } },
+          producto: { select: { nombre: true, categoria: { select: { nombre: true } } } },
           unidad: { select: { abrevia: true } },
           lotes: { select: { cantidadDisponible: true } },
         },
@@ -44,24 +41,25 @@ export class ReporteInventarioUseCase implements UseCase<
           tipo: true,
           cantidad: true,
           fecha: true,
-          item: { select: { nombre: true } },
-          motivo: { select: { nombre: true } },
+          variante: { select: { producto: { select: { nombre: true } }, unidad: { select: { abrevia: true } } } },
+          motivo: { select: { nombre: true, clave: true, esMerma: true } },
         },
       }),
     ]);
 
-    const existencias = items
-      .map((item) => {
-        const stockActual = item.lotes.reduce(
+    const existencias = variantes
+      .map((variante) => {
+        const stockActual = variante.lotes.reduce(
           (total, lote) => total + Number(lote.cantidadDisponible),
           0,
         );
-        const stockMinimo = Number(item.stockMinimo);
+        const stockMinimo = Number(variante.stockMinimo);
         return {
-          itemId: item.id,
-          nombre: item.nombre,
-          categoria: item.categoria.nombre,
-          unidad: item.unidad.abrevia,
+          varianteId: variante.id,
+          nombre: variante.producto.nombre,
+          categoria: variante.producto.categoria.nombre,
+          unidad: variante.unidad.abrevia,
+          estado: variante.estado,
           stockActual,
           stockMinimo,
           stockBajo: stockActual < stockMinimo,
@@ -69,27 +67,45 @@ export class ReporteInventarioUseCase implements UseCase<
       })
       .sort((a, b) => a.nombre.localeCompare(b.nombre));
 
-    const movimientosPorTipo: Record<TipoMovimiento, number> = {
-      ENTRADA: 0,
-      SALIDA: 0,
-      AJUSTE: 0,
-    };
+    let entradas = 0;
+    let salidas = 0;
+    let ajustesPositivos = 0;
+    let ajustesNegativos = 0;
     const mermas: ReporteInventarioResponseDto['mermas'] = [];
     const caducados: ReporteInventarioResponseDto['caducados'] = [];
 
     for (const m of movimientos) {
-      movimientosPorTipo[m.tipo] += Number(m.cantidad);
+      const cantidad = Number(m.cantidad);
+
+      if (m.tipo === TipoMovimiento.ENTRADA) entradas += cantidad;
+      else if (m.tipo === TipoMovimiento.SALIDA) salidas += cantidad;
+      else if (cantidad > 0) ajustesPositivos += cantidad;
+      else ajustesNegativos += Math.abs(cantidad);
 
       const resumen = {
-        itemNombre: m.item.nombre,
-        cantidad: Number(m.cantidad),
+        productoNombre: m.variante.producto.nombre,
+        unidad: m.variante.unidad.abrevia,
+        cantidad,
         motivo: m.motivo.nombre,
         fecha: m.fecha,
       };
-      if (m.motivo.nombre === MOTIVO_MERMA) mermas.push(resumen);
-      if (m.motivo.nombre === MOTIVO_CADUCADO) caducados.push(resumen);
+      // La merma se identifica por la clave del motivo, no por su nombre (que
+      // es editable desde Configuración) — así no se rompe si se renombra.
+      if (m.motivo.esMerma) mermas.push(resumen);
+      if (m.motivo.clave === 'CADUCADO') caducados.push(resumen);
     }
 
-    return { existencias, movimientosPorTipo, mermas, caducados };
+    return {
+      existencias,
+      movimientosPorTipo: {
+        entradas,
+        salidas,
+        ajustesPositivos,
+        ajustesNegativos,
+        ajusteNeto: ajustesPositivos - ajustesNegativos,
+      },
+      mermas,
+      caducados,
+    };
   }
 }

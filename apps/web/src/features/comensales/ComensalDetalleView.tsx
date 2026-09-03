@@ -33,9 +33,14 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { EmptyState } from '@/components/shared/EmptyState';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { PaginationControls } from '@/components/ui/pagination';
+import { usePaginacion } from '@/lib/pagination';
 import {
   descargarExpedientePdf,
   resolverUrlArchivo,
+  useAsistenciasComensal,
   useComensal,
   useEliminarComensal,
   useFirmarCartaUsoImagen,
@@ -44,6 +49,12 @@ import {
   useSubirIneReversoComensal,
 } from './api';
 import { formatearFecha } from './utils/edad';
+
+const ETIQUETA_HORARIO: Record<string, string> = {
+  DESAYUNO: 'Desayuno',
+  COMIDA: 'Comida',
+  CENA: 'Cena',
+};
 
 export function ComensalDetalleView() {
   const { id } = useParams<{ id: string }>();
@@ -66,6 +77,12 @@ export function ComensalDetalleView() {
 
   const puedeEditar = user?.rol !== UserRoles.USUARIO_SIMPLE;
   const puedeEliminar = user?.rol === UserRoles.ADMINISTRADOR;
+
+  const { page: paginaAsistencias, limit: limiteAsistencias, setPage: setPaginaAsistencias } = usePaginacion(10);
+  const { data: asistencias, isLoading: cargandoAsistencias } = useAsistenciasComensal(comensalId, {
+    page: paginaAsistencias,
+    limit: limiteAsistencias,
+  });
 
   function manejarErrorMutacion(error: unknown, fallback: string) {
     toast.error(error instanceof ApiError ? error.message : fallback);
@@ -349,12 +366,40 @@ export function ComensalDetalleView() {
         <CardHeader>
           <CardTitle>Asistencias</CardTitle>
         </CardHeader>
-        <CardContent>
-          <EmptyState
-            icon={FileText}
-            title="Aún no hay registro de asistencias"
-            description="Disponible cuando se active el registro de Turno de comida (Fase 3)."
-          />
+        <CardContent className="flex flex-col gap-3">
+          {cargandoAsistencias && <Skeleton className="h-24 w-full" />}
+          {!cargandoAsistencias && (!asistencias || asistencias.items.length === 0) && (
+            <EmptyState
+              icon={FileText}
+              title="Aún no hay registro de asistencias"
+              description="Aparecerán aquí en cuanto se registre su primera asistencia a un turno de comida."
+            />
+          )}
+          {!cargandoAsistencias && asistencias && asistencias.items.length > 0 && (
+            <>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Fecha</TableHead>
+                    <TableHead>Turno</TableHead>
+                    <TableHead>Método</TableHead>
+                    <TableHead>Registró</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {asistencias.items.map((asistencia) => (
+                    <TableRow key={asistencia.id}>
+                      <TableCell>{formatearFecha(asistencia.fecha)}</TableCell>
+                      <TableCell>{ETIQUETA_HORARIO[asistencia.horario] ?? asistencia.horario}</TableCell>
+                      <TableCell className="text-muted-foreground">{asistencia.metodoCaptura}</TableCell>
+                      <TableCell className="text-muted-foreground">{asistencia.registradoPor.nombre}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+              <PaginationControls meta={asistencias.meta} onPageChange={setPaginaAsistencias} />
+            </>
+          )}
         </CardContent>
       </Card>
     </div>
@@ -385,17 +430,32 @@ function IneLado({
   inputRef: React.RefObject<HTMLInputElement | null>;
   onSeleccionar: (file: File | undefined) => void;
 }) {
+  const [ampliada, setAmpliada] = React.useState(false);
+
   return (
     <div className="flex flex-col gap-2">
       <span className="text-xs tracking-wide text-muted-foreground uppercase">{titulo}</span>
       {rutaArchivo ? (
-        <img
-          src={resolverUrlArchivo(rutaArchivo)}
-          alt={`INE ${titulo.toLowerCase()}`}
-          className="h-32 w-full rounded-lg border border-border object-cover"
-        />
+        <>
+          <button
+            type="button"
+            onClick={() => setAmpliada(true)}
+            className="aspect-[1.586/1] w-full overflow-hidden rounded-lg border border-border transition-opacity hover:opacity-90"
+          >
+            <img
+              src={resolverUrlArchivo(rutaArchivo)}
+              alt={`INE ${titulo.toLowerCase()}`}
+              className="h-full w-full object-contain"
+            />
+          </button>
+          <Dialog open={ampliada} onOpenChange={setAmpliada}>
+            <DialogContent className="sm:max-w-2xl">
+              <img src={resolverUrlArchivo(rutaArchivo)} alt={`INE ${titulo.toLowerCase()}`} className="w-full rounded-lg" />
+            </DialogContent>
+          </Dialog>
+        </>
       ) : (
-        <div className="flex h-32 w-full items-center justify-center rounded-lg border border-dashed border-border text-muted-foreground">
+        <div className="flex aspect-[1.586/1] w-full items-center justify-center rounded-lg border border-dashed border-border text-muted-foreground">
           <IdCard className="size-8" />
         </div>
       )}

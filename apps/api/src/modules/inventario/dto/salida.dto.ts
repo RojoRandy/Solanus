@@ -1,8 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
 import {
   IsInt,
-  IsNumber,
   IsOptional,
+  IsNumber,
   IsPositive,
   IsString,
 } from 'class-validator';
@@ -10,7 +10,7 @@ import {
 export class RegistrarSalidaDto {
   @ApiProperty({ example: 1 })
   @IsInt()
-  itemId: number;
+  varianteId: number;
 
   @ApiProperty({ example: 5 })
   @IsNumber()

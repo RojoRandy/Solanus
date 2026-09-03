@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
+import { HorarioComida, MetodoCaptura } from '@prisma/client';
 import {
   IsBoolean,
   IsBooleanString,
@@ -10,6 +11,7 @@ import {
   IsString,
   Min,
 } from 'class-validator';
+import { PaginationQueryDto } from '@/common/dto/pagination.dto';
 
 export class CrearComensalDto {
   @ApiProperty({ example: 'María' })
@@ -77,7 +79,7 @@ export class ActualizarComensalDto {
   tutorId?: number | null;
 }
 
-export class ListarComensalesQueryDto {
+export class ListarComensalesQueryDto extends PaginationQueryDto {
   @ApiProperty({
     required: false,
     description: 'Busca por folio, nombres o apellidos',
@@ -160,4 +162,24 @@ export class ComensalDetalleResponseDto extends ComensalResponseDto {
   cartaUsoImagen: CartaUsoImagenResponseDto | null;
   @ApiProperty()
   updatedAt: Date;
+}
+
+class AsistenciaComensalUsuarioRefDto {
+  @ApiProperty()
+  id: number;
+  @ApiProperty()
+  nombre: string;
+}
+
+export class AsistenciaComensalResponseDto {
+  @ApiProperty()
+  id: number;
+  @ApiProperty()
+  fecha: Date;
+  @ApiProperty({ enum: HorarioComida, enumName: 'HorarioComida' })
+  horario: HorarioComida;
+  @ApiProperty({ enum: MetodoCaptura, enumName: 'MetodoCaptura' })
+  metodoCaptura: MetodoCaptura;
+  @ApiProperty({ type: AsistenciaComensalUsuarioRefDto })
+  registradoPor: AsistenciaComensalUsuarioRefDto;
 }

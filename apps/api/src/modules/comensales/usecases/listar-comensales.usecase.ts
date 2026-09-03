@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { UseCase } from '@/common/interfaces/use-case.interface';
 import { PrismaService } from '@/prisma/prisma.service';
+import { PaginatedDto, paginado, toSkipTake } from '@/common/dto/pagination.dto';
 import {
   ComensalResponseDto,
   ListarComensalesQueryDto,
@@ -14,13 +15,13 @@ import {
 @Injectable()
 export class ListarComensalesUseCase implements UseCase<
   ListarComensalesQueryDto,
-  ComensalResponseDto[]
+  PaginatedDto<ComensalResponseDto>
 > {
   constructor(private readonly prisma: PrismaService) {}
 
   async execute(
     query: ListarComensalesQueryDto,
-  ): Promise<ComensalResponseDto[]> {
+  ): Promise<PaginatedDto<ComensalResponseDto>> {
     const activo = query.activo === undefined ? true : query.activo === 'true';
 
     const where: Prisma.ComensalWhereInput = { activo };
@@ -35,12 +36,18 @@ export class ListarComensalesUseCase implements UseCase<
       ];
     }
 
-    const comensales = await this.prisma.comensal.findMany({
-      where,
-      orderBy: [{ apellidos: 'asc' }, { nombres: 'asc' }],
-      select: comensalListSelect,
-    });
+    const { skip, take } = toSkipTake(query);
+    const [comensales, total] = await Promise.all([
+      this.prisma.comensal.findMany({
+        where,
+        orderBy: [{ apellidos: 'asc' }, { nombres: 'asc' }],
+        select: comensalListSelect,
+        skip,
+        take,
+      }),
+      this.prisma.comensal.count({ where }),
+    ]);
 
-    return comensales.map(mapComensalResponse);
+    return paginado(comensales.map(mapComensalResponse), total, query);
   }
 }

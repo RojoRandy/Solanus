@@ -4,11 +4,10 @@ import { PrismaService } from '@/prisma/prisma.service';
 import {
   CategoriaInventarioResponseDto,
   MotivoMovimientoResponseDto,
-  UbicacionResponseDto,
   UnidadMedidaResponseDto,
 } from '../dto/catalogos.dto';
 
-/** Catálogos simples de solo lectura (§ ya sembrados por prisma/seed.ts) — sin CRUD en esta fase. */
+/** Catálogos simples de solo lectura (sembrados por prisma/seed.ts). El alta/baja vive en crud-catalogos.usecase.ts. */
 
 @Injectable()
 export class ListarCategoriasUseCase implements UseCase<
@@ -21,7 +20,7 @@ export class ListarCategoriasUseCase implements UseCase<
     return this.prisma.categoriaInventario.findMany({
       where: { activo: true },
       orderBy: { nombre: 'asc' },
-      select: { id: true, nombre: true },
+      select: { id: true, nombre: true, activo: true },
     });
   }
 }
@@ -35,24 +34,9 @@ export class ListarUnidadesUseCase implements UseCase<
 
   async execute(): Promise<UnidadMedidaResponseDto[]> {
     return this.prisma.unidadMedida.findMany({
-      orderBy: { nombre: 'asc' },
-      select: { id: true, nombre: true, abrevia: true },
-    });
-  }
-}
-
-@Injectable()
-export class ListarUbicacionesUseCase implements UseCase<
-  void,
-  UbicacionResponseDto[]
-> {
-  constructor(private readonly prisma: PrismaService) {}
-
-  async execute(): Promise<UbicacionResponseDto[]> {
-    return this.prisma.ubicacion.findMany({
       where: { activo: true },
       orderBy: { nombre: 'asc' },
-      select: { id: true, nombre: true },
+      select: { id: true, nombre: true, abrevia: true, activo: true },
     });
   }
 }
@@ -68,7 +52,7 @@ export class ListarMotivosUseCase implements UseCase<
     return this.prisma.motivoMovimiento.findMany({
       where: { activo: true },
       orderBy: { nombre: 'asc' },
-      select: { id: true, nombre: true },
+      select: { id: true, nombre: true, clave: true, esMerma: true },
     });
   }
 }

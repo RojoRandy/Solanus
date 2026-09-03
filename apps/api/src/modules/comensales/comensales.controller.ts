@@ -17,13 +17,12 @@ import { ApiConsumes, ApiTags } from '@nestjs/swagger';
 import { Auth } from '../auth/decorators/auth.decorator';
 import { UserRoles } from '@/common/interfaces/enums';
 import { IdParamDto } from '@/common/dto/api-validator.dto';
-import {
-  ApiOkSchemaArrayResponse,
-  ApiOkSchemaResponse,
-} from '@/common/dto/response.dto';
+import { ApiOkSchemaResponse } from '@/common/dto/response.dto';
+import { PaginationQueryDto } from '@/common/dto/pagination.dto';
 import { ImageUploadInterceptor } from '@/common/uploads/image-upload.interceptor';
 import {
   ActualizarComensalDto,
+  AsistenciaComensalResponseDto,
   ComensalDetalleResponseDto,
   ComensalResponseDto,
   CrearComensalDto,
@@ -40,6 +39,7 @@ import { SubirIneFrenteComensalUseCase } from './usecases/subir-ine-frente-comen
 import { SubirIneReversoComensalUseCase } from './usecases/subir-ine-reverso-comensal.usecase';
 import { FirmarCartaUsoImagenUseCase } from './usecases/firmar-carta-uso-imagen.usecase';
 import { GenerarPdfExpedienteUseCase } from './usecases/generar-pdf-expediente.usecase';
+import { ListarAsistenciasComensalUseCase } from './usecases/listar-asistencias-comensal.usecase';
 
 const ROLES_LECTURA = [
   UserRoles.ADMINISTRADOR,
@@ -72,6 +72,8 @@ export class ComensalesController {
     private readonly firmarCartaUsoImagen: FirmarCartaUsoImagenUseCase,
     @Inject(GenerarPdfExpedienteUseCase)
     private readonly generarPdfExpediente: GenerarPdfExpedienteUseCase,
+    @Inject(ListarAsistenciasComensalUseCase)
+    private readonly listarAsistenciasComensal: ListarAsistenciasComensalUseCase,
   ) {}
 
   @Post()
@@ -83,7 +85,7 @@ export class ComensalesController {
 
   @Get()
   @Auth(...ROLES_LECTURA)
-  @ApiOkSchemaArrayResponse(ComensalResponseDto)
+  @ApiOkSchemaResponse(ComensalResponseDto)
   findAll(@Query() query: ListarComensalesQueryDto) {
     return this.listarComensales.execute(query);
   }
@@ -152,6 +154,13 @@ export class ComensalesController {
     @Body() dto: FirmarCartaUsoImagenDto,
   ) {
     return this.firmarCartaUsoImagen.execute({ id: Number(id), dto });
+  }
+
+  @Get(':id/asistencias')
+  @Auth(...ROLES_LECTURA)
+  @ApiOkSchemaResponse(AsistenciaComensalResponseDto)
+  findAsistencias(@Param() { id }: IdParamDto, @Query() query: PaginationQueryDto) {
+    return this.listarAsistenciasComensal.execute({ comensalId: Number(id), query });
   }
 
   @Get(':id/expediente.pdf')

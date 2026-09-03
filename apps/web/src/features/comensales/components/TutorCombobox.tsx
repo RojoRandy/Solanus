@@ -28,9 +28,9 @@ export function TutorCombobox({
   excluirComensalId,
   disabled,
 }: TutorComboboxProps) {
-  const { data: comensales, isLoading } = useComensales({ activo: 'true' });
+  const { data, isLoading } = useComensales({ activo: 'true', limit: 200 });
 
-  const opciones: TutorOption[] = (comensales ?? [])
+  const opciones: TutorOption[] = (data?.items ?? [])
     .filter((c) => c.edad >= 18 && c.id !== excluirComensalId)
     .map((c) => ({
       value: c.id,

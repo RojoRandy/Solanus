@@ -1,14 +1,27 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsDateString, IsEnum, IsInt, IsOptional } from 'class-validator';
+import { IsDateString, IsEnum, IsInt, IsOptional, IsString } from 'class-validator';
 import { Type } from 'class-transformer';
-import { TipoMovimiento } from '@prisma/client';
+import { EstadoProducto, TipoMovimiento } from '@prisma/client';
+import { PaginationQueryDto } from '@/common/dto/pagination.dto';
 
-export class ListarMovimientosQueryDto {
+export class ListarMovimientosQueryDto extends PaginationQueryDto {
   @ApiProperty({ required: false })
   @IsOptional()
   @Type(() => Number)
   @IsInt()
-  itemId?: number;
+  varianteId?: number;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  productoId?: number;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  categoriaId?: number;
 
   @ApiProperty({
     required: false,
@@ -42,11 +55,44 @@ export class ListarMovimientosQueryDto {
   hasta?: string;
 }
 
-class MovimientoItemRefDto {
+export class ActualizarMovimientoDto {
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsDateString()
+  fecha?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsInt()
+  motivoId?: number;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  notas?: string;
+}
+
+class MovimientoProductoRefDto {
   @ApiProperty()
   id: number;
   @ApiProperty()
   nombre: string;
+}
+
+class MovimientoUnidadRefDto {
+  @ApiProperty()
+  id: number;
+  @ApiProperty()
+  abrevia: string;
+}
+
+class MovimientoVarianteRefDto {
+  @ApiProperty()
+  id: number;
+  @ApiProperty({ enum: EstadoProducto, enumName: 'EstadoProducto' })
+  estado: EstadoProducto;
+  @ApiProperty({ type: MovimientoUnidadRefDto })
+  unidad: MovimientoUnidadRefDto;
 }
 
 class MovimientoMotivoRefDto {
@@ -66,8 +112,10 @@ class MovimientoUsuarioRefDto {
 export class MovimientoResponseDto {
   @ApiProperty()
   id: number;
-  @ApiProperty({ type: MovimientoItemRefDto })
-  item: MovimientoItemRefDto;
+  @ApiProperty({ type: MovimientoProductoRefDto })
+  producto: MovimientoProductoRefDto;
+  @ApiProperty({ type: MovimientoVarianteRefDto })
+  variante: MovimientoVarianteRefDto;
   @ApiProperty({ required: false, nullable: true })
   loteId: number | null;
   @ApiProperty({ enum: TipoMovimiento, enumName: 'TipoMovimiento' })
@@ -84,4 +132,6 @@ export class MovimientoResponseDto {
   fecha: Date;
   @ApiProperty({ required: false, nullable: true })
   notas: string | null;
+  @ApiProperty()
+  editado: boolean;
 }

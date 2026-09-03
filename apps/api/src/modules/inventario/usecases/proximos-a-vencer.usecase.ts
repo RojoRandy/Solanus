@@ -6,7 +6,7 @@ import { ProximoAVencerResponseDto } from '../dto/reportes.dto';
 
 const DIAS_POR_DEFECTO = 15;
 
-/** Lo usa el Dashboard (Fase 4) para alertar sobre lotes que están por caducar. */
+/** Lo usa el Dashboard para alertar sobre lotes que están por caducar. */
 @Injectable()
 export class ProximosAVencerUseCase implements UseCase<
   number | undefined,
@@ -30,7 +30,14 @@ export class ProximosAVencerUseCase implements UseCase<
         id: true,
         cantidadDisponible: true,
         fechaCaducidad: true,
-        item: { select: { id: true, nombre: true } },
+        variante: {
+          select: {
+            id: true,
+            estado: true,
+            producto: { select: { nombre: true } },
+            unidad: { select: { abrevia: true } },
+          },
+        },
       },
     });
 
@@ -38,8 +45,10 @@ export class ProximosAVencerUseCase implements UseCase<
       .filter((lote) => lote.fechaCaducidad !== null)
       .map((lote) => ({
         loteId: lote.id,
-        itemId: lote.item.id,
-        itemNombre: lote.item.nombre,
+        varianteId: lote.variante.id,
+        productoNombre: lote.variante.producto.nombre,
+        unidad: lote.variante.unidad.abrevia,
+        estado: lote.variante.estado,
         cantidadDisponible: Number(lote.cantidadDisponible),
         fechaCaducidad: lote.fechaCaducidad,
       }));
