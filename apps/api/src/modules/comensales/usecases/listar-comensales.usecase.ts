@@ -36,11 +36,15 @@ export class ListarComensalesUseCase implements UseCase<
       ];
     }
 
+    const orden = query.orden ?? 'desc';
+    const orderBy: Prisma.ComensalOrderByWithRelationInput[] =
+      query.ordenarPor === 'nombre' ? [{ nombres: orden }, { apellidos: orden }] : [{ folio: orden }];
+
     const { skip, take } = toSkipTake(query);
     const [comensales, total] = await Promise.all([
       this.prisma.comensal.findMany({
         where,
-        orderBy: [{ apellidos: 'asc' }, { nombres: 'asc' }],
+        orderBy,
         select: comensalListSelect,
         skip,
         take,

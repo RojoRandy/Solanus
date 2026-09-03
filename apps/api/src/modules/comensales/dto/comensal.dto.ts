@@ -5,6 +5,7 @@ import {
   IsBoolean,
   IsBooleanString,
   IsDate,
+  IsIn,
   IsInt,
   IsNotEmpty,
   IsOptional,
@@ -96,6 +97,26 @@ export class ListarComensalesQueryDto extends PaginationQueryDto {
   @IsOptional()
   @IsBooleanString()
   activo?: string;
+
+  @ApiProperty({
+    required: false,
+    enum: ['folio', 'nombre'],
+    default: 'folio',
+    description: 'Campo de ordenamiento',
+  })
+  @IsOptional()
+  @IsIn(['folio', 'nombre'])
+  ordenarPor?: 'folio' | 'nombre';
+
+  @ApiProperty({
+    required: false,
+    enum: ['asc', 'desc'],
+    default: 'desc',
+    description: 'Dirección de ordenamiento',
+  })
+  @IsOptional()
+  @IsIn(['asc', 'desc'])
+  orden?: 'asc' | 'desc';
 }
 
 export class FirmarCartaUsoImagenDto {

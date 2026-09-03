@@ -35,6 +35,8 @@ function construirQueryString(params: ListarComensalesParams): string {
   if (params.activo) query.set('activo', params.activo);
   if (params.page) query.set('page', String(params.page));
   if (params.limit) query.set('limit', String(params.limit));
+  if (params.ordenarPor) query.set('ordenarPor', params.ordenarPor);
+  if (params.orden) query.set('orden', params.orden);
   const texto = query.toString();
   return texto ? `?${texto}` : '';
 }

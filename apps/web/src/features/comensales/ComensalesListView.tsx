@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Users, UserPlus, AlertCircle } from 'lucide-react';
+import { Search, Users, UserPlus, AlertCircle, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
 import { UserRoles } from '@comedor-solanus/shared';
 import { useAuth } from '@/lib/auth-context';
 import { Button } from '@/components/ui/button';
@@ -20,9 +20,12 @@ import {
 import { EmptyState } from '@/components/shared/EmptyState';
 import { usePaginacion } from '@/lib/pagination';
 import { useComensales } from './api';
-import type { Comensal } from './types';
+import type { Comensal, ListarComensalesParams } from './types';
 
 const DEBOUNCE_MS = 350;
+
+type CampoOrden = NonNullable<ListarComensalesParams['ordenarPor']>;
+type DireccionOrden = NonNullable<ListarComensalesParams['orden']>;
 
 export function ComensalesListView() {
   const navigate = useNavigate();
@@ -32,6 +35,8 @@ export function ComensalesListView() {
   const [busquedaInput, setBusquedaInput] = React.useState('');
   const [busqueda, setBusqueda] = React.useState('');
   const [activo, setActivo] = React.useState<'true' | 'false'>('true');
+  const [ordenarPor, setOrdenarPor] = React.useState<CampoOrden>('folio');
+  const [orden, setOrden] = React.useState<DireccionOrden>('desc');
   const { page, limit, setPage, resetPagina } = usePaginacion();
 
   React.useEffect(() => {
@@ -42,13 +47,27 @@ export function ComensalesListView() {
   React.useEffect(() => {
     resetPagina();
     // eslint-disable-next-line react-hooks/exhaustive-deps -- resetear página solo cuando cambian los filtros, no en cada render
-  }, [busqueda, activo]);
+  }, [busqueda, activo, ordenarPor, orden]);
+
+  const ordenarPorCampo = React.useCallback(
+    (campo: CampoOrden) => {
+      if (ordenarPor === campo) {
+        setOrden((actual) => (actual === 'asc' ? 'desc' : 'asc'));
+      } else {
+        setOrdenarPor(campo);
+        setOrden('asc');
+      }
+    },
+    [ordenarPor],
+  );
 
   const { data, isLoading, isFetching, isError, refetch } = useComensales({
     busqueda: busqueda || undefined,
     activo,
     page,
     limit,
+    ordenarPor,
+    orden,
   });
 
   return (
@@ -137,8 +156,12 @@ export function ComensalesListView() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Folio</TableHead>
-                  <TableHead>Nombre</TableHead>
+                  <TableHeadOrdenable campo="folio" ordenarPor={ordenarPor} orden={orden} onOrdenar={ordenarPorCampo}>
+                    Folio
+                  </TableHeadOrdenable>
+                  <TableHeadOrdenable campo="nombre" ordenarPor={ordenarPor} orden={orden} onOrdenar={ordenarPorCampo}>
+                    Nombre
+                  </TableHeadOrdenable>
                   <TableHead>Edad</TableHead>
                   <TableHead>Tutor</TableHead>
                   <TableHead>Estado</TableHead>
@@ -155,6 +178,35 @@ export function ComensalesListView() {
         </div>
       )}
     </div>
+  );
+}
+
+function TableHeadOrdenable({
+  campo,
+  ordenarPor,
+  orden,
+  onOrdenar,
+  children,
+}: {
+  campo: CampoOrden;
+  ordenarPor: CampoOrden;
+  orden: DireccionOrden;
+  onOrdenar: (campo: CampoOrden) => void;
+  children: React.ReactNode;
+}) {
+  const activo = ordenarPor === campo;
+  const Icono = activo ? (orden === 'asc' ? ArrowUp : ArrowDown) : ArrowUpDown;
+  return (
+    <TableHead>
+      <button
+        type="button"
+        onClick={() => onOrdenar(campo)}
+        className="inline-flex items-center gap-1 text-inherit hover:text-foreground"
+      >
+        {children}
+        <Icono className={`size-3.5 ${activo ? 'text-foreground' : 'text-muted-foreground'}`} />
+      </button>
+    </TableHead>
   );
 }
 

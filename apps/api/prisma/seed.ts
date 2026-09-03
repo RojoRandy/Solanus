@@ -1,5 +1,7 @@
-import { PrismaClient, OrigenLote, HorarioComida, EstadoProducto } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
+import * as fs from 'fs';
+import * as path from 'path';
 
 const prisma = new PrismaClient();
 
@@ -7,170 +9,132 @@ async function hash(password: string) {
   return bcrypt.hash(password, await bcrypt.genSalt(10));
 }
 
+// Los comensales originales solo traen nombre completo, sin fecha de
+// nacimiento — se usa un valor de referencia que el admin debe corregir
+// desde el expediente de cada comensal.
+const FECHA_NACIMIENTO_REFERENCIA = new Date('2000-01-01');
+
+function normalizarNombreCompleto(crudo: string): string {
+  return crudo
+    .replace(/\([^)]*\)/g, ' ') // paréntesis con contenido
+    .replace(/\(.*$/g, ' ') // paréntesis sin cerrar hasta el final
+    .replace(/[^A-Za-zÀ-ÖØ-öø-ÿÑñ ]/g, ' ') // solo letras y espacios
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function capitalizarPalabra(palabra: string): string {
+  return palabra[0].toUpperCase() + palabra.slice(1).toLowerCase();
+}
+
+// Preposiciones que forman parte de un apellido compuesto (p.ej. "De Los
+// Reyes", "De la Cruz") y deben quedar pegadas al apellido, no sueltas.
+const PREPOSICIONES_APELLIDO = new Set(['de', 'del', 'la', 'los', 'las']);
+
+// Extrae, desde el final de `palabras`, el grupo de la última palabra "real"
+// junto con cualquier racha de preposiciones que la preceda inmediatamente
+// (p.ej. ["...", "De", "Los", "Reyes"] -> grupo ["De", "Los", "Reyes"]).
+function extraerGrupoApellido(palabras: string[]): { grupo: string[]; resto: string[] } {
+  if (palabras.length === 0) return { grupo: [], resto: [] };
+  let inicio = palabras.length - 1;
+  while (inicio - 1 >= 0 && PREPOSICIONES_APELLIDO.has(palabras[inicio - 1].toLowerCase())) {
+    inicio -= 1;
+  }
+  return { grupo: palabras.slice(inicio), resto: palabras.slice(0, inicio) };
+}
+
+function dividirNombreApellidos(nombreCompleto: string): { nombres: string; apellidos: string } {
+  const palabras = nombreCompleto.split(' ').filter(Boolean).map(capitalizarPalabra);
+
+  if (palabras.length === 1) return { nombres: palabras[0], apellidos: '' };
+  if (palabras.length === 2) return { nombres: palabras[0], apellidos: palabras[1] };
+
+  const { grupo: apellidoMaterno, resto: sinMaterno } = extraerGrupoApellido(palabras);
+  const { grupo: apellidoPaterno, resto: nombres } = extraerGrupoApellido(sinMaterno);
+
+  if (nombres.length === 0) {
+    // Los dos apellidos consumieron toda la cadena: no partir el nombre de pila.
+    return { nombres: sinMaterno.join(' '), apellidos: apellidoMaterno.join(' ') };
+  }
+  return { nombres: nombres.join(' '), apellidos: [...apellidoPaterno, ...apellidoMaterno].join(' ') };
+}
+
+function leerComensalesDesdeCsv(): { nombres: string; apellidos: string; fechaNacimiento: Date }[] {
+  const rutaCsv = path.resolve(__dirname, '../../../docs/Lista Comensales.csv');
+  const contenido = fs.readFileSync(rutaCsv, 'utf-8').replace(/^﻿/, '');
+  const [, ...filas] = contenido.split(/\r?\n/).filter((linea) => linea.trim().length > 0);
+
+  const comensales: { nombres: string; apellidos: string; fechaNacimiento: Date }[] = [];
+  for (const fila of filas) {
+    const nombreCrudo = fila.split(',')[1] ?? '';
+    const nombreNormalizado = normalizarNombreCompleto(nombreCrudo);
+    if (!nombreNormalizado) continue;
+
+    // La fila sin datos capturados ("faltan datos") se conserva como
+    // comensal placeholder para no perder el folio de la lista original.
+    if (nombreNormalizado.toLowerCase() === 'faltan datos') {
+      comensales.push({ nombres: 'Faltan Datos', apellidos: '', fechaNacimiento: FECHA_NACIMIENTO_REFERENCIA });
+      continue;
+    }
+
+    const { nombres, apellidos } = dividirNombreApellidos(nombreNormalizado);
+    comensales.push({ nombres, apellidos, fechaNacimiento: FECHA_NACIMIENTO_REFERENCIA });
+  }
+  return comensales;
+}
+
 async function main() {
-  console.log('Sembrando datos de ejemplo del Comedor Solanus...');
+  console.log('Limpiando y sembrando base de datos del Comedor Solanus...');
 
-  // ── Usuarios (uno por rol) ──────────────────────────────────
-  await prisma.usuario.createMany({
-    data: [
-      { username: 'admin', nombre: 'Administrador General', rol: 'ADMINISTRADOR', password: await hash('Solanus2026!') },
-      { username: 'operativo', nombre: 'Coordinador Operativo', rol: 'USUARIO', password: await hash('Solanus2026!') },
-      { username: 'captura', nombre: 'Voluntario de Captura', rol: 'USUARIO_SIMPLE', password: await hash('Solanus2026!') },
-    ],
-    skipDuplicates: true,
+  // ── Usuario admin ────────────────────────────────────────────
+  await prisma.usuario.upsert({
+    where: { username: 'admin' },
+    update: {},
+    create: { username: 'admin', nombre: 'Administrador General', rol: 'ADMINISTRADOR', password: await hash('Solanus2026!') },
   });
-  const admin = await prisma.usuario.findUniqueOrThrow({ where: { username: 'admin' } });
 
-  // ── Catálogos de inventario (valores reales del Excel de donativos) ──
-  const categorias = await Promise.all(
-    ['Productos de Despensa', 'Frutas y verduras', 'Limpieza', 'Utensilios', 'Lácteos y embutidos'].map((nombre) =>
-      prisma.categoriaInventario.upsert({ where: { nombre }, update: {}, create: { nombre } }),
-    ),
-  );
-  const unidades = await Promise.all(
+  // ── Categorías de productos ──────────────────────────────────
+  await Promise.all(
     [
-      { nombre: 'Pieza', abrevia: 'pz' },
+      'Frutas y verduras',
+      'Lacteos, huevo y embutidos',
+      'Carnes',
+      'Panaderia y tortillas',
+      'Granos y cereales',
+      'Abarrotes',
+      'Condimentos y especias',
+      'Bebidas',
+      'Botanas y dulces',
+      'Congelados',
+      'Limpieza',
+      'Higiene',
+    ].map((nombre) => prisma.categoriaInventario.upsert({ where: { nombre }, update: {}, create: { nombre } })),
+  );
+
+  // ── Unidades de medida ───────────────────────────────────────
+  await Promise.all(
+    [
+      { nombre: 'Piezas', abrevia: 'pzs' },
+      { nombre: 'Gramo', abrevia: 'gr' },
       { nombre: 'Kilogramo', abrevia: 'kg' },
+      { nombre: 'Mililitro', abrevia: 'ml' },
       { nombre: 'Litro', abrevia: 'lt' },
-      { nombre: 'Bolsa', abrevia: 'bls' },
+      { nombre: 'Cartera', abrevia: 'cartera' },
+      { nombre: 'Paquete', abrevia: 'paq' },
       { nombre: 'Caja', abrevia: 'cja' },
+      { nombre: 'Docena', abrevia: 'doce' },
+      { nombre: 'Bolsa', abrevia: 'bolsa' },
+      { nombre: 'Lata', abrevia: 'lata' },
+      { nombre: 'Botella', abrevia: 'bot' },
+      { nombre: 'Frasco', abrevia: 'frasco' },
     ].map((u) => prisma.unidadMedida.upsert({ where: { nombre: u.nombre }, update: {}, create: u })),
   );
 
-  await Promise.all(
-    [
-      { clave: 'COMPRA', nombre: 'Compra' },
-      { clave: 'DONACION', nombre: 'Donación' },
-      { clave: 'CONSUMO', nombre: 'Consumo en comida' },
-      { clave: 'MERMA', nombre: 'Merma', esMerma: true },
-      { clave: 'CADUCADO', nombre: 'Caducado', esMerma: true },
-      { clave: 'AJUSTE', nombre: 'Ajuste' },
-    ].map((m) =>
-      prisma.motivoMovimiento.upsert({
-        where: { clave: m.clave },
-        update: {},
-        create: { ...m, esSistema: true },
-      }),
-    ),
-  );
+  // ── Comensales (docs/Lista Comensales.csv) ──────────────────
+  const comensales = leerComensalesDesdeCsv();
+  await prisma.comensal.createMany({ data: comensales });
 
-  const bienhechor = await prisma.bienhechor.upsert({
-    where: { id: 1 },
-    update: {},
-    create: { nombre: 'Público en General', contacto: null },
-  });
-
-  // ── Arroz: una sola variante, comprado ───────────────────────
-  const arroz = await prisma.producto.create({
-    data: { nombre: 'Arroz', categoriaId: categorias[0].id },
-  });
-  const arrozKgCrudo = await prisma.varianteInventario.create({
-    data: {
-      productoId: arroz.id,
-      unidadId: unidades[1].id, // Kilogramo
-      estado: EstadoProducto.CRUDO,
-      stockMinimo: 20,
-    },
-  });
-  await prisma.loteInventario.create({
-    data: {
-      varianteId: arrozKgCrudo.id,
-      marca: 'MC Paiza',
-      presentacion: '900 grs',
-      ubicacion: 'Almacén',
-      cantidadInicial: 40,
-      cantidadDisponible: 40,
-      fechaIngreso: new Date(),
-      fechaCaducidad: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000),
-      costoUnitario: 18,
-      costoTotal: 720,
-      origen: OrigenLote.DONADO,
-      bienhechorId: bienhechor.id,
-      cfdi: 'PF-376',
-    },
-  });
-
-  // ── Frijol: dos variantes del mismo producto (kg crudo y pieza cocido) ──
-  // — así la pantalla de existencias agrupadas tiene qué mostrar de entrada.
-  const frijol = await prisma.producto.create({
-    data: { nombre: 'Frijol', categoriaId: categorias[0].id },
-  });
-  const frijolKgCrudo = await prisma.varianteInventario.create({
-    data: {
-      productoId: frijol.id,
-      unidadId: unidades[1].id, // Kilogramo
-      estado: EstadoProducto.CRUDO,
-      stockMinimo: 15,
-    },
-  });
-  const frijolPzCocido = await prisma.varianteInventario.create({
-    data: {
-      productoId: frijol.id,
-      unidadId: unidades[0].id, // Pieza (olla de porciones)
-      estado: EstadoProducto.COCIDO,
-      stockMinimo: 5,
-    },
-  });
-  await prisma.loteInventario.create({
-    data: {
-      varianteId: frijolKgCrudo.id,
-      marca: 'La Costeña',
-      cantidadInicial: 30,
-      cantidadDisponible: 30,
-      fechaIngreso: new Date(),
-      fechaCaducidad: new Date(Date.now() + 180 * 24 * 60 * 60 * 1000),
-      costoUnitario: 32,
-      costoTotal: 960,
-      origen: OrigenLote.COMPRADO,
-      cfdi: 'A-1029',
-    },
-  });
-  await prisma.loteInventario.create({
-    data: {
-      varianteId: frijolPzCocido.id,
-      cantidadInicial: 12,
-      cantidadDisponible: 12,
-      fechaIngreso: new Date(),
-      origen: OrigenLote.COMPRADO,
-    },
-  });
-
-  // ── Comensales de ejemplo ───────────────────────────────────
-  const tutor = await prisma.comensal.create({
-    data: {
-      nombres: 'Cristina Yamileth',
-      apellidos: 'Ruiz Ortiz',
-      fechaNacimiento: new Date('1988-04-12'),
-    },
-  });
-
-  await prisma.comensal.create({
-    data: {
-      nombres: 'Israel',
-      apellidos: 'Rivera Leal',
-      fechaNacimiento: new Date('2019-06-03'),
-      tutorId: tutor.id,
-    },
-  });
-
-  // ── Voluntario de ejemplo ───────────────────────────────────
-  await prisma.voluntario.create({
-    data: { nombres: 'Erika', apellidos: 'Hernández', telefono: '6181234567' },
-  });
-
-  // ── Turno de comida de ejemplo (hoy, comida) ────────────────
-  await prisma.turnoComida.upsert({
-    where: { fecha_horario: { fecha: new Date(new Date().toDateString()), horario: HorarioComida.COMIDA } },
-    update: {},
-    create: {
-      fecha: new Date(new Date().toDateString()),
-      horario: HorarioComida.COMIDA,
-      menu: 'Arroz, frijoles, tortillas',
-      registradoPorId: admin.id,
-    },
-  });
-
-  console.log('Seed completado.');
+  console.log(`Seed completado: ${comensales.length} comensales.`);
 }
 
 main()

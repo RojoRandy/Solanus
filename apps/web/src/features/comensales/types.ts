@@ -54,6 +54,8 @@ export interface ListarComensalesParams {
   activo?: 'true' | 'false';
   page?: number;
   limit?: number;
+  ordenarPor?: 'folio' | 'nombre';
+  orden?: 'asc' | 'desc';
 }
 
 export interface AsistenciaComensal {
