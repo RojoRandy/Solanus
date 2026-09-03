@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
-import { ServeStaticModule } from '@nestjs/serve-static';
-import { join } from 'path';
+import { ConfigModule } from '@nestjs/config';
+import { ArchivosController } from './common/archivos/archivos.controller';
+import { HealthController } from './common/health/health.controller';
 import { PrismaModule } from './prisma/prisma.module';
 import { StorageModule } from './common/storage/storage.module';
 import { PdfModule } from './common/pdf/pdf.module';
@@ -18,19 +18,6 @@ import { ReportesModule } from './modules/reportes/reportes.module';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
-    ServeStaticModule.forRootAsync({
-      inject: [ConfigService],
-      useFactory: (configService: ConfigService) => [
-        {
-          rootPath: join(
-            process.cwd(),
-            configService.get<string>('UPLOADS_DIR') ?? './uploads',
-          ),
-          serveRoot:
-            configService.get<string>('UPLOADS_PUBLIC_PATH') ?? '/uploads',
-        },
-      ],
-    }),
     PrismaModule,
     StorageModule,
     PdfModule,
@@ -44,5 +31,6 @@ import { ReportesModule } from './modules/reportes/reportes.module';
     DashboardModule,
     ReportesModule,
   ],
+  controllers: [HealthController, ArchivosController],
 })
 export class AppModule {}

@@ -10,7 +10,7 @@
     "start": "nest start",
     "dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
-    "start:prod": "node dist/main",
+    "start:prod": "node dist/src/main",
     "lint": "eslint \"{src,test}/**/*.ts\" --fix",
     "test": "jest",
     "test:watch": "jest --watch",
@@ -26,13 +26,14 @@
     "seed": "ts-node -r tsconfig-paths/register prisma/seed.ts"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1126.0",
+    "@aws-sdk/s3-request-presigner": "^3.1126.0",
     "@nestjs/common": "^11.0.1",
     "@nestjs/config": "^4.0.0",
     "@nestjs/core": "^11.0.1",
     "@nestjs/jwt": "^11.0.0",
     "@nestjs/passport": "^11.0.5",
     "@nestjs/platform-express": "^11.0.1",
-    "@nestjs/serve-static": "^5.0.2",
     "@nestjs/swagger": "^11.0.3",
     "@prisma/client": "^6.3.1",
     "bcrypt": "^5.1.1",
@@ -42,9 +43,9 @@
     "multer": "^1.4.5-lts.1",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
+    "puppeteer": "^24.1.1",
     "reflect-metadata": "^0.2.2",
-    "rxjs": "^7.8.1",
-    "puppeteer": "^24.1.1"
+    "rxjs": "^7.8.1"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",

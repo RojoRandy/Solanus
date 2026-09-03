@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   InternalServerErrorException,
+  NotFoundException,
 } from '@nestjs/common';
 import { ErrorResponseDto } from '../dto/response.dto';
 
@@ -9,6 +10,10 @@ const Exceptions = {
     new InternalServerErrorException(Responses.ERROR_UPLOADING_FILE(data)),
   ERROR_DELETING_FILE: (data?: any) =>
     new InternalServerErrorException(Responses.ERROR_DELETING_FILE(data)),
+  ERROR_READING_FILE: (data?: any) =>
+    new InternalServerErrorException(Responses.ERROR_READING_FILE(data)),
+  ARCHIVO_NO_ENCONTRADO: (data?: any) =>
+    new NotFoundException(Responses.ARCHIVO_NO_ENCONTRADO(data)),
   TIPO_ARCHIVO_NO_PERMITIDO: (data?: any) =>
     new BadRequestException(Responses.TIPO_ARCHIVO_NO_PERMITIDO(data)),
   ARCHIVO_DEMASIADO_GRANDE: (data?: any) =>
@@ -26,6 +31,18 @@ const Responses = {
     new ErrorResponseDto(
       'ERROR_DELETING_FILE',
       'No se pudo eliminar el archivo',
+      data,
+    ),
+  ERROR_READING_FILE: (data?: any) =>
+    new ErrorResponseDto(
+      'ERROR_READING_FILE',
+      'No se pudo leer el archivo',
+      data,
+    ),
+  ARCHIVO_NO_ENCONTRADO: (data?: any) =>
+    new ErrorResponseDto(
+      'ARCHIVO_NO_ENCONTRADO',
+      'El archivo solicitado no existe',
       data,
     ),
   TIPO_ARCHIVO_NO_PERMITIDO: (data?: any) =>

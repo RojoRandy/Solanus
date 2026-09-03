@@ -110,20 +110,31 @@ export class GenerarPdfExpedienteUseCase implements UseCase<
     }
   }
 
-  private async archivoComoDataUri(absolutePath: string): Promise<string | null> {
-    const extension = path.extname(absolutePath).toLowerCase();
+  private bufferComoDataUri(buffer: Buffer, rutaOExtension: string): string {
+    const extension = path.extname(rutaOExtension).toLowerCase();
     const mime = MIME_POR_EXTENSION[extension] ?? 'image/png';
+    return `data:${mime};base64,${buffer.toString('base64')}`;
+  }
+
+  /** Assets del build (logos), siempre en disco local — no pasan por el storage service. */
+  private async archivoComoDataUri(absolutePath: string): Promise<string | null> {
     try {
       const buffer = await fs.readFile(absolutePath);
-      return `data:${mime};base64,${buffer.toString('base64')}`;
+      return this.bufferComoDataUri(buffer, absolutePath);
     } catch {
       return null;
     }
   }
 
+  /** Fotos e INE subidos por el usuario, servidos por el storage service (local o S3). */
   private async archivoStorageComoDataUri(rutaRelativa: string | null | undefined): Promise<string | null> {
     if (!rutaRelativa) return null;
-    return this.archivoComoDataUri(this.storage.resolveAbsolutePath(rutaRelativa));
+    try {
+      const buffer = await this.storage.read(rutaRelativa);
+      return this.bufferComoDataUri(buffer, rutaRelativa);
+    } catch {
+      return null;
+    }
   }
 
   private construirHtml(

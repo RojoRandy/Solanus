@@ -1,8 +1,8 @@
 /**
  * Contrato de almacenamiento de archivos (fotos, INE, PDFs de expediente).
- * Implementación actual: disco local (ver local-storage.service.ts).
- * Migrar a S3/MinIO más adelante implica escribir otra clase que cumpla
- * esta misma interfaz — la lógica de negocio nunca toca el disco directamente.
+ * Implementaciones: disco local (local-storage.service.ts, dev) y S3
+ * (s3-storage.service.ts, producción) — la lógica de negocio nunca toca el
+ * disco ni el SDK de AWS directamente, solo esta interfaz.
  */
 export interface IStorageService {
   /**
@@ -14,8 +14,16 @@ export interface IStorageService {
   /** Elimina un archivo a partir de su ruta pública relativa. */
   delete(publicPath: string): Promise<void>;
 
-  /** Resuelve la ruta absoluta en disco de una ruta pública relativa. */
-  resolveAbsolutePath(publicPath: string): string;
+  /** Lee el contenido de un archivo a partir de su ruta pública relativa. */
+  read(publicPath: string): Promise<Buffer>;
+
+  /**
+   * URL firmada de corta duración para servir el archivo directamente desde
+   * el proveedor de almacenamiento (redirect 302). Devuelve `null` cuando el
+   * driver no soporta URLs firmadas (almacenamiento local) — en ese caso el
+   * llamador debe transmitir el archivo él mismo con `read()`.
+   */
+  getSignedUrl(publicPath: string): Promise<string | null>;
 }
 
 export const STORAGE_SERVICE = 'STORAGE_SERVICE';

@@ -43,7 +43,23 @@ export class LocalStorageService implements IStorageService {
     }
   }
 
-  resolveAbsolutePath(publicPath: string): string {
+  async read(publicPath: string): Promise<Buffer> {
+    try {
+      return await fs.readFile(this.resolveAbsolutePath(publicPath));
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+        throw CommonErrors.Exceptions.ARCHIVO_NO_ENCONTRADO({ publicPath });
+      }
+      throw CommonErrors.Exceptions.ERROR_READING_FILE(error);
+    }
+  }
+
+  /** El driver local no firma URLs: el llamador debe transmitir el archivo con read(). */
+  async getSignedUrl(): Promise<string | null> {
+    return null;
+  }
+
+  private resolveAbsolutePath(publicPath: string): string {
     const relative = publicPath.startsWith(this.publicPath)
       ? publicPath.slice(this.publicPath.length)
       : publicPath;

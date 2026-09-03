@@ -15,7 +15,7 @@ export class PdfService implements OnModuleDestroy {
     if (this.browserPromise === null) {
       this.browserPromise = puppeteer.launch({
         headless: true,
-        args: ['--no-sandbox'],
+        args: ['--no-sandbox', '--disable-dev-shm-usage'],
       });
     }
     return this.browserPromise;

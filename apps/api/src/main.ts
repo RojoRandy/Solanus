@@ -1,5 +1,5 @@
 import { NestFactory } from '@nestjs/core';
-import { ValidationPipe } from '@nestjs/common';
+import { RequestMethod, ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { MulterExceptionFilter } from './common/filters/multer-exception.filter';
@@ -9,7 +9,9 @@ import { config, swaggerSetupOptions } from './common/swagger/options';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  app.setGlobalPrefix('api');
+  app.setGlobalPrefix('api', {
+    exclude: [{ path: 'uploads/*ruta', method: RequestMethod.GET }],
+  });
 
   app.useGlobalFilters(new HttpExceptionFilter(), new MulterExceptionFilter());
   app.useGlobalPipes(
@@ -20,11 +22,14 @@ async function bootstrap() {
   );
   app.useGlobalInterceptors(new ApiResponseInterceptor());
 
-  app.enableCors();
+  const origenesPermitidos = process.env.WEB_ORIGIN?.split(',').map((o) => o.trim());
+  app.enableCors({ origin: origenesPermitidos ?? true });
 
-  const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api/docs', app, document, swaggerSetupOptions);
+  if (process.env.SWAGGER_ENABLED === 'true') {
+    const document = SwaggerModule.createDocument(app, config);
+    SwaggerModule.setup('api/docs', app, document, swaggerSetupOptions);
+  }
 
-  await app.listen(process.env.PORT ?? 3000);
+  await app.listen(process.env.PORT ?? 3000, '0.0.0.0');
 }
 void bootstrap();
