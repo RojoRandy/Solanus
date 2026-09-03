@@ -10,6 +10,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ComboboxField } from '../ComboboxField';
 import { ApiError } from '@/lib/api-client';
 import { useLotesVariante, useMotivos, useRegistrarAjuste, useVariantes } from '../api';
+import { ETIQUETA_ESTADO } from '../types';
 
 interface RegistrarAjusteDialogProps {
   open: boolean;
@@ -32,7 +33,7 @@ export function RegistrarAjusteDialog({ open, onOpenChange }: RegistrarAjusteDia
 
   const opcionesVariantes = (variantesPag?.items ?? []).map((v) => ({
     value: v.id,
-    label: `${v.producto.nombre} · ${v.unidad.abrevia} · ${v.estado === 'CRUDO' ? 'crudo' : 'cocido'} (existencia: ${v.stockActual})`,
+    label: `${v.producto.nombre} · ${v.unidad.abrevia} · ${ETIQUETA_ESTADO[v.estado].toLowerCase()} (existencia: ${v.stockActual})`,
   }));
   const opcionesLotes = (lotes ?? []).map((l) => ({
     value: l.id,

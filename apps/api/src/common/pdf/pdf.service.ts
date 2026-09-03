@@ -21,7 +21,10 @@ export class PdfService implements OnModuleDestroy {
     return this.browserPromise;
   }
 
-  async render(html: string): Promise<Buffer> {
+  async render(
+    html: string,
+    options?: { margin?: { top: string; bottom: string; left: string; right: string } },
+  ): Promise<Buffer> {
     const browser = await this.getBrowser();
     const page = await browser.newPage();
     try {
@@ -29,7 +32,7 @@ export class PdfService implements OnModuleDestroy {
       const pdf = await page.pdf({
         format: 'letter',
         printBackground: true,
-        margin: { top: '18mm', bottom: '18mm', left: '16mm', right: '16mm' },
+        margin: options?.margin ?? { top: '18mm', bottom: '18mm', left: '16mm', right: '16mm' },
       });
       return Buffer.from(pdf);
     } finally {

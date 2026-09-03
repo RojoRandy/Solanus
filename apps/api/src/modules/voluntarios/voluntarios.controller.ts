@@ -58,7 +58,10 @@ export class VoluntariosController {
     return this.crearVoluntario.execute(dto);
   }
 
+  // Abierto también a USUARIO_SIMPLE: la pantalla de Turno de comida usa este
+  // listado para asignar voluntarios al turno, y ese rol sí puede capturar ahí.
   @Get()
+  @Auth(UserRoles.ADMINISTRADOR, UserRoles.USUARIO, UserRoles.USUARIO_SIMPLE)
   @ApiOkSchemaArrayResponse(VoluntarioResponseDto)
   findAll(@Query() query: ListarVoluntariosQueryDto) {
     return this.listarVoluntarios.execute(query);

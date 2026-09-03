@@ -217,6 +217,7 @@ model Producto {
 enum EstadoProducto {
   CRUDO
   COCIDO
+  NO_APLICA
 }
 
 // Una variante es la combinación real que se cuenta en el almacén:

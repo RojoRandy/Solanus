@@ -97,7 +97,9 @@ export class GenerarPdfExpedienteUseCase implements UseCase<
       ]);
 
       const html = this.construirHtml(comensal, { logoComedor, logoAbp, foto, ineFrente, ineReverso });
-      const buffer = await this.pdfService.render(html);
+      const buffer = await this.pdfService.render(html, {
+        margin: { top: '12mm', bottom: '12mm', left: '12mm', right: '12mm' },
+      });
 
       return { buffer, filename: `expediente-${comensal.folio}.pdf` };
     } catch (error) {
@@ -193,7 +195,7 @@ export class GenerarPdfExpedienteUseCase implements UseCase<
   * { box-sizing: border-box; }
   body { font-family: 'Helvetica Neue', Arial, sans-serif; color: #2A2020; margin: 0; padding: 0; }
   .marca { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 12px; }
-  .marca img { height: 48px; object-fit: contain; }
+  .marca img { height: 68px; object-fit: contain; }
   .marca h1 { flex: 1; text-align: center; color: ${COLOR_VINO}; font-size: 20px; margin: 0; }
   .encabezado { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid ${COLOR_VINO}; padding-bottom: 16px; margin-bottom: 20px; }
   .encabezado h2.titulo { color: ${COLOR_VINO}; font-size: 18px; margin: 0 0 4px; }
@@ -207,7 +209,7 @@ export class GenerarPdfExpedienteUseCase implements UseCase<
   .seccion h2 { font-size: 13px; color: ${COLOR_VINO}; text-transform: uppercase; letter-spacing: 0.04em; border-bottom: 1px solid #eee; padding-bottom: 4px; margin-bottom: 8px; }
   .seccion ul { margin: 0; padding-left: 18px; font-size: 13px; }
   .ine-grid { display: flex; gap: 16px; }
-  .ine-grid img.ine { width: 260px; height: auto; border-radius: 6px; border: 1px solid #ddd; }
+  .ine-grid img.ine { width: 260px; height: 164px; object-fit: cover; border-radius: 6px; border: 1px solid #ddd; }
   .ine-etiqueta { text-align: center; font-size: 11px; color: #6B6B6B; margin: 4px 0 0; }
   .badge { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; }
   .badge.si { background: #E4EDE1; color: #3E6B3A; }

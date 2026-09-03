@@ -31,7 +31,8 @@ const schema = z
     productoId: z.number().optional(),
     productoNuevoNombre: z.string().trim().optional(),
     productoNuevoCategoriaId: z.number().optional(),
-    estado: z.enum(['CRUDO', 'COCIDO']),
+    productoNuevoCodigoBarras: z.string().trim().optional(),
+    estado: z.enum(['CRUDO', 'COCIDO', 'NO_APLICA']),
     cantidadInicial: z.coerce.number({ message: 'Indica la cantidad' }).positive('Debe ser mayor a cero'),
     costoUnitario: z.coerce.number({ message: 'Indica el costo unitario' }).positive('Debe ser mayor a cero'),
     unidadId: z.number({ message: 'Selecciona una unidad' }),
@@ -131,7 +132,11 @@ export function RegistrarEntradaPage() {
         productoId: values.origenProducto === 'existente' ? values.productoId : undefined,
         productoNuevo:
           values.origenProducto === 'nuevo'
-            ? { nombre: values.productoNuevoNombre!, categoriaId: values.productoNuevoCategoriaId! }
+            ? {
+                nombre: values.productoNuevoNombre!,
+                categoriaId: values.productoNuevoCategoriaId!,
+                codigoBarras: values.productoNuevoCodigoBarras || undefined,
+              }
             : undefined,
         estado: values.estado as EstadoProducto,
         cantidadInicial: values.cantidadInicial,
@@ -223,6 +228,10 @@ export function RegistrarEntradaPage() {
                   </div>
                   {errors.productoNuevoNombre && <p className="text-xs text-destructive">{errors.productoNuevoNombre.message}</p>}
                 </div>
+                <div className="flex flex-col gap-1.5 sm:col-span-2">
+                  <Label htmlFor="productoNuevoCodigoBarras">Código de barras</Label>
+                  <Input id="productoNuevoCodigoBarras" {...register('productoNuevoCodigoBarras')} placeholder="Opcional" />
+                </div>
               </div>
             )}
           </CardContent>
@@ -236,9 +245,9 @@ export function RegistrarEntradaPage() {
             <div className="flex flex-col gap-1.5">
               <Label>Crudo o cocido</Label>
               <Select
-                items={{ CRUDO: 'Crudo', COCIDO: 'Cocido' }}
+                items={{ CRUDO: 'Crudo', COCIDO: 'Cocido', NO_APLICA: 'No aplica' }}
                 value={estado}
-                onValueChange={(value) => setValue('estado', value as 'CRUDO' | 'COCIDO')}
+                onValueChange={(value) => setValue('estado', value as EstadoProducto)}
               >
                 <SelectTrigger className="w-full">
                   <SelectValue />
@@ -246,6 +255,7 @@ export function RegistrarEntradaPage() {
                 <SelectContent>
                   <SelectItem value="CRUDO">Crudo</SelectItem>
                   <SelectItem value="COCIDO">Cocido</SelectItem>
+                  <SelectItem value="NO_APLICA">No aplica</SelectItem>
                 </SelectContent>
               </Select>
             </div>

@@ -1,527 +1,560 @@
-# Graph Report - Solanus  (2026-09-02)
+# Graph Report - Solanus  (2026-09-03)
 
 ## Corpus Check
-- 263 files · ~75,157 words
-- Verdict: corpus is large enough that graph structure adds value.
+- cluster-only mode — file stats not available
 
 ## Summary
-- 1873 nodes · 4691 edges · 140 communities (87 shown, 53 thin omitted)
-- Extraction: 98% EXTRACTED · 2% INFERRED · 0% AMBIGUOUS · INFERRED: 98 edges (avg confidence: 0.84)
+- 2133 nodes · 5887 edges · 138 communities (94 shown, 44 thin omitted)
+- Extraction: 98% EXTRACTED · 2% INFERRED · 0% AMBIGUOUS · INFERRED: 104 edges (avg confidence: 0.82)
 - Token cost: 0 input · 0 output
 
+## Graph Freshness
+- Built from commit: `983cb500`
+- Run `git rev-parse HEAD` and compare to check if the graph is stale.
+- Run `graphify update .` after code changes (no API cost).
+
 ## Community Hubs (Navigation)
-- Voluntarios — Errores y DTOs
-- Asistencia — Controller y Turnos
-- Asistencia — Hooks de API Web
-- Bienhechores — Controller CRUD
-- Inventario — Hooks de API Web
-- Casos de Uso — Constructores (Asistencia/Inventario)
-- UI — EmptyState y AlertDialog
-- UI — Button, Calendar, Card, Input
-- Dashboard — DTOs y Usecase
-- UI — Avatar, Card, Command (variantes)
-- Comensales — Controller y Upload
-- Inventario — Catálogos DTO y Controller
-- Usuarios — DTO y Usecases
-- UI — Separator y Sheet
-- Inventario — Item DTO
-- Auth — Controller y Service
-- Comensales — Errores y Storage Local
-- apps/web — devDependencies
-- Reportes — API Web y UI Tabs
-- Comensales — Controller (uploads/expediente)
-- Módulos NestJS — Registro en AppModule
-- Common — Response DTO y Filtros de Error
-- Web — App Shell y Páginas
-- apps/web — tsconfig.app compilerOptions
-- CLAUDE.md — Documentación del proyecto
-- apps/web — dependencies
-- Dashboard/Voluntarios — Types y API Web
-- Reportes — DTOs
-- Comensales — DTO crear/actualizar
-- UI — Combobox
-- apps/web — components.json (shadcn)
-- Auth — Decorators y Guards
-- Inventario — Entrada DTO (lotes)
-- apps/api — tsconfig compilerOptions
-- apps/web — tsconfig.node compilerOptions
-- Misceláneo
-- Inventario Controller Inventariocontroller
-- Components Ui
-- Claude Modulos
-- Comensales Utils
-- Package Dependencies
-- Package Scripts
-- Features Comensales
-- Package
-- Inventario Movimiento
-- Components Ui Dropdown Menu
-- Apiresponseproperty
-- Prompt Entidad
-- Misceláneo
-- Packages Shared
-- Comensales Generar Pdf
-- Dashboard Controller
-- Usuarios Controller
-- Components Theme Provider
-- Features Bienhechores
-- Package
-- Misceláneo
-- Reportes Reporte
-- Readme
-- E2e Asistencia
-- Features Comensales
-- Claude Seed
-- Features Comensales Comensaldetalleview
-- Prompt Emilkowalski Skills
-- Comensales
-- Components Ui Input Group
-- Packages Shared Package
-- Package
-- Asistencia
-- Inventario Salida
-- Tsconfig Build
-- Misceláneo
-- Components Ui Popover
-- Nest Cli
-- Auth Controller
-- Misceláneo
-- Tsconfig
-- Claude
-- Prisma Seed
-- Auth Strategies Jwt Strategy
-- Index
-- Features
-- Claude
-- Package Dependencies
-- Package Dependencies
-- Package Dependencies
-- Package Dependencies
-- Package Dependencies
-- Package Dependencies
-- Package Dependencies
-- Package Dependencies
-- Package Dependencies
-- Package Dependencies
-- Package Dependencies
-- Package
-- Package Devdependencies
-- Package Devdependencies
-- Package
-- Package
-- Package Devdependencies
-- Package Devdependencies
-- Package Devdependencies
-- Package Devdependencies
-- Package
-- Package Devdependencies
-- Package Devdependencies
-- Package Devdependencies
-- Package Devdependencies
-- Package Devdependencies
-- Package Devdependencies
-- Package Devdependencies
-- Package Devdependencies
-- Package Devdependencies
-- Package
-- Package Devdependencies
-- Package Devdependencies
-- Package
-- Package
-- E2e Fixtures Foto Prueba
-- Package Dependencies
-- Package Dependencies
-- Package Dependencies
-- Package Dependencies
-- Package Dependencies
-- Package Dependencies
-- Package Dependencies
-- Package Dependencies
-- Package Dependencies
-- Package Dependencies
-- Package Dependencies
-- Public Logo Abp
-- Public Logo Comedor
-- Logotipo Principal
-- Logotipo Secundario
+- InventarioController
+- inventario.controller.ts
+- voluntarios.controller.ts
+- asistencia.controller.ts
+- api-client.ts
+- PrismaService
+- ComensalDetalleView.tsx
+- sidebar.tsx
+- usuarios.controller.ts
+- PaginationQueryDto
+- comensales/api.ts
+- cn
+- useAuth
+- comensales.controller.ts
+- ComensalFormView.tsx
+- reportes.controller.ts
+- inventario/api.ts
+- combobox.tsx
+- RegistrarEntradaPage.tsx
+- AsistenciaPage.tsx
+- devDependencies
+- crear-producto.usecase.ts
+- VoluntariosListView.tsx
+- subir-ine-frente-comensal.usecase.ts
+- input-group.tsx
+- ComensalesController
+- AuthenticatedUser
+- ComensalDetalleView
+- compilerOptions
+- devDependencies
+- ApiOkSchemaResponse
+- registrar-entrada.usecase.ts
+- IdParamDto
+- inventario/dto/reportes.dto.ts
+- components.json
+- bienhechores.controller.ts
+- variante.dto.ts
+- compilerOptions
+- compilerOptions
+- auth.decorator.ts
+- response.dto.ts
+- app.module.ts
+- BienhechoresController
+- date-picker.tsx
+- AuthProvider.tsx
+- generar-pdf-expediente.usecase.ts
+- theme-provider.tsx
+- dependencies
+- scripts
+- ApiOkSchemaArrayResponse
+- firmar-carta-uso-imagen.usecase.ts
+- comensal.dto.ts
+- usuarios/api.ts
+- package.json
+- RegistrarDonativoDto
+- apps/api (CLAUDE.md)
+- bienhechores/api.ts
+- apps/web (CLAUDE.md)
+- asistencia-descuento.spec.ts
+- ErrorResponseDto
+- PdfService
+- dependencies
+- Estado del proyecto (fases)
+- apps/web — Convenciones (README)
+- apps/api — Convenciones (README)
+- nest-cli.json
+- app.e2e-spec.ts
+- GenerarPdfExpedienteUseCase
+- Comedor Solanus (root CLAUDE.md)
+- scripts
+- shared/package.json
+- api/package.json
+- main.ts
+- RegistrarAsistenciaDto
+- ActualizarBienhechorUseCase
+- exclude
+- permisos.ts
+- scripts
+- LocalStorageService
+- ListarBienhechoresUseCase
+- web/package.json
+- alert.tsx
+- web/tsconfig.json
+- Estructura por feature (src/features/<modulo>)
+- .obtenerTurno
+- DistintoDeCeroConstraint
+- tooltip.tsx
+- @eslint/js
+- @types/node
+- typescript
+- typescript-eslint
+- StorageModule
+- class-variance-authority
+- class-transformer
+- class-validator
+- multer
+- @nestjs/common
+- @nestjs/jwt
+- @nestjs/passport
+- @nestjs/platform-express
+- @nestjs/swagger
+- passport-jwt
+- puppeteer
+- @nestjs/schematics
+- prettier
+- @types/bcrypt
+- @types/multer
+- @types/supertest
+- Capuchinos - Comedor Solanus Logo
+- cmdk
+- @comedor-solanus/shared
+- date-fns
+- @fontsource-variable/inter
+- @hookform/resolvers
+- lucide-react
+- next-themes
+- react
+- react-day-picker
+- react-dom
+- react-hook-form
+- react-router-dom
+- sonner
+- tailwind-merge
+- tailwindcss
+- @tanstack/react-query
+- tw-animate-css
+- Amigos de los Capuchinos ABP Logo
+- Comedor Solanus Logo (Capuchinos)
+- ApiConsumes
+- UploadedFile
+- UseInterceptors
+- IsBooleanString
+- ValidateNested
 
 ## God Nodes (most connected - your core abstractions)
-1. `cn()` - 161 edges
-2. `PrismaService` - 114 edges
-3. `UseCase` - 105 edges
-4. `ApiOkSchemaResponse()` - 41 edges
-5. `IdParamDto` - 36 edges
-6. `Auth()` - 33 edges
-7. `Button()` - 30 edges
-8. `@prisma/client` - 29 edges
-9. `Card()` - 23 edges
-10. `useAuth()` - 23 edges
+1. `cn()` - 172 edges
+2. `PrismaService` - 105 edges
+3. `UseCase` - 96 edges
+4. `Button()` - 50 edges
+5. `@prisma/client` - 41 edges
+6. `InventarioController` - 34 edges
+7. `ApiError` - 34 edges
+8. `Input()` - 28 edges
+9. `ApiOkSchemaResponse()` - 28 edges
+10. `useAuth()` - 27 edges
 
 ## Surprising Connections (you probably didn't know these)
-- `E2E: login-roles, comensal-expediente, asistencia-descuento` --shares_data_with--> `Testing E2E — flujos críticos (sección 8)`  [INFERRED]
-  apps/web/CLAUDE.md → Prompt.md
 - `Puertos no estándar a propósito (5442/3210/5173/5183)` --shares_data_with--> `servicio postgres (comedor-solanus-db, 5442:5432)`  [INFERRED]
   CLAUDE.md → docker-compose.yml
-- `Seed — usuarios admin/operativo/captura (Solanus2026!)` --shares_data_with--> `Roles del sistema: administrador, usuario, usuario_simple`  [INFERRED]
-  README.md → Prompt.md
-- `schema.prisma — un solo dueño a la vez` --references--> `Estrategia de subagentes y trabajo en paralelo (3.1)`  [EXTRACTED]
-  apps/api/README.md → Prompt.md
-- `Módulos existentes: auth, usuarios, comensales, asistencia, inventario, bienhechores, voluntarios, dashboard, reportes` --shares_data_with--> `Módulo Voluntarios (4.4)`  [INFERRED]
-  apps/api/CLAUDE.md → Prompt.md
+- `Variables de entorno API (.env.example)` --conceptually_related_to--> `servicio postgres (comedor-solanus-db, 5442:5432)`  [INFERRED]
+  apps/api/CLAUDE.md → docker-compose.yml
+- `Estructura del repositorio (README raíz)` --references--> `apps/web (CLAUDE.md)`  [INFERRED]
+  README.md → apps/web/CLAUDE.md
+- `Estructura del repositorio (README raíz)` --references--> `packages/shared (CLAUDE.md)`  [INFERRED]
+  README.md → packages/shared/CLAUDE.md
+- `Skills y plugins de este proyecto` --conceptually_related_to--> `Librerías clave (TanStack Query, RHF+Zod, sonner, lucide-react, next-themes, cmdk...)`  [INFERRED]
+  CLAUDE.md → apps/web/CLAUDE.md
 
 ## Import Cycles
 - None detected.
 
 ## Hyperedges (group relationships)
-- **Flujo de descuento automático de inventario al registrar asistencia** — prompt_asistencia_comensales_modulo, prompt_inventario_modulo, prompt_entidad_movimientoinventario, apps_web_claude_e2e_tests [INFERRED 0.85]
-- **Tracks A/B/C paralelizables bajo la estrategia de subagentes** — prompt_track_a_comensales, prompt_track_b_inventario_bienhechores, prompt_track_c_voluntarios, prompt_estrategia_subagentes [EXTRACTED 1.00]
 - **packages/shared como fuente de verdad de roles/permisos, consumida por api y web** — packages_shared_claude_roles, apps_api_claude_auth_guard, apps_web_readme_navegacion_rol [INFERRED 0.85]
 
-## Communities (140 total, 53 thin omitted)
+## Communities (138 total, 44 thin omitted)
 
-### Community 0 - "Voluntarios — Errores y DTOs"
+### Community 0 - "InventarioController"
+Cohesion: 0.05
+Nodes (47): ApiOkSchemaArrayResponse, RegistrarAjusteDto, ApiProperty, IsInt, IsNotEmpty, IsNumber, IsOptional, IsString (+39 more)
+
+### Community 1 - "inventario.controller.ts"
+Cohesion: 0.06
+Nodes (43): ActualizarCategoriaDto, ActualizarUnidadDto, CategoriaInventarioResponseDto, CrearCategoriaDto, CrearUnidadDto, MotivoMovimientoResponseDto, ApiProperty, IsBoolean (+35 more)
+
+### Community 2 - "voluntarios.controller.ts"
 Cohesion: 0.06
 Nodes (47): Exceptions, Responses, VoluntarioErrors, telefonoMxRegex, ActualizarVoluntarioDto, CrearVoluntarioDto, ListarVoluntariosQueryDto, ApiProperty (+39 more)
 
-### Community 1 - "Asistencia — Controller y Turnos"
+### Community 3 - "asistencia.controller.ts"
 Cohesion: 0.06
-Nodes (51): AsistenciaErrors, Exceptions, Responses, UseCase, ROLES_CAPTURA, ROLES_DESHACER, Get, Inject (+43 more)
+Nodes (46): ROLES_CAPTURA, ROLES_DESHACER, Inject, ActualizarTurnoDto, AsistenciaResponseDto, ComensalRefDto, ListarTurnosQueryDto, ObtenerTurnoQueryDto (+38 more)
 
-### Community 2 - "Asistencia — Hooks de API Web"
-Cohesion: 0.07
-Nodes (47): Avatar(), AvatarFallback(), AvatarImage(), Textarea(), buildQuery(), QK, useActualizarTurno(), useAsignarVoluntario() (+39 more)
+### Community 4 - "api-client.ts"
+Cohesion: 0.06
+Nodes (63): Avatar(), AvatarFallback(), AvatarImage(), Card(), CardContent(), CardDescription(), CardHeader(), CardTitle() (+55 more)
 
-### Community 3 - "Bienhechores — Controller CRUD"
-Cohesion: 0.08
-Nodes (31): BienhechoresController, ApiTags, Body, Controller, Delete, Get, Inject, Param (+23 more)
-
-### Community 4 - "Inventario — Hooks de API Web"
-Cohesion: 0.08
-Nodes (41): SelectContent(), SelectItem(), SelectTrigger(), SelectValue(), buildQuery(), QK, useActualizarInventarioItem(), useCategorias() (+33 more)
-
-### Community 5 - "Casos de Uso — Constructores (Asistencia/Inventario)"
-Cohesion: 0.08
-Nodes (18): Exceptions, InventarioErrors, Responses, RegistrarInsumoTurnoArgs, EliminarInventarioItemUseCase, Injectable, LOTE_SELECT, LoteConRelaciones (+10 more)
-
-### Community 6 - "UI — EmptyState y AlertDialog"
-Cohesion: 0.18
-Nodes (24): EmptyState(), EmptyStateProps, AlertDialog(), AlertDialogAction(), AlertDialogCancel(), AlertDialogContent(), AlertDialogDescription(), AlertDialogFooter() (+16 more)
-
-### Community 7 - "UI — Button, Calendar, Card, Input"
-Cohesion: 0.14
-Nodes (26): Button(), buttonVariants, Calendar(), Card(), CardContent(), CardDescription(), CardHeader(), CardTitle() (+18 more)
-
-### Community 8 - "Dashboard — DTOs y Usecase"
-Cohesion: 0.09
-Nodes (24): now(), AsistenciaResumenDto, DonativosResumenDto, ResumenDashboardResponseDto, ApiProperty, ObtenerResumenDashboardUseCase, Injectable, ProximoAVencerResponseDto (+16 more)
-
-### Community 9 - "UI — Avatar, Card, Command (variantes)"
-Cohesion: 0.09
-Nodes (32): AlertDialogMedia(), AlertDialogOverlay(), AvatarBadge(), AvatarGroup(), AvatarGroupCount(), CalendarDayButton(), CardAction(), CardFooter() (+24 more)
-
-### Community 10 - "Comensales — Controller y Upload"
-Cohesion: 0.09
-Nodes (24): ALLOWED_MIME_TYPES, ImageUploadInterceptor(), ROLES_ESCRITURA, ROLES_LECTURA, Inject, ActualizarComensalUseCase, Injectable, CrearComensalUseCase (+16 more)
-
-### Community 11 - "Inventario — Catálogos DTO y Controller"
+### Community 5 - "PrismaService"
 Cohesion: 0.10
-Nodes (19): CategoriaInventarioResponseDto, MotivoMovimientoResponseDto, ApiProperty, UbicacionResponseDto, UnidadMedidaResponseDto, Inject, ActualizarInventarioItemUseCase, Injectable (+11 more)
+Nodes (23): AsistenciaErrors, Exceptions, Responses, Exceptions, InventarioErrors, Responses, UseCase, AsignarVoluntarioTurnoArgs (+15 more)
 
-### Community 12 - "Usuarios — DTO y Usecases"
-Cohesion: 0.11
-Nodes (20): ActualizarUsuarioDto, CrearUsuarioDto, ApiProperty, IsBoolean, IsEnum, IsNotEmpty, IsOptional, IsString (+12 more)
+### Community 6 - "ComensalDetalleView.tsx"
+Cohesion: 0.18
+Nodes (30): EmptyState(), EmptyStateProps, AlertDialog(), AlertDialogAction(), AlertDialogCancel(), AlertDialogContent(), AlertDialogDescription(), AlertDialogFooter() (+22 more)
 
-### Community 13 - "UI — Separator y Sheet"
-Cohesion: 0.08
-Nodes (25): Separator(), Sheet(), SheetContent(), SheetDescription(), SheetFooter(), SheetHeader(), SheetOverlay(), SheetTitle() (+17 more)
-
-### Community 14 - "Inventario — Item DTO"
-Cohesion: 0.16
-Nodes (21): ActualizarInventarioItemDto, CategoriaRefDto, CrearInventarioItemDto, InventarioItemResponseDto, ListarInventarioItemsQueryDto, ApiProperty, IsBoolean, IsInt (+13 more)
-
-### Community 15 - "Auth — Controller y Service"
-Cohesion: 0.15
-Nodes (16): AuthErrors, Exceptions, Responses, Get, AuthService, Injectable, AuthUser, AuthenticatedUser (+8 more)
-
-### Community 16 - "Comensales — Errores y Storage Local"
-Cohesion: 0.11
-Nodes (15): ComensalErrors, Exceptions, Responses, LocalStorageService, Injectable, IStorageService, STORAGE_SERVICE, ExpedienteComensalPdf (+7 more)
-
-### Community 17 - "apps/web — devDependencies"
+### Community 7 - "sidebar.tsx"
 Cohesion: 0.06
-Nodes (31): devDependencies, eslint, @eslint/js, eslint-plugin-react-hooks, eslint-plugin-react-refresh, globals, @playwright/test, prettier (+23 more)
+Nodes (40): AppLayout(), iniciales(), NAV_ITEMS, NavItem, Separator(), Sheet(), SheetContent(), SheetDescription() (+32 more)
 
-### Community 18 - "Reportes — API Web y UI Tabs"
-Cohesion: 0.11
-Nodes (26): Tabs(), TabsContent(), TabsList(), tabsListVariants, TabsTrigger(), buildQuery(), useReporteAsistencia(), useReporteDonativos() (+18 more)
-
-### Community 19 - "Comensales — Controller (uploads/expediente)"
-Cohesion: 0.14
-Nodes (17): ApiOkSchemaResponse(), ComensalesController, ApiConsumes, ApiTags, Body, Controller, Delete, Get (+9 more)
-
-### Community 20 - "Módulos NestJS — Registro en AppModule"
+### Community 8 - "usuarios.controller.ts"
 Cohesion: 0.09
-Nodes (24): StorageModule, Global, Module, AsistenciaModule, Module, AuthModule, Module, BienhechoresModule (+16 more)
+Nodes (25): prisma, AuthErrors, Exceptions, Responses, ActualizarUsuarioDto, CrearUsuarioDto, ApiProperty, IsBoolean (+17 more)
 
-### Community 21 - "Common — Response DTO y Filtros de Error"
-Cohesion: 0.11
-Nodes (15): AppModule, Module, ErrorResponseDto, SchemaResponse, ApiProperty, CommonErrors, Exceptions, Responses (+7 more)
+### Community 9 - "PaginationQueryDto"
+Cohesion: 0.09
+Nodes (33): paginado(), PaginatedDto, PaginationMetaDto, PaginationQueryDto, toSkipTake(), ApiProperty, IsInt, IsOptional (+25 more)
 
-### Community 22 - "Web — App Shell y Páginas"
-Cohesion: 0.14
-Nodes (19): AppLayout(), LoginPage(), ComensalesPage(), useResumenDashboard(), DashboardPage(), diasRestantes(), formatFecha(), formatMoneda() (+11 more)
-
-### Community 23 - "apps/web — tsconfig.app compilerOptions"
-Cohesion: 0.07
-Nodes (26): compilerOptions, allowImportingTsExtensions, erasableSyntaxOnly, jsx, lib, module, moduleDetection, moduleResolution (+18 more)
-
-### Community 24 - "CLAUDE.md — Documentación del proyecto"
-Cohesion: 0.12
-Nodes (25): apps/api (CLAUDE.md), Variables de entorno API (.env.example), Errores catalogados en common/errors/<x>.errors.ts, Patrón de módulo: un caso de uso por archivo, prisma/schema.prisma — punto de sincronización, Tests: jest unitarios + e2e (requiere Postgres), UseCase<T,U> (use-case.interface.ts), apps/web (CLAUDE.md) (+17 more)
-
-### Community 25 - "apps/web — dependencies"
-Cohesion: 0.08
-Nodes (25): dependencies, @base-ui/react, class-variance-authority, clsx, @comedor-solanus/shared, date-fns, @fontsource-variable/inter, react-day-picker (+17 more)
-
-### Community 26 - "Dashboard/Voluntarios — Types y API Web"
-Cohesion: 0.11
-Nodes (18): ProximoAVencer, ResumenDashboard, StockBajoItem, ActualizarVoluntarioInput, API_ORIGIN, CrearVoluntarioInput, ErrorResponseBody, ListarVoluntariosParams (+10 more)
-
-### Community 27 - "Reportes — DTOs"
-Cohesion: 0.16
-Nodes (16): AsistenciaPorDiaDto, DonativosPorBienhechorDto, ExistenciaReporteDto, MovimientoResumenDto, RangoFechaQueryDto, ReporteAsistenciaResponseDto, ReporteDonativosResponseDto, ReporteInventarioResponseDto (+8 more)
-
-### Community 28 - "Comensales — DTO crear/actualizar"
+### Community 10 - "comensales/api.ts"
 Cohesion: 0.15
-Nodes (19): Query, ActualizarComensalDto, CartaUsoImagenResponseDto, ComensalTutorResumenDto, CrearComensalDto, FirmarCartaUsoImagenDto, ListarComensalesQueryDto, ApiProperty (+11 more)
+Nodes (19): construirQueryString(), queryKeys, SERVER_ROOT_URL, subirArchivo(), useComensales(), useSubirArchivoComensal(), useSubirFotoComensal(), useSubirIneFrenteComensal() (+11 more)
 
-### Community 29 - "UI — Combobox"
+### Community 11 - "cn"
+Cohesion: 0.07
+Nodes (35): AlertDialogMedia(), AlertDialogOverlay(), AvatarBadge(), AvatarGroup(), AvatarGroupCount(), CardAction(), CardFooter(), Command() (+27 more)
+
+### Community 12 - "useAuth"
+Cohesion: 0.12
+Nodes (19): LoginPage(), useResumenDashboard(), StatCard(), StatCardProps, TONE_CLASSES, DashboardPage(), diasRestantes(), formatFecha() (+11 more)
+
+### Community 13 - "comensales.controller.ts"
+Cohesion: 0.07
+Nodes (25): ImageUploadInterceptor(), ROLES_ESCRITURA, ROLES_LECTURA, Inject, ActualizarComensalUseCase, Injectable, CrearComensalUseCase, Injectable (+17 more)
+
+### Community 14 - "ComensalFormView.tsx"
+Cohesion: 0.22
+Nodes (12): useActualizarComensal(), useComensal(), useCrearComensal(), ComensalesListView(), ComensalesPage(), ComensalFormValues, ComensalFormView(), comensalSchema (+4 more)
+
+### Community 15 - "reportes.controller.ts"
+Cohesion: 0.11
+Nodes (24): AsistenciaPorDiaDto, DonativosPorBienhechorDto, ExistenciaReporteDto, MovimientoResumenDto, MovimientosPorTipoDto, RangoFechaQueryDto, ReporteAsistenciaResponseDto, ReporteDonativosResponseDto (+16 more)
+
+### Community 16 - "inventario/api.ts"
+Cohesion: 0.04
+Nodes (59): LineaForm, nuevaLinea(), RegistrarDonativoDialog(), limpiar(), registrar(), EditarCategoriaDialog(), EditarUnidadDialog(), EditarUnidadDialogProps (+51 more)
+
+### Community 17 - "combobox.tsx"
 Cohesion: 0.13
 Nodes (17): ComboboxChip(), ComboboxChips(), ComboboxChipsInput(), ComboboxClear(), ComboboxContent(), ComboboxEmpty(), ComboboxGroup(), ComboboxInput() (+9 more)
 
-### Community 30 - "apps/web — components.json (shadcn)"
+### Community 18 - "RegistrarEntradaPage.tsx"
+Cohesion: 0.12
+Nodes (43): Button(), DatePicker(), Dialog(), DialogContent(), DialogDescription(), DialogFooter(), DialogHeader(), DialogTitle() (+35 more)
+
+### Community 19 - "AsistenciaPage.tsx"
+Cohesion: 0.07
+Nodes (39): Tabs(), TabsContent(), TabsList(), tabsListVariants, TabsTrigger(), buildQuery(), useTurno(), useTurnosDelDia() (+31 more)
+
+### Community 20 - "devDependencies"
+Cohesion: 0.06
+Nodes (31): devDependencies, eslint-config-prettier, @eslint/eslintrc, eslint-plugin-prettier, jest, @nestjs/cli, @nestjs/testing, source-map-support (+23 more)
+
+### Community 21 - "crear-producto.usecase.ts"
+Cohesion: 0.15
+Nodes (19): ActualizarProductoDto, CrearProductoDto, ListarProductosQueryDto, ProductoResponseDto, ApiProperty, IsBoolean, IsInt, IsOptional (+11 more)
+
+### Community 22 - "VoluntariosListView.tsx"
+Cohesion: 0.09
+Nodes (22): useRegistrarInsumoTurno(), InsumosTurno(), StockMinimoTab(), useActualizarVariante(), useLotesVariante(), useMovimientos(), useProducto(), useVariante() (+14 more)
+
+### Community 23 - "subir-ine-frente-comensal.usecase.ts"
+Cohesion: 0.17
+Nodes (13): ComensalErrors, Exceptions, Responses, IStorageService, STORAGE_SERVICE, ALLOWED_MIME_TYPES, extensionFromMimeType(), ComensalDetalleResponseDto (+5 more)
+
+### Community 24 - "input-group.tsx"
+Cohesion: 0.24
+Nodes (9): InputGroup(), InputGroupAddon(), inputGroupAddonVariants, InputGroupButton(), inputGroupButtonVariants, InputGroupInput(), InputGroupText(), InputGroupTextarea() (+1 more)
+
+### Community 25 - "ComensalesController"
+Cohesion: 0.19
+Nodes (16): ApiConsumes, ComensalesController, ApiOkSchemaResponse, ApiTags, Auth, Body, Controller, Delete (+8 more)
+
+### Community 26 - "AuthenticatedUser"
+Cohesion: 0.12
+Nodes (14): Get, Inject, AuthService, Injectable, AuthenticatedUser, SignInDto, SignInResponseDto, ApiProperty (+6 more)
+
+### Community 27 - "ComensalDetalleView"
+Cohesion: 0.25
+Nodes (11): resolverUrlArchivo(), useAsistenciasComensal(), useEliminarComensal(), useFirmarCartaUsoImagen(), ComensalDetalleView(), handleDescargarPdf(), handleEliminar(), handleFirmarCarta() (+3 more)
+
+### Community 28 - "compilerOptions"
+Cohesion: 0.07
+Nodes (26): compilerOptions, allowImportingTsExtensions, erasableSyntaxOnly, jsx, lib, module, moduleDetection, moduleResolution (+18 more)
+
+### Community 29 - "devDependencies"
+Cohesion: 0.08
+Nodes (25): eslint, globals, devDependencies, eslint, eslint-plugin-react-hooks, eslint-plugin-react-refresh, globals, @playwright/test (+17 more)
+
+### Community 30 - "ApiOkSchemaResponse"
+Cohesion: 0.12
+Nodes (18): ApiOkSchemaResponse(), Auth(), DashboardController, ApiTags, Controller, Get, Inject, Query (+10 more)
+
+### Community 31 - "registrar-entrada.usecase.ts"
+Cohesion: 0.16
+Nodes (15): RegistrarDonativoResponseDto, LoteBienhechorRefDto, LoteResponseDto, LoteVarianteRefDto, ApiProperty, validarCategoria(), RegistrarDonativoUseCase, Injectable (+7 more)
+
+### Community 32 - "IdParamDto"
+Cohesion: 0.18
+Nodes (13): EmisorParamDto, EmisorRelationParamDto, IdParamDto, ApiProperty, AsistenciaController, ApiTags, Body, Controller (+5 more)
+
+### Community 33 - "inventario/dto/reportes.dto.ts"
+Cohesion: 0.14
+Nodes (14): AsistenciaResumenDto, DonativosResumenDto, ResumenDashboardResponseDto, ApiProperty, ObtenerResumenDashboardUseCase, Injectable, ProximoAVencerResponseDto, StockBajoResponseDto (+6 more)
+
+### Community 34 - "components.json"
 Cohesion: 0.09
 Nodes (21): aliases, components, hooks, lib, ui, utils, iconLibrary, menuAccent (+13 more)
 
-### Community 31 - "Auth — Decorators y Guards"
+### Community 35 - "bienhechores.controller.ts"
+Cohesion: 0.25
+Nodes (12): ActualizarBienhechorDto, BienhechorResponseDto, CrearBienhechorDto, ListarBienhechoresQueryDto, ApiProperty, IsBoolean, IsOptional, IsString (+4 more)
+
+### Community 36 - "variante.dto.ts"
 Cohesion: 0.16
-Nodes (8): Auth(), META_ROLES, RoleProtected(), ControladorConMetodoProtegido, ControladorProtegidoPorClase, SinRolesController, Injectable, UserRoleGuard
+Nodes (18): CategoriaRefDto, ActualizarVarianteDto, CrearVarianteDto, ListarVariantesQueryDto, ProductoRefDto, ApiProperty, IsBoolean, IsEnum (+10 more)
 
-### Community 32 - "Inventario — Entrada DTO (lotes)"
-Cohesion: 0.11
-Nodes (18): LoteBienhechorRefDto, LoteItemRefDto, LoteResponseDto, RegistrarEntradaDto, ApiProperty, IsDateString, IsEnum, IsInt (+10 more)
-
-### Community 33 - "apps/api — tsconfig compilerOptions"
+### Community 37 - "compilerOptions"
 Cohesion: 0.10
 Nodes (20): compilerOptions, allowSyntheticDefaultImports, baseUrl, declaration, emitDecoratorMetadata, esModuleInterop, experimentalDecorators, forceConsistentCasingInFileNames (+12 more)
 
-### Community 34 - "apps/web — tsconfig.node compilerOptions"
+### Community 38 - "compilerOptions"
 Cohesion: 0.10
 Nodes (20): compilerOptions, allowImportingTsExtensions, erasableSyntaxOnly, lib, module, moduleDetection, moduleResolution, noEmit (+12 more)
 
-### Community 35 - "Misceláneo"
-Cohesion: 0.21
-Nodes (13): EmisorParamDto, EmisorRelationParamDto, IdParamDto, ApiProperty, AsistenciaController, ApiTags, Body, Controller (+5 more)
+### Community 39 - "auth.decorator.ts"
+Cohesion: 0.17
+Nodes (7): META_ROLES, RoleProtected(), ControladorConMetodoProtegido, ControladorProtegidoPorClase, SinRolesController, Injectable, UserRoleGuard
 
-### Community 36 - "Inventario Controller Inventariocontroller"
-Cohesion: 0.21
-Nodes (8): ApiOkSchemaArrayResponse(), InventarioController, ApiTags, Controller, Delete, Get, Param, Query
+### Community 40 - "response.dto.ts"
+Cohesion: 0.16
+Nodes (15): ApiResponseProperty, ApiBadRequestResponseError(), ApiForbiddenResponseError(), ApiInternalServerErrorResponseError(), ApiMultiResponseErrorDecorator(), ApiNotFoundResponseError(), ApiNotImplementedResponseError(), ApiUnauthorizedResponseError() (+7 more)
 
-### Community 37 - "Components Ui"
+### Community 41 - "app.module.ts"
+Cohesion: 0.11
+Nodes (17): AsistenciaModule, Module, BienhechoresModule, Module, ComensalesModule, Module, DashboardModule, Module (+9 more)
+
+### Community 42 - "BienhechoresController"
 Cohesion: 0.12
-Nodes (18): iniciales(), NAV_ITEMS, NavItem, Sidebar(), SidebarContent(), SidebarFooter(), SidebarGroup(), SidebarGroupContent() (+10 more)
+Nodes (11): BienhechoresController, ApiTags, Body, Controller, Delete, Get, Param, Patch (+3 more)
 
-### Community 38 - "Claude Modulos"
-Cohesion: 0.22
-Nodes (19): Módulos existentes: auth, usuarios, comensales, asistencia, inventario, bienhechores, voluntarios, dashboard, reportes, Arquitectura del repositorio (sección 3), Módulo Asistencia de comensales (4.2), Prompt Comedor Solanus — brief funcional, Módulo Comensales (4.1), Módulo Dashboard (4.6), Entregables esperados (sección 10), Estrategia de subagentes y trabajo en paralelo (3.1) (+11 more)
+### Community 43 - "date-picker.tsx"
+Cohesion: 0.19
+Nodes (15): buttonVariants, Calendar(), CalendarDayButton(), DatePickerProps, fechaAIso(), isoAFecha(), DateRangePicker(), DateRangePickerProps (+7 more)
 
-### Community 39 - "Comensales Utils"
-Cohesion: 0.29
-Nodes (10): ComensalResponseDto, ComensalDetalle, ComensalListado, comensalListSelect, mapComensalResponse(), tutorResumenSelect, calcularEdad(), esMayorDeEdad() (+2 more)
+### Community 44 - "AuthProvider.tsx"
+Cohesion: 0.27
+Nodes (9): AuthProvider(), descargarExpedientePdf(), subirFoto(), getToken(), request(), setToken(), AuthContext, AuthContextValue (+1 more)
 
-### Community 40 - "Package Dependencies"
+### Community 45 - "generar-pdf-expediente.usecase.ts"
+Cohesion: 0.17
+Nodes (16): now(), ComensalResponseDto, ASSETS_DIR, ComensalExpediente, EXPEDIENTE_SELECT, ExpedienteComensalPdf, MIME_POR_EXTENSION, ComensalDetalle (+8 more)
+
+### Community 46 - "theme-provider.tsx"
+Cohesion: 0.17
+Nodes (15): App(), disableTransitionsTemporarily(), getSystemTheme(), isEditableTarget(), isTheme(), ResolvedTheme, Theme, THEME_VALUES (+7 more)
+
+### Community 47 - "dependencies"
 Cohesion: 0.12
-Nodes (17): dependencies, class-transformer, class-validator, @nestjs/jwt, @nestjs/platform-express, @nestjs/serve-static, passport-jwt, puppeteer (+9 more)
+Nodes (17): dependencies, bcrypt, dayjs, @nestjs/config, @nestjs/core, @nestjs/serve-static, passport, @prisma/client (+9 more)
 
-### Community 41 - "Package Scripts"
+### Community 48 - "scripts"
 Cohesion: 0.12
 Nodes (17): scripts, build, dev, format, lint, prisma:deploy, prisma:generate, prisma:migrate (+9 more)
 
-### Community 42 - "Features Comensales"
-Cohesion: 0.19
-Nodes (15): construirQueryString(), queryKeys, SERVER_ROOT_URL, subirArchivo(), useSubirArchivoComensal(), useSubirFotoComensal(), useSubirIneFrenteComensal(), useSubirIneReversoComensal() (+7 more)
+### Community 49 - "ApiOkSchemaArrayResponse"
+Cohesion: 0.13
+Nodes (10): ApiOkSchemaArrayResponse(), ApiTags, Body, Controller, Delete, Get, Param, Patch (+2 more)
 
-### Community 43 - "Package"
-Cohesion: 0.12
-Nodes (16): description, engines, node, name, packageManager, private, scripts, build (+8 more)
+### Community 50 - "firmar-carta-uso-imagen.usecase.ts"
+Cohesion: 0.29
+Nodes (5): FirmarCartaUsoImagenDto, IsBoolean, FirmarCartaUsoImagenArgs, FirmarCartaUsoImagenUseCase, Injectable
 
-### Community 44 - "Inventario Movimiento"
-Cohesion: 0.17
-Nodes (13): ListarMovimientosQueryDto, MovimientoItemRefDto, MovimientoMotivoRefDto, MovimientoResponseDto, MovimientoUsuarioRefDto, ApiProperty, IsDateString, IsEnum (+5 more)
-
-### Community 45 - "Components Ui Dropdown Menu"
-Cohesion: 0.12
-Nodes (9): DropdownMenuCheckboxItem(), DropdownMenuContent(), DropdownMenuItem(), DropdownMenuLabel(), DropdownMenuRadioItem(), DropdownMenuSeparator(), DropdownMenuShortcut(), DropdownMenuSubContent() (+1 more)
-
-### Community 46 - "Apiresponseproperty"
+### Community 51 - "comensal.dto.ts"
 Cohesion: 0.21
-Nodes (11): ApiResponseProperty, ApiBadRequestResponseError(), ApiForbiddenResponseError(), ApiInternalServerErrorResponseError(), ApiMultiResponseErrorDecorator(), ApiNotFoundResponseError(), ApiNotImplementedResponseError(), ApiUnauthorizedResponseError() (+3 more)
+Nodes (16): ActualizarComensalDto, AsistenciaComensalUsuarioRefDto, CartaUsoImagenResponseDto, ComensalTutorResumenDto, CrearComensalDto, ListarComensalesQueryDto, ApiProperty, IsInt (+8 more)
 
-### Community 47 - "Prompt Entidad"
-Cohesion: 0.19
-Nodes (15): Estudio Socioeconómico y Despensas — diferido, no implementar, Despensas (futuro, sección 11.2), Módulo Despensas — diferido (4.5), Entidad Asistencia, Entidad Bienhechor (donador), Entidad CartaUsoImagen, Entidad Comensal, Entidad InventarioItem (+7 more)
+### Community 52 - "usuarios/api.ts"
+Cohesion: 0.17
+Nodes (10): useActualizarUsuario(), useCrearUsuario(), useEliminarUsuario(), useUsuarios(), UsuarioFormDialog(), UsuarioFormDialogProps, ActualizarUsuarioInput, CrearUsuarioInput (+2 more)
 
-### Community 48 - "Misceláneo"
+### Community 53 - "package.json"
 Cohesion: 0.14
-Nodes (14): @Auth(...roles) requiere importar AuthModule, Commit c1323ba — fix interceptor no envuelve binarios, SchemaResponse vía response.interceptor.ts (binarios excluidos), Comandos propios: prisma:migrate, prisma:studio, prisma:seed, apps/api — Convenciones (README), schema.prisma — un solo dueño a la vez, Protección de rutas: @Auth combina JWT + UserRoleGuard, Respuesta uniforme { data, success, message } (+6 more)
+Nodes (13): prisma, description, engines, node, name, packageManager, pnpm, onlyBuiltDependencies (+5 more)
 
-### Community 49 - "Packages Shared"
-Cohesion: 0.21
-Nodes (10): AuthProvider(), setToken(), AuthContext, AuthContextValue, AuthenticatedUser, SignInRequest, SignInResponse, MODULOS_POR_ROL (+2 more)
+### Community 54 - "RegistrarDonativoDto"
+Cohesion: 0.20
+Nodes (14): LineaDonativoDto, RegistrarDonativoDto, ApiProperty, IsDateString, IsEnum, IsInt, IsNumber, IsOptional (+6 more)
 
-### Community 50 - "Comensales Generar Pdf"
-Cohesion: 0.21
-Nodes (5): PdfService, Injectable, GenerarPdfExpedienteUseCase, Inject, Injectable
-
-### Community 51 - "Dashboard Controller"
-Cohesion: 0.15
-Nodes (11): DashboardController, ApiTags, Controller, Get, Inject, Query, ResumenDashboardQueryDto, IsInt (+3 more)
-
-### Community 52 - "Usuarios Controller"
-Cohesion: 0.18
-Nodes (9): ApiTags, Body, Controller, Delete, Get, Param, Patch, Post (+1 more)
-
-### Community 53 - "Components Theme Provider"
-Cohesion: 0.21
-Nodes (11): disableTransitionsTemporarily(), getSystemTheme(), isEditableTarget(), isTheme(), ResolvedTheme, Theme, THEME_VALUES, ThemeProvider() (+3 more)
-
-### Community 54 - "Features Bienhechores"
-Cohesion: 0.23
-Nodes (10): RegistrarDonativoDialog(), limpiar(), registrar(), buildQuery(), useBienhechores(), useEliminarBienhechor(), BienhechoresListPage(), ActualizarBienhechorInput (+2 more)
-
-### Community 55 - "Package"
+### Community 55 - "apps/api (CLAUDE.md)"
 Cohesion: 0.17
-Nodes (11): name, private, scripts, build, dev, lint, preview, test:e2e (+3 more)
+Nodes (13): apps/api (CLAUDE.md), Variables de entorno API (.env.example), Errores catalogados en common/errors/<x>.errors.ts, Módulos existentes: auth, usuarios, comensales, asistencia, inventario, bienhechores, voluntarios, dashboard, reportes, Patrón de módulo: un caso de uso por archivo, common/pdf/pdf.service.ts (Puppeteer, expedientes PDF), Reusar antes de crear (utils, pdf, storage), common/storage/local-storage.service.ts + image-upload.interceptor.ts (+5 more)
 
-### Community 56 - "Misceláneo"
-Cohesion: 0.18
-Nodes (9): PdfModule, Global, Module, pnpm, onlyBuiltDependencies, prisma, @prisma/engines, puppeteer (+1 more)
+### Community 56 - "bienhechores/api.ts"
+Cohesion: 0.17
+Nodes (13): buildQuery(), useActualizarBienhechor(), useBienhechores(), useCrearBienhechor(), useEliminarBienhechor(), BienhechoresListPage(), BienhechorFormPage(), NuevoBienhechorDialog() (+5 more)
 
-### Community 57 - "Reportes Reporte"
-Cohesion: 0.18
-Nodes (7): Inject, ReporteAsistenciaUseCase, Injectable, ReporteDonativosUseCase, Injectable, ReporteInventarioUseCase, Injectable
+### Community 57 - "apps/web (CLAUDE.md)"
+Cohesion: 0.17
+Nodes (11): apps/web (CLAUDE.md), E2E: login-roles, comensal-expediente, asistencia-descuento, VITE_API_URL (.env.local), Librerías clave (TanStack Query, RHF+Zod, sonner, lucide-react, next-themes, cmdk...), Skills al trabajar en apps/web, Tailwind v4 CSS-first + shadcn/ui sobre Base UI (base-nova), Verificación: lint, typecheck, test:e2e, /logo-comedor.png (favicon) (+3 more)
 
-### Community 58 - "Readme"
-Cohesion: 0.22
-Nodes (11): Tailwind v4 CSS-first + shadcn/ui sobre Base UI (base-nova), Contrato de API (tipos compartidos en packages/shared), apps/web — Convenciones (README), Navegación por rol (nav-config.ts + puedeAcceder()), Paleta y tokens (src/index.css) — vino/marrón sobre crema, Rutas protegidas (ProtectedRoute.tsx con prop modulo), Componentes shadcn/ui (src/components/ui/, npx shadcn add), src/auth.ts (tipos de auth) (+3 more)
-
-### Community 59 - "E2e Asistencia"
-Cohesion: 0.18
+### Community 58 - "asistencia-descuento.spec.ts"
+Cohesion: 0.17
 Nodes (3): __dirname, FOTO_PRUEBA, CREDENCIALES
 
-### Community 60 - "Features Comensales"
-Cohesion: 0.22
-Nodes (9): useActualizarComensal(), useComensal(), useCrearComensal(), ComensalFormView(), comensalSchema, fechaISOSinHora(), calcularEdad(), esMayorDeEdad() (+1 more)
+### Community 59 - "ErrorResponseDto"
+Cohesion: 0.24
+Nodes (6): ErrorResponseDto, CommonErrors, Exceptions, Responses, HttpExceptionFilter, Catch
 
-### Community 61 - "Claude Seed"
+### Community 60 - "PdfService"
+Cohesion: 0.22
+Nodes (6): PdfModule, Global, Module, PdfService, Injectable, puppeteer
+
+### Community 61 - "dependencies"
+Cohesion: 0.18
+Nodes (11): dependencies, @base-ui/react, clsx, shadcn, @tailwindcss/vite, zod, @base-ui/react, clsx (+3 more)
+
+### Community 62 - "Estado del proyecto (fases)"
 Cohesion: 0.20
 Nodes (10): prisma/seed.ts (admin/operativo/captura, Solanus2026!), Comedor Solanus (README raíz), Estado del proyecto (fases), Fase 0 — Andamiaje del monorepo (completada), Fase 1 — Auth, roles, usuarios, layout (completada), Fase 2 — Comensales, Inventario, Voluntarios, Fase 3 — Turno de comida (asistencia + descuento), Fase 4 — Dashboard y reportes (+2 more)
 
-### Community 62 - "Features Comensales Comensaldetalleview"
+### Community 63 - "apps/web — Convenciones (README)"
 Cohesion: 0.29
-Nodes (10): resolverUrlArchivo(), useEliminarComensal(), useFirmarCartaUsoImagen(), ComensalDetalleView(), handleDescargarPdf(), handleEliminar(), handleFirmarCarta(), manejarErrorMutacion() (+2 more)
+Nodes (10): Contrato de API (tipos compartidos en packages/shared), apps/web — Convenciones (README), Navegación por rol (nav-config.ts + puedeAcceder()), Paleta y tokens (src/index.css) — vino/marrón sobre crema, Rutas protegidas (ProtectedRoute.tsx con prop modulo), src/auth.ts (tipos de auth), src/index.ts (barrel export), packages/shared (CLAUDE.md) (+2 more)
 
-### Community 63 - "Prompt Emilkowalski Skills"
-Cohesion: 0.20
-Nodes (10): emilkowalski/skills (pulido de animación), example-skills@anthropic-agent-skills, ConardLi/garden-skills (excluido explícitamente), impeccable (anti-slop UI detector), Setup de skills y plugins (sección 0), superpowers@superpowers-marketplace (TDD, planeación por fases), leonxlnx/taste-skill (excluido explícitamente), ui-ux-pro-max@ui-ux-pro-max-skill (+2 more)
+### Community 64 - "apps/api — Convenciones (README)"
+Cohesion: 0.22
+Nodes (9): @Auth(...roles) requiere importar AuthModule, Commit c1323ba — fix interceptor no envuelve binarios, prisma/schema.prisma — punto de sincronización, SchemaResponse vía response.interceptor.ts (binarios excluidos), Comandos propios: prisma:migrate, prisma:studio, prisma:seed, apps/api — Convenciones (README), schema.prisma — un solo dueño a la vez, Protección de rutas: @Auth combina JWT + UserRoleGuard (+1 more)
 
-### Community 64 - "Comensales"
-Cohesion: 0.44
-Nodes (3): extensionFromMimeType(), ComensalDetalleResponseDto, mapComensalDetalleResponse()
+### Community 65 - "nest-cli.json"
+Cohesion: 0.22
+Nodes (8): collection, compilerOptions, assets, deleteOutDir, watchAssets, $schema, sourceRoot, common/pdf/assets/**/*
 
-### Community 65 - "Components Ui Input Group"
+### Community 66 - "app.e2e-spec.ts"
 Cohesion: 0.28
-Nodes (8): InputGroup(), InputGroupAddon(), inputGroupAddonVariants, InputGroupButton(), inputGroupButtonVariants, InputGroupInput(), InputGroupText(), InputGroupTextarea()
+Nodes (5): AppModule, Module, SchemaResponse, ApiProperty, ApiResponseInterceptor
 
-### Community 66 - "Packages Shared Package"
+### Community 67 - "GenerarPdfExpedienteUseCase"
+Cohesion: 0.33
+Nodes (3): GenerarPdfExpedienteUseCase, Inject, Injectable
+
+### Community 68 - "Comedor Solanus (root CLAUDE.md)"
+Cohesion: 0.25
+Nodes (9): Amigos de los Capuchinos ABP, Comedor Comunitario Beato Solanus Casey, Comedor Solanus (root CLAUDE.md), Estudio Socioeconómico y Despensas — diferido, no implementar, Consultar graphify antes de explorar, Monorepo pnpm (apps/* + packages/*), Puertos no estándar a propósito (5442/3210/5173/5183), Skills y plugins de este proyecto (+1 more)
+
+### Community 69 - "scripts"
+Cohesion: 0.22
+Nodes (9): scripts, build, db:down, db:up, dev, dev:api, dev:web, lint (+1 more)
+
+### Community 70 - "shared/package.json"
 Cohesion: 0.22
 Nodes (8): description, exports, main, name, private, type, types, version
 
-### Community 67 - "Package"
+### Community 71 - "api/package.json"
 Cohesion: 0.25
 Nodes (7): description, license, name, prisma, seed, private, version
 
-### Community 68 - "Asistencia"
+### Community 72 - "main.ts"
+Cohesion: 0.32
+Nodes (4): MulterExceptionFilter, Catch, config, swaggerSetupOptions
+
+### Community 73 - "RegistrarAsistenciaDto"
 Cohesion: 0.43
 Nodes (7): AsignarVoluntarioDto, RegistrarAsistenciaDto, RegistrarInsumoTurnoDto, ApiProperty, IsEnum, IsInt, IsOptional
 
-### Community 69 - "Inventario Salida"
+### Community 74 - "ActualizarBienhechorUseCase"
 Cohesion: 0.25
-Nodes (7): RegistrarSalidaDto, ApiProperty, IsInt, IsNumber, IsOptional, IsPositive, IsString
+Nodes (5): Inject, ActualizarBienhechorUseCase, Injectable, ObtenerBienhechorUseCase, Injectable
 
-### Community 70 - "Tsconfig Build"
+### Community 75 - "exclude"
 Cohesion: 0.25
 Nodes (7): exclude, extends, dist, node_modules, **/*spec.ts, test, ./tsconfig.json
 
-### Community 71 - "Misceláneo"
-Cohesion: 0.29
-Nodes (7): devDependencies, eslint-plugin-prettier, ts-jest, tsconfig-paths, eslint-plugin-prettier, ts-jest, tsconfig-paths
+### Community 76 - "permisos.ts"
+Cohesion: 0.27
+Nodes (7): SignInRequest, SignInResponse, Modulo, MODULOS_POR_ROL, TODOS_LOS_ROLES, UserRole, UserRoles
 
-### Community 72 - "Components Ui Popover"
+### Community 77 - "scripts"
 Cohesion: 0.29
-Nodes (6): Popover(), PopoverContent(), PopoverDescription(), PopoverHeader(), PopoverTitle(), PopoverTrigger()
+Nodes (7): scripts, build, dev, lint, preview, test:e2e, typecheck
 
-### Community 73 - "Nest Cli"
+### Community 79 - "ListarBienhechoresUseCase"
 Cohesion: 0.33
-Nodes (5): collection, compilerOptions, deleteOutDir, $schema, sourceRoot
+Nodes (3): Query, ListarBienhechoresUseCase, Injectable
 
-### Community 74 - "Auth Controller"
+### Community 80 - "web/package.json"
 Cohesion: 0.40
-Nodes (4): AuthController, ApiTags, Controller, Inject
+Nodes (4): name, private, type, version
 
-### Community 75 - "Misceláneo"
+### Community 81 - "alert.tsx"
 Cohesion: 0.50
-Nodes (3): App(), Toaster(), queryClient
+Nodes (4): Alert(), AlertDescription(), AlertTitle(), alertVariants
 
-### Community 76 - "Tsconfig"
+### Community 82 - "web/tsconfig.json"
 Cohesion: 0.40
 Nodes (4): compilerOptions, paths, files, references
 
-### Community 77 - "Claude"
+### Community 83 - "Estructura por feature (src/features/<modulo>)"
 Cohesion: 0.50
 Nodes (4): DTOs con class-validator + @ApiProperty (Swagger /api/docs), src/lib/api-client.ts — único punto de red, auth-context.ts + ProtectedRoute.tsx (guard por rol), Estructura por feature (src/features/<modulo>)
 
-### Community 80 - "Index"
-Cohesion: 0.50
-Nodes (3): /logo-comedor.png (favicon), /src/main.tsx (entry script), #root mount point
+### Community 86 - "tooltip.tsx"
+Cohesion: 0.40
+Nodes (3): Tooltip(), TooltipContent(), TooltipTrigger()
 
-### Community 81 - "Features"
-Cohesion: 0.50
-Nodes (4): descargarExpedientePdf(), subirFoto(), getToken(), request()
-
-### Community 83 - "Claude"
+### Community 87 - "@eslint/js"
 Cohesion: 0.67
-Nodes (3): common/pdf/pdf.service.ts (Puppeteer, expedientes PDF), Reusar antes de crear (utils, pdf, storage), common/storage/local-storage.service.ts + image-upload.interceptor.ts
+Nodes (3): @eslint/js, @eslint/js, @eslint/js
+
+### Community 88 - "@types/node"
+Cohesion: 0.67
+Nodes (3): @types/node, @types/node, @types/node
+
+### Community 89 - "typescript"
+Cohesion: 0.67
+Nodes (3): typescript, typescript, typescript
+
+### Community 90 - "typescript-eslint"
+Cohesion: 0.67
+Nodes (3): typescript-eslint, typescript-eslint, typescript-eslint
+
+### Community 91 - "StorageModule"
+Cohesion: 0.67
+Nodes (3): StorageModule, Global, Module
 
 ## Knowledge Gaps
-- **379 isolated node(s):** `$schema`, `collection`, `sourceRoot`, `deleteOutDir`, `name` (+374 more)
+- **372 isolated node(s):** `ActualizarCatalogoArgs`, `ComensalFormValues`, `CartaUsoImagen`, `ComensalTutorResumen`, `SignInRequest` (+367 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **53 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **44 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `PrismaService` connect `Casos de Uso — Constructores (Asistencia/Inventario)` to `Inventario — Entrada DTO (lotes)`, `Asistencia — Controller y Turnos`, `Voluntarios — Errores y DTOs`, `Bienhechores — Controller CRUD`, `Comensales Utils`, `Dashboard — DTOs y Usecase`, `Comensales — Controller y Upload`, `Inventario — Catálogos DTO y Controller`, `Inventario Movimiento`, `Usuarios — DTO y Usecases`, `Inventario — Item DTO`, `Auth Strategies Jwt Strategy`, `Auth — Controller y Service`, `Comensales — Errores y Storage Local`, `Comensales Generar Pdf`, `Reportes Reporte`, `Comensales — DTO crear/actualizar`?**
-  _High betweenness centrality (0.040) - this node is a cross-community bridge._
-- **Why does `UseCase` connect `Asistencia — Controller y Turnos` to `Inventario — Entrada DTO (lotes)`, `Voluntarios — Errores y DTOs`, `Bienhechores — Controller CRUD`, `Casos de Uso — Constructores (Asistencia/Inventario)`, `Comensales Utils`, `Dashboard — DTOs y Usecase`, `Comensales — Controller y Upload`, `Inventario — Catálogos DTO y Controller`, `Inventario Movimiento`, `Usuarios — DTO y Usecases`, `Inventario — Item DTO`, `Auth — Controller y Service`, `Comensales — Errores y Storage Local`, `Comensales Generar Pdf`, `Reportes Reporte`, `Comensales — DTO crear/actualizar`?**
-  _High betweenness centrality (0.038) - this node is a cross-community bridge._
-- **Why does `cn()` connect `UI — Avatar, Card, Command (variantes)` to `Components Ui Input Group`, `Asistencia — Hooks de API Web`, `Inventario — Hooks de API Web`, `Components Ui`, `UI — EmptyState y AlertDialog`, `UI — Button, Calendar, Card, Input`, `Components Ui Popover`, `Components Ui Dropdown Menu`, `UI — Separator y Sheet`, `Reportes — API Web y UI Tabs`, `Features Comensales`, `UI — Combobox`?**
-  _High betweenness centrality (0.025) - this node is a cross-community bridge._
-- **What connects `$schema`, `collection`, `sourceRoot` to the rest of the system?**
-  _379 weakly-connected nodes found - possible documentation gaps or missing edges._
-- **Should `Voluntarios — Errores y DTOs` be split into smaller, more focused modules?**
+- **Why does `@prisma/client` connect `PrismaService` to `inventario.controller.ts`, `inventario/dto/reportes.dto.ts`, `asistencia.controller.ts`, `bienhechores.controller.ts`, `variante.dto.ts`, `voluntarios.controller.ts`, `auth.decorator.ts`, `usuarios.controller.ts`, `RegistrarAsistenciaDto`, `PaginationQueryDto`, `generar-pdf-expediente.usecase.ts`, `dependencies`, `reportes.controller.ts`, `comensal.dto.ts`, `crear-producto.usecase.ts`, `package.json`, `registrar-entrada.usecase.ts`?**
+  _High betweenness centrality (0.121) - this node is a cross-community bridge._
+- **Why does `dependencies` connect `dependencies` to `class-transformer`, `class-validator`, `multer`, `@nestjs/common`, `@nestjs/jwt`, `@nestjs/passport`, `@nestjs/platform-express`, `api/package.json`, `@nestjs/swagger`, `passport-jwt`, `puppeteer`?**
+  _High betweenness centrality (0.076) - this node is a cross-community bridge._
+- **Why does `devDependencies` connect `devDependencies` to `api/package.json`, `@nestjs/schematics`, `prettier`, `@types/bcrypt`, `@types/multer`, `@types/supertest`, `package.json`, `@eslint/js`, `@types/node`, `typescript`, `typescript-eslint`, `devDependencies`?**
+  _High betweenness centrality (0.076) - this node is a cross-community bridge._
+- **What connects `ActualizarCatalogoArgs`, `ComensalFormValues`, `CartaUsoImagen` to the rest of the system?**
+  _372 weakly-connected nodes found - possible documentation gaps or missing edges._
+- **Should `InventarioController` be split into smaller, more focused modules?**
+  _Cohesion score 0.05031645569620253 - nodes in this community are weakly interconnected._
+- **Should `inventario.controller.ts` be split into smaller, more focused modules?**
+  _Cohesion score 0.05582603050957481 - nodes in this community are weakly interconnected._
+- **Should `voluntarios.controller.ts` be split into smaller, more focused modules?**
   _Cohesion score 0.05927405927405927 - nodes in this community are weakly interconnected._
-- **Should `Asistencia — Controller y Turnos` be split into smaller, more focused modules?**
-  _Cohesion score 0.06322624743677376 - nodes in this community are weakly interconnected._
-- **Should `Asistencia — Hooks de API Web` be split into smaller, more focused modules?**
-  _Cohesion score 0.07377049180327869 - nodes in this community are weakly interconnected._

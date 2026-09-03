@@ -55,6 +55,7 @@ function DatePicker({ value, onChange, placeholder = "Selecciona una fecha", dis
       <PopoverContent className="w-auto p-0">
         <Calendar
           mode="single"
+          captionLayout="dropdown"
           locale={es}
           selected={fecha}
           defaultMonth={fecha}

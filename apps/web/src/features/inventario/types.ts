@@ -18,11 +18,12 @@ export interface MotivoRef {
   esMerma?: boolean;
 }
 
-export type EstadoProducto = 'CRUDO' | 'COCIDO';
+export type EstadoProducto = 'CRUDO' | 'COCIDO' | 'NO_APLICA';
 
 export const ETIQUETA_ESTADO: Record<EstadoProducto, string> = {
   CRUDO: 'Crudo',
   COCIDO: 'Cocido',
+  NO_APLICA: 'No aplica',
 };
 
 export interface Producto {

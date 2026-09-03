@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { AlertTriangle, ClipboardList, Package, PackagePlus, Settings, Search } from 'lucide-react';
+import { AlertTriangle, ClipboardList, Package, PackagePlus, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -56,10 +56,6 @@ export function ExistenciasPage() {
           <Button variant="outline" render={<Link to="productos" />}>
             <Package />
             Catálogo de productos
-          </Button>
-          <Button variant="outline" render={<Link to="/configuracion" />}>
-            <Settings />
-            Configuración
           </Button>
           <Button render={<Link to="registrar-entrada" />}>
             <PackagePlus />

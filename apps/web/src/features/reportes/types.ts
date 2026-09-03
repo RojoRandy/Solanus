@@ -19,7 +19,7 @@ export interface ExistenciaReporte {
   nombre: string;
   categoria: string;
   unidad: string;
-  estado: 'CRUDO' | 'COCIDO';
+  estado: 'CRUDO' | 'COCIDO' | 'NO_APLICA';
   stockActual: number;
   stockMinimo: number;
   stockBajo: boolean;

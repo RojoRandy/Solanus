@@ -8,6 +8,7 @@ import { EmptyState } from '@/components/shared/EmptyState';
 import { ComboboxField } from '@/features/inventario/ComboboxField';
 import { useMovimientos, useVariantes } from '@/features/inventario/api';
 import { NuevoProductoDialog } from '@/features/inventario/components/NuevoProductoDialog';
+import { ETIQUETA_ESTADO } from '@/features/inventario/types';
 import { ApiError } from '@/lib/api-client';
 import { useRegistrarInsumoTurno } from '../api';
 import { RegistrarDonativoDialog } from './RegistrarDonativoDialog';
@@ -24,7 +25,7 @@ export function InsumosTurno({ turnoId }: { turnoId: number }) {
 
   const opciones = (variantesPag?.items ?? []).map((v) => ({
     value: v.id,
-    label: `${v.producto.nombre} · ${v.unidad.abrevia} · ${v.estado === 'CRUDO' ? 'crudo' : 'cocido'} (${v.stockActual} disponible)`,
+    label: `${v.producto.nombre} · ${v.unidad.abrevia} · ${ETIQUETA_ESTADO[v.estado].toLowerCase()} (${v.stockActual} disponible)`,
   }));
 
   function registrar() {

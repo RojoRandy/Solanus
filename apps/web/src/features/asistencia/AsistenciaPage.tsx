@@ -1,10 +1,12 @@
 import * as React from 'react';
 import { CalendarClock, UtensilsCrossed } from 'lucide-react';
+import { puedeAcceder } from '@comedor-solanus/shared';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { SpinnerOverlay } from '@/components/ui/spinner';
 import { EmptyState } from '@/components/shared/EmptyState';
+import { useAuth } from '@/lib/auth-context';
 import { useTurno, useTurnosDelDia } from './api';
 import type { HorarioComida } from './types';
 import { CapturaFolio } from './components/CapturaFolio';
@@ -36,6 +38,8 @@ function formatFechaLarga(fecha: string): string {
 }
 
 export function AsistenciaPage() {
+  const { user } = useAuth();
+  const puedeVerInsumos = Boolean(user && puedeAcceder(user.rol, 'inventario'));
   const [fecha, setFecha] = React.useState(hoyISO());
   const [horario, setHorario] = React.useState<HorarioComida>(horarioSugerido());
   // El turno solo se carga tras confirmar en el modal — GET /asistencia/turno
@@ -109,7 +113,7 @@ export function AsistenciaPage() {
               <div className="flex flex-col gap-6">
                 <MenuTurno key={turno.id} turno={turno} />
                 <VoluntariosTurno turno={turno} />
-                <InsumosTurno turnoId={turno.id} />
+                {puedeVerInsumos && <InsumosTurno turnoId={turno.id} />}
               </div>
             </div>
           )}

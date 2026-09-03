@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyState } from '@/components/shared/EmptyState';
+import { ETIQUETA_ESTADO } from '@/features/inventario/types';
 import { useReporteInventario } from '../api';
 import type { RangoFecha } from '../types';
 
@@ -110,7 +111,7 @@ export function ReporteInventarioView({ rango }: { rango: RangoFecha }) {
                     <TableCell className="font-medium">{item.nombre}</TableCell>
                     <TableCell className="text-muted-foreground">{item.categoria}</TableCell>
                     <TableCell>
-                      <Badge variant="secondary">{item.estado === 'CRUDO' ? 'Crudo' : 'Cocido'}</Badge>
+                      <Badge variant="secondary">{ETIQUETA_ESTADO[item.estado]}</Badge>
                     </TableCell>
                     <TableCell className="text-right">
                       {item.stockActual} {item.unidad}

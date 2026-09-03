@@ -18,7 +18,7 @@ import { RegistrarAjusteDialog } from './components/RegistrarAjusteDialog';
 import { useCategorias, useMovimientos, useVariantes } from './api';
 import { usePaginacion } from '@/lib/pagination';
 import { formatCantidad, formatFechaCorta } from './format';
-import type { Movimiento } from './types';
+import { ETIQUETA_ESTADO, type Movimiento } from './types';
 
 const ETIQUETA_TIPO: Record<string, string> = {
   ENTRADA: 'Entrada',
@@ -46,7 +46,7 @@ export function MovimientosPage() {
     () =>
       (variantesPag?.items ?? []).map((v) => ({
         value: v.id,
-        label: `${v.producto.nombre} · ${v.unidad.abrevia} · ${v.estado === 'CRUDO' ? 'crudo' : 'cocido'}`,
+        label: `${v.producto.nombre} · ${v.unidad.abrevia} · ${ETIQUETA_ESTADO[v.estado].toLowerCase()}`,
       })),
     [variantesPag],
   );
