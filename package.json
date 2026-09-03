@@ -4,12 +4,12 @@
   "private": true,
   "description": "Sistema de gesti\u00f3n interna del Comedor Comunitario Beato Solanus Casey (Amigos de los Capuchinos ABP)",
   "scripts": {
-    "dev": "pnpm --parallel --filter ./apps/* dev",
+    "dev": "pnpm --parallel --filter \"./apps/*\" dev",
     "dev:api": "pnpm --filter ./apps/api dev",
     "dev:web": "pnpm --filter ./apps/web dev",
-    "build": "pnpm --recursive --filter ./apps/* build",
-    "lint": "pnpm --recursive --filter ./apps/* lint",
-    "test": "pnpm --recursive --filter ./apps/* test",
+    "build": "pnpm --recursive --filter \"./apps/*\" build",
+    "lint": "pnpm --recursive --filter \"./apps/*\" lint",
+    "test": "pnpm --recursive --filter \"./apps/*\" test",
     "db:up": "docker compose up -d",
     "db:down": "docker compose down"
   },

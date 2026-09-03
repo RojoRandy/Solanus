@@ -15,3 +15,4 @@ playwright-report/
 test-results/
 graphify-out/.graphify_python
 graphify-out/.graphify_root
+docs/
