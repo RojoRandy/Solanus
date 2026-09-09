@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { SelectorMes } from './components/SelectorMes';
+import { ExportarPdfButton } from './components/ExportarPdfButton';
 import { ReporteAsistenciaView } from './components/ReporteAsistenciaView';
 import { ReporteInventarioView } from './components/ReporteInventarioView';
 import { ReporteDonativosView } from './components/ReporteDonativosView';
@@ -17,7 +18,10 @@ export function ReportesPage() {
           <h1 className="text-2xl font-semibold tracking-tight">Reportes</h1>
           <p className="text-muted-foreground">Asistencia, inventario, donativos y evidencias del mes.</p>
         </div>
-        <SelectorMes periodo={periodo} onChange={setPeriodo} />
+        <div className="flex items-center gap-2">
+          <SelectorMes periodo={periodo} onChange={setPeriodo} />
+          <ExportarPdfButton periodo={periodo} />
+        </div>
       </div>
 
       <Tabs defaultValue="asistencia">

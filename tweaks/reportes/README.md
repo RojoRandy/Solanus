@@ -16,7 +16,7 @@ sesión que lo generó; cada paso de abajo es autocontenido y puede retomarse en
 | 4 | [Evidencias (Prisma + módulo API)](04-evidencias-api.md) | ✅ hecho | 2 |
 | 5 | [Web: selector mes/año y rewire de los 3 tabs](05-web-selector-mes-y-tabs.md) | ✅ hecho | 1, 3 |
 | 6 | [Web: sección Evidencias](06-web-evidencias.md) | ✅ hecho | 1, 4, 5 |
-| 7 | [PDF mensual](07-pdf-mensual.md) | ⬜ pendiente | 1, 3, 4, 5 |
+| 7 | [PDF mensual](07-pdf-mensual.md) | ✅ hecho | 1, 3, 4, 5 |
 
 Leyenda: ⬜ pendiente · 🔄 en curso · ✅ hecho
 

@@ -137,3 +137,24 @@ En navegador: con un mes que tenga asistencias, movimientos, donativos y al meno
 evidencia, el botón "Exportar PDF" descarga un archivo que abre con las 4 secciones en orden,
 landscape, la matriz de asistencia legible con la fila de totales, y las fotos repartidas de 4 en
 4 (2 páginas para 5 fotos).
+
+---
+
+> **Hecho:** `PdfService.render` gana `landscape?: boolean` (default `false`, PDFs de comensales
+> sin cambios). `escapar()` extraído a `common/pdf/html.util.ts`, reusado por
+> `exportar-comensales-pdf.usecase.ts` y el nuevo usecase. `common/errors/reportes.errors.ts`
+> con `DEMASIADAS_EVIDENCIAS_PARA_PDF`. `reporte-mensual-pdf.usecase.ts`: inyecta
+> `ReporteAsistenciaUseCase` para la matriz, consulta movimientos/donativos/evidencias por
+> Prisma directo (replica orden y filtros de sus endpoints, documentado en comentarios), tope
+> `LIMITE_EVIDENCIAS_PDF = 40` antes de leer archivos, fotos en chunks de 4 con
+> `break-after: page`, fila de totales de la matriz en `<tbody>` (no `<tfoot>`) para que no se
+> repita por página. Endpoint `GET /reportes/mensual.pdf` con `StreamableFile` (ya exento del
+> envoltorio). Web: `ExportarPdfButton.tsx` usando `api.descargar`. `pnpm --filter api test`
+> (43 ✓) y `build` verdes; `pnpm --filter web typecheck`/`lint` limpios (0 errores).
+>
+> **Verificado con datos reales** (mismo schema aislado `wt_reportes_066566`): `curl` al
+> endpoint devuelve `%PDF-1.4` válido de 470 KB; inspección página por página confirma las 4
+> secciones landscape en orden — Asistencia (KPIs + matriz con celda ámbar en el día correcto y
+> fila de totales), Inventario (tabla de movimientos), Donativos (tabla con monto y método),
+> Evidencias (foto de prueba). Botón "Exportar PDF" en el navegador dispara
+> `GET /reportes/mensual.pdf → 200 OK` y el flujo de blob de `api.descargar` sin errores.

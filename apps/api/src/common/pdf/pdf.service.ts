@@ -23,7 +23,11 @@ export class PdfService implements OnModuleDestroy {
 
   async render(
     html: string,
-    options?: { margin?: { top: string; bottom: string; left: string; right: string } },
+    options?: {
+      margin?: { top: string; bottom: string; left: string; right: string };
+      /** Letter horizontal — para reportes con tablas anchas (p. ej. la matriz de asistencia). */
+      landscape?: boolean;
+    },
   ): Promise<Buffer> {
     const browser = await this.getBrowser();
     const page = await browser.newPage();
@@ -32,6 +36,7 @@ export class PdfService implements OnModuleDestroy {
       const pdf = await page.pdf({
         format: 'letter',
         printBackground: true,
+        landscape: options?.landscape ?? false,
         margin: options?.margin ?? { top: '18mm', bottom: '18mm', left: '16mm', right: '16mm' },
       });
       return Buffer.from(pdf);

@@ -1,4 +1,4 @@
-import { Controller, Get, Inject, Query } from '@nestjs/common';
+import { Controller, Get, Header, Inject, Query, StreamableFile } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { Auth } from '../auth/decorators/auth.decorator';
 import { UserRoles } from '@/common/interfaces/enums';
@@ -13,6 +13,7 @@ import {
 import { ReporteAsistenciaUseCase } from './usecases/reporte-asistencia.usecase';
 import { ReporteInventarioUseCase } from './usecases/reporte-inventario.usecase';
 import { ReporteDonativosUseCase } from './usecases/reporte-donativos.usecase';
+import { ReporteMensualPdfUseCase } from './usecases/reporte-mensual-pdf.usecase';
 
 @ApiTags('Reportes')
 @Controller('reportes')
@@ -25,6 +26,8 @@ export class ReportesController {
     private readonly reporteInventario: ReporteInventarioUseCase,
     @Inject(ReporteDonativosUseCase)
     private readonly reporteDonativos: ReporteDonativosUseCase,
+    @Inject(ReporteMensualPdfUseCase)
+    private readonly reporteMensualPdf: ReporteMensualPdfUseCase,
   ) {}
 
   @Get('asistencia')
@@ -43,5 +46,12 @@ export class ReportesController {
   @ApiOkSchemaResponse(ReporteDonativosResponseDto)
   donativos(@Query() query: RangoFechaQueryDto) {
     return this.reporteDonativos.execute(query);
+  }
+
+  @Get('mensual.pdf')
+  @Header('Content-Type', 'application/pdf')
+  async mensualPdf(@Query() query: PeriodoMensualQueryDto): Promise<StreamableFile> {
+    const { buffer, filename } = await this.reporteMensualPdf.execute(query);
+    return new StreamableFile(buffer, { disposition: `attachment; filename="${filename}"` });
   }
 }
