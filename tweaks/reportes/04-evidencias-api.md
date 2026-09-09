@@ -126,3 +126,21 @@ Agregar `EvidenciasModule` a los `imports` de `apps/api/src/app.module.ts`.
 Desde Swagger (`/api/docs`): subir dos fotos a `anio=2026&mes=9`, `GET /evidencias?anio=2026&mes=9`
 devuelve las dos, `DELETE /evidencias/:id` de una de ellas hace que desaparezca de la lista y del
 disco/bucket (`uploads/evidencias/2026-09/` en local).
+
+---
+
+> **Hecho:** modelo `EvidenciaMensual` + relación `Usuario.evidenciasSubidas`, migración
+> `20260909185246_agregar_evidencias_mensuales`. Módulo `apps/api/src/modules/evidencias/`
+> calcado de `donativos/`: `listar/subir/eliminar-evidencia.usecase.ts` + `evidencia.mapper.ts`
+> (select/map reusado por listar y subir) + controller con `GET/POST /evidencias?anio&mes` y
+> `DELETE /evidencias/:id` (solo ADMIN). Reusa `ImageUploadInterceptor('foto')` y
+> `CommonErrors.Exceptions.ARCHIVO_NO_ENCONTRADO` tal cual, sin código nuevo de validación.
+> Registrado en `app.module.ts`. Verificado end-to-end con el servidor real
+> (`preview_start` config `api`) contra un schema de Postgres aislado
+> (`?schema=reportes_wt`, para no chocar con el schema `public` compartido por otro
+> worktree/sesión que tenía una migración de agenda ya aplicada ahí): login, `GET
+> /evidencias` vacío, dos `POST` con imágenes reales (multipart), archivos confirmados en
+> disco bajo `uploads/evidencias/2026-09/`, `GET /uploads/...` sirviéndolos sin auth, `DELETE`
+> de una borra la fila y el archivo, la otra persiste. `pnpm --filter api test` (43 ✓) y
+> `build` verdes. `apps/api/.env` local (gitignorado) creado para esta verificación —
+> no se commitea.

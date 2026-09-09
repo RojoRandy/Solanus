@@ -15,6 +15,7 @@ import { VoluntariosModule } from './modules/voluntarios/voluntarios.module';
 import { AsistenciaModule } from './modules/asistencia/asistencia.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { ReportesModule } from './modules/reportes/reportes.module';
+import { EvidenciasModule } from './modules/evidencias/evidencias.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { ReportesModule } from './modules/reportes/reportes.module';
     AsistenciaModule,
     DashboardModule,
     ReportesModule,
+    EvidenciasModule,
   ],
   controllers: [HealthController, ArchivosController],
 })
