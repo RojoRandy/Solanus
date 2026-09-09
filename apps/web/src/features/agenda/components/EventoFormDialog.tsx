@@ -7,10 +7,10 @@ import { format } from 'date-fns';
 import { COLOR_EVENTO_DEFAULT, colorEventoRegex } from '@comedor-solanus/shared';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { DatePicker, fechaAIso } from '@/components/ui/date-picker';
+import { TimePicker } from '@/components/ui/time-picker';
 import { ColorPicker } from '@/components/shared/ColorPicker';
 import { ApiError } from '@/lib/api-client';
 import { useActualizarEvento, useCrearEvento } from '../api';
@@ -68,6 +68,7 @@ export function EventoFormDialog({ evento, open, onOpenChange }: EventoFormDialo
   }, [open, evento, reset]);
 
   const fecha = watch('fecha');
+  const hora = watch('hora');
   const color = watch('color');
 
   async function onSubmit(values: FormValues) {
@@ -96,7 +97,7 @@ export function EventoFormDialog({ evento, open, onOpenChange }: EventoFormDialo
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>{esEdicion ? 'Editar evento' : 'Nuevo evento'}</DialogTitle>
         </DialogHeader>
@@ -109,7 +110,7 @@ export function EventoFormDialog({ evento, open, onOpenChange }: EventoFormDialo
             </div>
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="evento-hora">Hora</Label>
-              <Input id="evento-hora" type="time" {...register('hora')} />
+              <TimePicker id="evento-hora" value={hora} onChange={(value) => setValue('hora', value ?? '', { shouldValidate: true })} />
               {errors.hora && <p className="text-xs text-destructive">{errors.hora.message}</p>}
             </div>
           </div>

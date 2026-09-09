@@ -83,7 +83,8 @@ export function CalendarioProximosDias() {
                 {eventosDelDia.length === 0 ? (
                   <span className="py-3 text-center text-xs text-muted-foreground">Sin eventos programados</span>
                 ) : (
-                  <div className="flex flex-col gap-1.5">
+                  // max-h-36 ≈ 3 eventos visibles; el resto se ve haciendo scroll o con clic en el día.
+                  <div className="flex max-h-36 flex-col gap-1.5 overflow-y-auto overscroll-contain pr-1">
                     {eventosDelDia.map((evento) => (
                       <div key={evento.id} className="flex flex-col gap-1 rounded-md border px-2 py-1" style={estiloEvento(evento.color)}>
                         <span className="text-[11px] font-semibold">{format(new Date(evento.fechaHora), 'h:mm a')}</span>
