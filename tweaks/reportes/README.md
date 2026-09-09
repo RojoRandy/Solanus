@@ -99,3 +99,25 @@ Al cerrar: `/code-review`, `/security-review` (las evidencias son fotos de perso
 - Virtualización de la matriz de asistencia; índice `@@index([turnoId])` en `Asistencia`.
 - Exportar el reporte mensual a Excel (`exceljs` ya está en el repo, pero no se pidió).
 - Orientación mixta en el PDF, números de página, encabezado repetido por página.
+
+## E2E con Playwright
+
+Suite corrida completa tras el cierre de la ronda (2026-09-09): navegadores instalados
+(`npx playwright install chromium`), los 9 specs preexistentes (`login-roles`,
+`comensal-expediente`, `asistencia-descuento`) verdes, más un spec nuevo,
+[`e2e/reportes.spec.ts`](../../apps/web/e2e/reportes.spec.ts), con 2 casos: el recorrido
+completo (asistencia, movimiento, donativo en dinero y evidencia capturados en vivo aparecen en
+el reporte del mes; exportar PDF) y el cambio de mes con estados vacíos. **11/11 verdes.**
+
+Hallazgo real durante esta corrida, no relacionado con el código: `nest start --watch` puede
+desincronizar su caché de compilación tras muchas horas de edición en la misma sesión y seguir
+sirviendo lógica vieja de un usecase aunque las rutas del controller sí se vean actualizadas —
+se manifestó como `/reportes/asistencia` devolviendo la forma anterior (`porDia`) e ignorando
+`anio`/`mes`. Un restart limpio (`rm -rf dist .nest`, matar el proceso, `preview_start` de
+nuevo) lo resuelve; si un reporte se ve "atorado" en el shape viejo durante desarrollo, este es
+el primer sospechoso antes de pensar que el código está mal.
+
+Para correr la suite localmente hace falta, además de `pnpm db:up` + API arriba, un seed
+completo (`pnpm --filter api prisma:seed`), que a su vez requiere `docs/Lista Comensales.csv`
+(dato real, gitignorado, no incluido en el repo) — usar un CSV placeholder de un par de filas
+solo para desbloquear el seed en un entorno local sin ese archivo.
