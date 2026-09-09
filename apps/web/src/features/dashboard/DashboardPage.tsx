@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { useAuth } from '@/lib/auth-context';
+import { CalendarioProximosDias } from '@/features/agenda/components/CalendarioProximosDias';
 import { useResumenDashboard } from './api';
 import { StatCard } from './components/StatCard';
 
@@ -32,6 +33,8 @@ export function DashboardPage() {
         <h1 className="text-2xl font-semibold tracking-tight">Hola, {user?.nombre.split(' ')[0]}</h1>
         <p className="text-muted-foreground">Panel general del Comedor Solanus.</p>
       </div>
+
+      <CalendarioProximosDias />
 
       {isLoading && <p className="text-sm text-muted-foreground">Cargando indicadores…</p>}
 

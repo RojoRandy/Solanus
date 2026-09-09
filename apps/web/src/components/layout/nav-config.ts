@@ -6,6 +6,7 @@ import {
   Package,
   HandHeart,
   HeartHandshake,
+  CalendarDays,
   FileBarChart,
   UserCog,
   Settings,
@@ -22,6 +23,7 @@ export interface NavItem {
 export const NAV_ITEMS: NavItem[] = [
   { modulo: 'dashboard', label: 'Panel general', to: '/', icon: LayoutDashboard },
   { modulo: 'asistencia', label: 'Turno de comida', to: '/asistencia', icon: UtensilsCrossed },
+  { modulo: 'agenda', label: 'Agenda', to: '/agenda', icon: CalendarDays },
   { modulo: 'comensales', label: 'Comensales', to: '/comensales', icon: Users },
   { modulo: 'inventario', label: 'Inventario', to: '/inventario', icon: Package },
   { modulo: 'bienhechores', label: 'Bienhechores', to: '/bienhechores', icon: HandHeart },

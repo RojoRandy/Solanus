@@ -14,6 +14,7 @@ export type Modulo =
   | 'inventario'
   | 'bienhechores'
   | 'voluntarios'
+  | 'agenda'
   | 'dashboard'
   | 'reportes'
   | 'configuracion';
@@ -27,6 +28,7 @@ export const MODULOS_POR_ROL: Record<Modulo, UserRole[]> = {
   inventario: [UserRoles.ADMINISTRADOR, UserRoles.USUARIO],
   bienhechores: [UserRoles.ADMINISTRADOR, UserRoles.USUARIO],
   voluntarios: [UserRoles.ADMINISTRADOR, UserRoles.USUARIO],
+  agenda: [UserRoles.ADMINISTRADOR, UserRoles.USUARIO],
   dashboard: [UserRoles.ADMINISTRADOR, UserRoles.USUARIO],
   reportes: [UserRoles.ADMINISTRADOR, UserRoles.USUARIO],
   configuracion: [UserRoles.ADMINISTRADOR],
