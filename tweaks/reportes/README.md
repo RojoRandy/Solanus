@@ -20,6 +20,31 @@ sesión que lo generó; cada paso de abajo es autocontenido y puede retomarse en
 
 Leyenda: ⬜ pendiente · 🔄 en curso · ✅ hecho
 
+**Todos los pasos completados y verificados end-to-end** (2026-09-09).
+
+- `pnpm --filter api test` (43 ✓), `pnpm --filter api build`, `pnpm --filter web typecheck &&
+  lint` (0 errores, 4 warnings preexistentes de `react-hooks/incompatible-library`),
+  `pnpm --filter web build` — verde.
+- Recorrido completo en navegador (panel integrado, no Playwright) con datos reales sembrados a
+  mano: matriz de asistencia con celda ámbar en el día correcto y fila de totales, cambio de mes
+  con las flechas (agosto vacío confirma que ya no se pierde el día 1), tabla de movimientos de
+  inventario, tabla de donativos en dinero con su total, subida/borrado de evidencias, y el PDF
+  mensual descargado con las 4 secciones landscape en orden.
+- **Hazard de infraestructura compartida encontrado y evitado:** el Postgres de
+  `docker-compose.yml` es un único contenedor compartido por todos los worktrees del host. El
+  primer nombre de schema aislado que usé (`reportes_wt`) coincidió con el de otra sesión
+  concurrente y aparecieron datos ajenos a mitad de la verificación — se migró a un nombre único
+  por worktree (`wt_reportes_066566`) antes de seguir mutando datos. Ninguna migración ni dato
+  de otra sesión se tocó a partir de ese punto.
+- **Bug real encontrado y corregido durante la verificación:** el `<Select>` de mes/año no tenía
+  la prop `items`, así que el trigger cerrado mostraba el valor crudo ("9") en vez de la
+  etiqueta ("Septiembre") — Base UI Select necesita `items={{value:label}}` para resolver el
+  texto (paso 5).
+- **Bugs preexistentes corregidos de paso, documentados en el paso 2:** `resolverRangoFecha`
+  perdía el día 1 del mes por defecto (mezcla de husos UTC/local) y
+  `ListarMovimientosUseCase` perdía los movimientos del último día del filtro `hasta` (límite
+  `lte` sobre una columna timestamp).
+
 ## Decisiones ya tomadas (no volver a discutirlas)
 
 - Todo el reporte se filtra por **mes/año**. Se elimina el `RangoFechaPicker` de `/reportes`.
