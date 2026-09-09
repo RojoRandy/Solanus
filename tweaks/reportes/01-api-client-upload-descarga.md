@@ -71,3 +71,16 @@ centralizarlo, agregarían la quinta y sexta copia del mismo bloque.
   `.pdf` — los cuatro flujos siguen funcionando igual que antes del cambio.
 - Balance de líneas negativo: `api-client.ts` crece ~40 líneas, los tres features encogen en
   conjunto más que eso.
+
+---
+
+> **Hecho:** `api-client.ts` gana `resolverUrlArchivo`, `lanzarErrorDeRespuesta` compartida,
+> `api.upload` y `api.descargar`; `request()` deja de forzar `Content-Type` cuando el body es
+> `FormData`. `comensales/api.ts` pierde `subirArchivo`/`descargarExpedientePdf`/
+> `descargarComensales` como bloques de `fetch` crudo (quedan de 1-6 líneas sobre `api.upload`/
+> `api.descargar`) y re-exporta `resolverUrlArchivo`. `voluntarios/api.ts`: `subirFoto` usa
+> `api.upload`; `resolveFotoUrl` delega en `resolverUrlArchivo` en vez de mantener su propia
+> `API_ORIGIN`. `asistencia/utils.ts`: `resolverFoto` idem. `pnpm --filter web typecheck` y
+> `lint` limpios (los 4 warnings de `react-hooks/incompatible-library` son preexistentes, no
+> relacionados). Verificación en navegador pendiente de un ciclo con Postgres arriba — no
+> requerida para este paso ya que no cambia comportamiento observable, solo la implementación.

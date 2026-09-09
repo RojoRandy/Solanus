@@ -10,7 +10,7 @@ sesión que lo generó; cada paso de abajo es autocontenido y puede retomarse en
 | # | Paso | Estado | Depende de |
 |---|---|---|---|
 | 0 | [Traer main a la rama](00-merge-main.md) | ✅ hecho | — |
-| 1 | [api-client: upload y descarga de blobs](01-api-client-upload-descarga.md) | ⬜ pendiente | 0 |
+| 1 | [api-client: upload y descarga de blobs](01-api-client-upload-descarga.md) | ✅ hecho | 0 |
 | 2 | [Periodo mensual en la API + límites de fecha](02-periodo-mensual.md) | ⬜ pendiente | 0 |
 | 3 | [Matriz de asistencia (API)](03-matriz-asistencia-api.md) | ⬜ pendiente | 2 |
 | 4 | [Evidencias (Prisma + módulo API)](04-evidencias-api.md) | ⬜ pendiente | 2 |
