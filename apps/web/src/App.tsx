@@ -4,6 +4,7 @@ import { ProtectedRoute } from '@/routes/ProtectedRoute';
 import { LoginPage } from '@/features/auth/LoginPage';
 import { HomePage } from '@/features/dashboard/HomePage';
 import { AsistenciaPage } from '@/features/asistencia/AsistenciaPage';
+import { AgendaPage } from '@/features/agenda/AgendaPage';
 import { ComensalesPage } from '@/features/comensales/ComensalesPage';
 import { InventarioPage } from '@/features/inventario/InventarioPage';
 import { BienhechoresPage } from '@/features/bienhechores/BienhechoresPage';
@@ -23,6 +24,9 @@ export function App() {
 
           <Route element={<ProtectedRoute modulo="asistencia" />}>
             <Route path="/asistencia" element={<AsistenciaPage />} />
+          </Route>
+          <Route element={<ProtectedRoute modulo="agenda" />}>
+            <Route path="/agenda" element={<AgendaPage />} />
           </Route>
           <Route element={<ProtectedRoute modulo="comensales" />}>
             <Route path="/comensales/*" element={<ComensalesPage />} />

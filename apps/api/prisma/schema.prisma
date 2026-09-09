@@ -109,6 +109,19 @@ model Bienhechor {
   @@map("bienhechores")
 }
 
+model EventoAgenda {
+  id          Int      @id @default(autoincrement())
+  fechaHora   DateTime
+  descripcion String
+  color       String // hex #RRGGBB — ver packages/shared/src/agenda.ts
+  activo      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([fechaHora])
+  @@map("eventos_agenda")
+}
+
 enum MetodoPagoDonativo {
   EFECTIVO
   TRANSFERENCIA
