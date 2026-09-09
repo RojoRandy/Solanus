@@ -1,22 +1,27 @@
 import * as React from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { RangoFechaPicker } from './components/RangoFechaPicker';
+import { SelectorMes } from './components/SelectorMes';
+import { ExportarPdfButton } from './components/ExportarPdfButton';
 import { ReporteAsistenciaView } from './components/ReporteAsistenciaView';
 import { ReporteInventarioView } from './components/ReporteInventarioView';
 import { ReporteDonativosView } from './components/ReporteDonativosView';
-import type { RangoFecha } from './types';
+import { EvidenciasView } from './components/EvidenciasView';
+import { periodoActual } from './periodo';
 
 export function ReportesPage() {
-  const [rango, setRango] = React.useState<RangoFecha>({});
+  const [periodo, setPeriodo] = React.useState(periodoActual());
 
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Reportes</h1>
-          <p className="text-muted-foreground">Asistencia, inventario y donativos. Por defecto, del mes en curso a hoy.</p>
+          <p className="text-muted-foreground">Asistencia, inventario, donativos y evidencias del mes.</p>
         </div>
-        <RangoFechaPicker rango={rango} onChange={setRango} />
+        <div className="flex items-center gap-2">
+          <SelectorMes periodo={periodo} onChange={setPeriodo} />
+          <ExportarPdfButton periodo={periodo} />
+        </div>
       </div>
 
       <Tabs defaultValue="asistencia">
@@ -24,15 +29,19 @@ export function ReportesPage() {
           <TabsTrigger value="asistencia">Asistencia</TabsTrigger>
           <TabsTrigger value="inventario">Inventario</TabsTrigger>
           <TabsTrigger value="donativos">Donativos</TabsTrigger>
+          <TabsTrigger value="evidencias">Evidencias</TabsTrigger>
         </TabsList>
         <TabsContent value="asistencia">
-          <ReporteAsistenciaView rango={rango} />
+          <ReporteAsistenciaView periodo={periodo} />
         </TabsContent>
         <TabsContent value="inventario">
-          <ReporteInventarioView rango={rango} />
+          <ReporteInventarioView periodo={periodo} />
         </TabsContent>
         <TabsContent value="donativos">
-          <ReporteDonativosView rango={rango} />
+          <ReporteDonativosView periodo={periodo} />
+        </TabsContent>
+        <TabsContent value="evidencias">
+          <EvidenciasView periodo={periodo} />
         </TabsContent>
       </Tabs>
     </div>

@@ -23,49 +23,19 @@ export class ReporteInventarioUseCase implements UseCase<
   }: ReporteInventarioArgs): Promise<ReporteInventarioResponseDto> {
     const rango = resolverRangoFecha(desde, hasta);
 
-    const [variantes, movimientos] = await Promise.all([
-      this.prisma.varianteInventario.findMany({
-        where: { activo: true },
-        select: {
-          id: true,
-          estado: true,
-          stockMinimo: true,
-          producto: { select: { nombre: true, categoria: { select: { nombre: true } } } },
-          unidad: { select: { abrevia: true } },
-          lotes: { select: { cantidadDisponible: true } },
-        },
-      }),
-      this.prisma.movimientoInventario.findMany({
-        where: { fecha: { gte: rango.desde, lte: rango.hasta } },
-        select: {
-          tipo: true,
-          cantidad: true,
-          fecha: true,
-          variante: { select: { producto: { select: { nombre: true } }, unidad: { select: { abrevia: true } } } },
-          motivo: { select: { nombre: true, clave: true, esMerma: true } },
-        },
-      }),
-    ]);
-
-    const existencias = variantes
-      .map((variante) => {
-        const stockActual = variante.lotes.reduce(
-          (total, lote) => total + Number(lote.cantidadDisponible),
-          0,
-        );
-        const stockMinimo = Number(variante.stockMinimo);
-        return {
-          varianteId: variante.id,
-          nombre: variante.producto.nombre,
-          categoria: variante.producto.categoria.nombre,
-          unidad: variante.unidad.abrevia,
-          estado: variante.estado,
-          stockActual,
-          stockMinimo,
-          stockBajo: stockActual < stockMinimo,
-        };
-      })
-      .sort((a, b) => a.nombre.localeCompare(b.nombre));
+    // El listado de movimientos del periodo lo consulta la web directo en
+    // GET /inventario/movimientos — este reporte solo agrega los totales por tipo
+    // y las listas de mermas/caducados, que no tienen otro endpoint.
+    const movimientos = await this.prisma.movimientoInventario.findMany({
+      where: { fecha: { gte: rango.desde, lte: rango.hasta } },
+      select: {
+        tipo: true,
+        cantidad: true,
+        fecha: true,
+        variante: { select: { producto: { select: { nombre: true } }, unidad: { select: { abrevia: true } } } },
+        motivo: { select: { nombre: true, clave: true, esMerma: true } },
+      },
+    });
 
     let entradas = 0;
     let salidas = 0;
@@ -96,7 +66,6 @@ export class ReporteInventarioUseCase implements UseCase<
     }
 
     return {
-      existencias,
       movimientosPorTipo: {
         entradas,
         salidas,

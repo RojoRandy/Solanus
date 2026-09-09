@@ -35,6 +35,7 @@ model Usuario {
   movimientosRegistrados MovimientoInventario[] @relation("MovimientoRegistradoPor")
   movimientosEditados    MovimientoInventario[] @relation("MovimientoEditadoPor")
   donativosDineroRegistrados DonativoDinero[]  @relation("DonativoDineroRegistradoPor")
+  evidenciasSubidas      EvidenciaMensual[]    @relation("EvidenciaSubidaPor")
 
   @@map("usuarios")
 }
@@ -137,6 +138,22 @@ model DonativoDinero {
   @@index([fecha])
   @@index([bienhechorId, fecha])
   @@map("donativos_dinero")
+}
+
+// Fotos de evidencia del reporte mensual entregado a la ABP. `anio`/`mes` como enteros
+// (no `@db.Date`) para no reintroducir la trampa de medianoche UTC de las columnas de fecha.
+// Sin `@@unique`: el requisito es N fotos por mes, no una.
+model EvidenciaMensual {
+  id          Int      @id @default(autoincrement())
+  anio        Int
+  mes         Int // 1..12, validado en el DTO — único escritor es la API
+  rutaArchivo String // ruta pública que devuelve StorageService.save()
+  subidoPorId Int
+  subidoPor   Usuario  @relation("EvidenciaSubidaPor", fields: [subidoPorId], references: [id])
+  createdAt   DateTime @default(now())
+
+  @@index([anio, mes])
+  @@map("evidencias_mensuales")
 }
 
 // ─────────────────────────────────────────────────────────────

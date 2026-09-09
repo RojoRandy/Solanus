@@ -3,6 +3,7 @@ import dayjs from 'dayjs';
 import { UseCase } from '@/common/interfaces/use-case.interface';
 import { PrismaService } from '@/prisma/prisma.service';
 import { PdfService } from '@/common/pdf/pdf.service';
+import { escapar } from '@/common/pdf/html.util';
 import { ComensalErrors } from '@/common/errors/comensal.errors';
 import { now } from '@/common/utils/date';
 import { ListarComensalesQueryDto } from '../dto/comensal.dto';
@@ -15,13 +16,6 @@ import {
 import { ArchivoExportado } from './exportar-comensales-xlsx.usecase';
 
 const COLOR_VINO = '#6B3140';
-
-function escapar(texto: string): string {
-  return texto
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
-}
 
 interface FilaComensal {
   folio: number;
