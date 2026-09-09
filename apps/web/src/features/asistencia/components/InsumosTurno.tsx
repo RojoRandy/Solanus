@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { toast } from 'sonner';
-import { Package, HandHeart, Plus } from 'lucide-react';
+import { Package, Plus } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,12 +11,10 @@ import { NuevoProductoDialog } from '@/features/inventario/components/NuevoProdu
 import { ETIQUETA_ESTADO } from '@/features/inventario/types';
 import { ApiError } from '@/lib/api-client';
 import { useRegistrarInsumoTurno } from '../api';
-import { RegistrarDonativoDialog } from './RegistrarDonativoDialog';
 
 export function InsumosTurno({ turnoId }: { turnoId: number }) {
   const [varianteId, setVarianteId] = React.useState<number>();
   const [cantidad, setCantidad] = React.useState('');
-  const [donativoAbierto, setDonativoAbierto] = React.useState(false);
   const [nuevoProductoAbierto, setNuevoProductoAbierto] = React.useState(false);
 
   const { data: variantesPag } = useVariantes({ limit: 200 });
@@ -51,11 +49,8 @@ export function InsumosTurno({ turnoId }: { turnoId: number }) {
 
   return (
     <Card>
-      <CardHeader className="flex-row items-center justify-between space-y-0">
+      <CardHeader>
         <CardTitle>Insumos usados</CardTitle>
-        <Button variant="outline" size="sm" onClick={() => setDonativoAbierto(true)}>
-          <HandHeart /> Registrar donativo
-        </Button>
       </CardHeader>
       <CardContent className="flex flex-col gap-3">
         <div className="flex flex-col gap-2 sm:flex-row">
@@ -96,7 +91,6 @@ export function InsumosTurno({ turnoId }: { turnoId: number }) {
         )}
       </CardContent>
 
-      <RegistrarDonativoDialog open={donativoAbierto} onOpenChange={setDonativoAbierto} />
       <NuevoProductoDialog
         open={nuevoProductoAbierto}
         onOpenChange={setNuevoProductoAbierto}

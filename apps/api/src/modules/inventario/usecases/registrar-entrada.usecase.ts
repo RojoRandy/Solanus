@@ -21,6 +21,7 @@ const CLAVE_MOTIVO_POR_ORIGEN: Record<OrigenLote, string> = {
 export const LOTE_SELECT = {
   id: true,
   marca: true,
+  granel: true,
   presentacion: true,
   ubicacion: true,
   cantidadInicial: true,
@@ -56,6 +57,7 @@ export function mapLote(lote: LoteConRelaciones): LoteResponseDto {
       estado: lote.variante.estado,
     },
     marca: lote.marca,
+    granel: lote.granel,
     presentacion: lote.presentacion,
     ubicacion: lote.ubicacion,
     cantidadInicial: Number(lote.cantidadInicial),
@@ -95,6 +97,9 @@ export class RegistrarEntradaUseCase implements UseCase<
     if (dto.estado === EstadoProducto.COCIDO && dto.marca)
       throw InventarioErrors.Exceptions.MARCA_NO_PERMITIDA_EN_COCIDO();
 
+    if (dto.granel && dto.marca)
+      throw InventarioErrors.Exceptions.MARCA_NO_PERMITIDA_EN_GRANEL();
+
     if (!dto.noCaduca && !dto.fechaCaducidad)
       throw InventarioErrors.Exceptions.CADUCIDAD_REQUERIDA();
 
@@ -112,7 +117,6 @@ export class RegistrarEntradaUseCase implements UseCase<
         const productoNuevo = await tx.producto.create({
           data: {
             nombre: dto.productoNuevo.nombre,
-            codigoBarras: dto.productoNuevo.codigoBarras,
             categoriaId: dto.productoNuevo.categoriaId,
           },
         });
@@ -139,7 +143,8 @@ export class RegistrarEntradaUseCase implements UseCase<
       const loteCreado = await tx.loteInventario.create({
         data: {
           varianteId: variante.id,
-          marca: dto.estado === EstadoProducto.COCIDO ? undefined : dto.marca,
+          marca: dto.estado === EstadoProducto.COCIDO || dto.granel ? undefined : dto.marca,
+          granel: dto.granel ?? false,
           presentacion: dto.presentacion,
           ubicacion: dto.ubicacion,
           cantidadInicial: dto.cantidadInicial,

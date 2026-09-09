@@ -1,20 +1,17 @@
 import { UtensilsCrossed } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { useReporteAsistencia } from '../api';
-import type { RangoFecha } from '../types';
+import { etiquetaPeriodo, type Periodo } from '../periodo';
 
-function formatFecha(iso: string): string {
-  return new Date(`${iso}T00:00:00`).toLocaleDateString('es-MX', { weekday: 'short', day: '2-digit', month: 'short' });
-}
-
-export function ReporteAsistenciaView({ rango }: { rango: RangoFecha }) {
-  const { data, isLoading } = useReporteAsistencia(rango);
+export function ReporteAsistenciaView({ periodo }: { periodo: Periodo }) {
+  const { data, isLoading } = useReporteAsistencia(periodo);
 
   if (isLoading) return <p className="text-sm text-muted-foreground">Cargando…</p>;
   if (!data) return null;
 
-  const maxDia = Math.max(1, ...data.porDia.map((d) => d.total));
+  const dias = Array.from({ length: data.diasDelMes }, (_, i) => i + 1);
 
   return (
     <div className="flex flex-col gap-6">
@@ -47,23 +44,65 @@ export function ReporteAsistenciaView({ rango }: { rango: RangoFecha }) {
 
       <Card>
         <CardHeader>
-          <CardTitle>Asistencia por día</CardTitle>
+          <CardTitle>Asistencia por día — {etiquetaPeriodo(periodo)}</CardTitle>
         </CardHeader>
         <CardContent>
-          {data.porDia.length === 0 ? (
-            <EmptyState icon={UtensilsCrossed} title="Sin asistencias en este periodo" />
+          {data.comensales.length === 0 ? (
+            <EmptyState icon={UtensilsCrossed} title="Sin asistencias en este mes" />
           ) : (
-            <div className="flex flex-col gap-2.5">
-              {data.porDia.map((dia) => (
-                <div key={dia.fecha} className="flex items-center gap-3">
-                  <span className="w-28 shrink-0 text-sm capitalize text-muted-foreground">{formatFecha(dia.fecha)}</span>
-                  <div className="h-6 flex-1 overflow-hidden rounded bg-muted">
-                    <div className="h-full rounded bg-primary" style={{ width: `${(dia.total / maxDia) * 100}%` }} />
-                  </div>
-                  <span className="w-10 shrink-0 text-right text-sm font-medium">{dia.total}</span>
-                </div>
-              ))}
-            </div>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead scope="col" className="sticky left-0 z-10 bg-card">
+                    Comensal
+                  </TableHead>
+                  {dias.map((dia) => (
+                    <TableHead key={dia} scope="col" className="w-7 px-0 text-center">
+                      {dia}
+                    </TableHead>
+                  ))}
+                  <TableHead scope="col" className="text-right">
+                    Total
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {data.comensales.map((fila) => (
+                  <TableRow key={fila.folio}>
+                    <TableHead scope="row" className="sticky left-0 z-10 w-52 bg-card font-normal whitespace-nowrap">
+                      <span className="text-muted-foreground">{fila.folio}</span> {fila.nombre}
+                    </TableHead>
+                    {fila.dias.map((valor, i) => (
+                      <TableCell
+                        key={i}
+                        className={
+                          valor > 0
+                            ? 'bg-[#FFBF00] text-center text-xs text-[#2A2020] tabular-nums'
+                            : 'text-center text-xs tabular-nums'
+                        }
+                        title={valor > 0 ? `${i + 1} de ${etiquetaPeriodo(periodo)}: ${valor} turno${valor > 1 ? 's' : ''}` : undefined}
+                      >
+                        {valor > 0 ? valor : ''}
+                      </TableCell>
+                    ))}
+                    <TableCell className="text-right font-medium">{fila.total}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+              <TableFooter>
+                <TableRow>
+                  <TableHead scope="row" className="sticky left-0 z-10 bg-muted/50 font-medium">
+                    Total
+                  </TableHead>
+                  {data.totalesPorDia.map((total, i) => (
+                    <TableCell key={i} className="text-center text-xs font-medium tabular-nums">
+                      {total > 0 ? total : ''}
+                    </TableCell>
+                  ))}
+                  <TableCell />
+                </TableRow>
+              </TableFooter>
+            </Table>
           )}
         </CardContent>
       </Card>

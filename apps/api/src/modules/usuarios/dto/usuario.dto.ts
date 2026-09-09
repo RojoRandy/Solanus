@@ -34,6 +34,11 @@ export class ActualizarUsuarioDto {
   @ApiProperty({ required: false })
   @IsOptional()
   @IsString()
+  username?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
   nombre?: string;
 
   @ApiProperty({ required: false, enum: UserRoles, enumName: 'RolUsuario' })

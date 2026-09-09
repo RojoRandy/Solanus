@@ -185,7 +185,7 @@ export function RegistrarDonativoDialog({ open, onOpenChange }: RegistrarDonativ
                 <div className="flex gap-2">
                   <Select
                     items={Object.fromEntries((unidades ?? []).map((u) => [String(u.id), `${u.nombre} (${u.abrevia})`]))}
-                    value={linea.unidadId ? String(linea.unidadId) : undefined}
+                    value={linea.unidadId ? String(linea.unidadId) : null}
                     onValueChange={(value) => actualizarLinea(linea.key, { unidadId: Number(value) })}
                   >
                     <SelectTrigger className="w-full">

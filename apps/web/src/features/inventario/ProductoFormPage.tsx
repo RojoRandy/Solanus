@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -16,7 +15,6 @@ import { useActualizarProducto, useCategorias, useCrearProducto, useProducto } f
 
 const schema = z.object({
   nombre: z.string().trim().min(1, 'Indica el nombre del producto'),
-  codigoBarras: z.string().trim().optional(),
   categoriaId: z.coerce.number({ message: 'Selecciona una categoría' }).int().positive(),
 });
 
@@ -37,24 +35,14 @@ export function ProductoFormPage() {
   const {
     register,
     handleSubmit,
-    reset,
     setValue,
     watch,
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: { nombre: '' },
+    values: producto ? { nombre: producto.nombre, categoriaId: producto.categoria.id } : undefined,
   });
-
-  useEffect(() => {
-    if (producto) {
-      reset({
-        nombre: producto.nombre,
-        codigoBarras: producto.codigoBarras ?? undefined,
-        categoriaId: producto.categoria.id,
-      });
-    }
-  }, [producto, reset]);
 
   const categoriaId = watch('categoriaId');
 
@@ -113,7 +101,7 @@ export function ProductoFormPage() {
                 <Label>Categoría</Label>
                 <Select
                   items={Object.fromEntries((categorias ?? []).map((c) => [String(c.id), c.nombre]))}
-                  value={categoriaId ? String(categoriaId) : undefined}
+                  value={categoriaId ? String(categoriaId) : null}
                   onValueChange={(value) => setValue('categoriaId', Number(value), { shouldValidate: true })}
                 >
                   <SelectTrigger className="w-full">
@@ -128,11 +116,6 @@ export function ProductoFormPage() {
                   </SelectContent>
                 </Select>
                 {errors.categoriaId && <p className="text-xs text-destructive">{errors.categoriaId.message}</p>}
-              </div>
-
-              <div className="flex flex-col gap-1.5">
-                <Label htmlFor="codigoBarras">Código de barras</Label>
-                <Input id="codigoBarras" {...register('codigoBarras')} placeholder="Opcional" />
               </div>
 
               <div className="flex justify-end gap-2 pt-2">

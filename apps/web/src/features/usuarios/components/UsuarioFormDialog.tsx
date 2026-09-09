@@ -73,7 +73,12 @@ export function UsuarioFormDialog({ usuario, open, onOpenChange }: UsuarioFormDi
       if (esEdicion && usuario) {
         await actualizar.mutateAsync({
           id: usuario.id,
-          dto: { nombre: values.nombre, rol: values.rol, password: values.password || undefined },
+          dto: {
+            username: values.username,
+            nombre: values.nombre,
+            rol: values.rol,
+            password: values.password || undefined,
+          },
         });
         toast.success('Usuario actualizado');
       } else {
@@ -92,18 +97,18 @@ export function UsuarioFormDialog({ usuario, open, onOpenChange }: UsuarioFormDi
         <DialogHeader>
           <DialogTitle>{esEdicion ? 'Editar usuario' : 'Nuevo usuario'}</DialogTitle>
           <DialogDescription>
-            {esEdicion ? 'Actualiza el rol o la contraseña del usuario.' : 'Da de alta un nuevo usuario del sistema.'}
+            {esEdicion ? 'Actualiza el usuario, el rol o la contraseña.' : 'Da de alta un nuevo usuario del sistema.'}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={(event) => void handleSubmit(onSubmit)(event)} className="flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="usuario-username">Usuario</Label>
-            <Input id="usuario-username" {...register('username')} disabled={esEdicion} autoFocus={!esEdicion} />
+            <Input id="usuario-username" {...register('username')} autoFocus />
             {errors.username && <p className="text-xs text-destructive">{errors.username.message}</p>}
           </div>
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="usuario-nombre">Nombre completo</Label>
-            <Input id="usuario-nombre" {...register('nombre')} autoFocus={esEdicion} />
+            <Input id="usuario-nombre" {...register('nombre')} />
             {errors.nombre && <p className="text-xs text-destructive">{errors.nombre.message}</p>}
           </div>
           <div className="flex flex-col gap-1.5">

@@ -29,7 +29,6 @@ export const ETIQUETA_ESTADO: Record<EstadoProducto, string> = {
 export interface Producto {
   id: number;
   nombre: string;
-  codigoBarras: string | null;
   categoria: CategoriaRef;
   activo: boolean;
   createdAt: string;
@@ -37,7 +36,6 @@ export interface Producto {
 
 export interface CrearProductoInput {
   nombre: string;
-  codigoBarras?: string;
   categoriaId: number;
 }
 
@@ -76,6 +74,7 @@ export interface RegistrarEntradaInput {
   costoTotal?: number;
   unidadId: number;
   marca?: string;
+  granel?: boolean;
   cfdi?: string;
   fechaCaducidad?: string;
   noCaduca?: boolean;
@@ -97,6 +96,7 @@ export interface Lote {
   id: number;
   variante: LoteVarianteRef;
   marca: string | null;
+  granel: boolean;
   presentacion: string | null;
   ubicacion: string | null;
   cantidadInicial: number;
@@ -113,6 +113,7 @@ export interface Lote {
 export interface LoteVivo {
   id: number;
   marca: string | null;
+  granel: boolean;
   cantidadDisponible: number;
   fechaCaducidad: string | null;
   fechaIngreso: string;

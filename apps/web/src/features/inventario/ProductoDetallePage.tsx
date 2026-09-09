@@ -62,8 +62,8 @@ export function ProductoDetallePage() {
         <CardContent>
           <dl className="grid gap-3 text-sm sm:grid-cols-2">
             <div>
-              <dt className="text-muted-foreground">Código de barras</dt>
-              <dd>{producto.codigoBarras ?? '—'}</dd>
+              <dt className="text-muted-foreground">Categoría</dt>
+              <dd>{producto.categoria.nombre}</dd>
             </div>
             <div>
               <dt className="text-muted-foreground">Estado</dt>

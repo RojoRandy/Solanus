@@ -28,6 +28,8 @@ const Exceptions = {
     new InternalServerErrorException(
       Responses.ERROR_GENERANDO_PDF_EXPEDIENTE(data),
     ),
+  EXPORTACION_DEMASIADO_GRANDE: (data?: any) =>
+    new BadRequestException(Responses.EXPORTACION_DEMASIADO_GRANDE(data)),
 };
 
 const Responses = {
@@ -83,6 +85,12 @@ const Responses = {
     new ErrorResponseDto(
       'ERROR_GENERANDO_PDF_EXPEDIENTE',
       'No se pudo generar el PDF del expediente',
+      data,
+    ),
+  EXPORTACION_DEMASIADO_GRANDE: (data?: any) =>
+    new ErrorResponseDto(
+      'EXPORTACION_DEMASIADO_GRANDE',
+      'La exportación supera el límite de registros; filtra la lista antes de exportar',
       data,
     ),
 };

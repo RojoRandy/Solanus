@@ -8,6 +8,13 @@ import {
   MovimientoResponseDto,
 } from '../dto/movimiento.dto';
 
+/** "YYYY-MM-DD" → medianoche UTC del día siguiente, para usar como límite superior exclusivo. */
+function diaSiguiente(fechaIso: string): Date {
+  const fecha = new Date(`${fechaIso}T00:00:00.000Z`);
+  fecha.setUTCDate(fecha.getUTCDate() + 1);
+  return fecha;
+}
+
 @Injectable()
 export class ListarMovimientosUseCase implements UseCase<
   ListarMovimientosQueryDto,
@@ -27,8 +34,11 @@ export class ListarMovimientosUseCase implements UseCase<
         ...(query.categoriaId ? { producto: { categoriaId: query.categoriaId } } : {}),
       },
       fecha: {
-        gte: query.desde ? new Date(query.desde) : undefined,
-        lte: query.hasta ? new Date(query.hasta) : undefined,
+        gte: query.desde ? new Date(`${query.desde}T00:00:00.000Z`) : undefined,
+        // `fecha` es timestamp (hora real de captura), no `@db.Date`: un `lte` a medianoche
+        // del día `hasta` excluía todos los movimientos de ese día. Límite exclusivo del día
+        // siguiente para que "hasta" sea inclusive de verdad.
+        lt: query.hasta ? diaSiguiente(query.hasta) : undefined,
       },
     };
 

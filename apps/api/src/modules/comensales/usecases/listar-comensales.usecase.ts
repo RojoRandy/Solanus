@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
 import { UseCase } from '@/common/interfaces/use-case.interface';
 import { PrismaService } from '@/prisma/prisma.service';
 import { PaginatedDto, paginado, toSkipTake } from '@/common/dto/pagination.dto';
@@ -11,6 +10,10 @@ import {
   comensalListSelect,
   mapComensalResponse,
 } from '../utils/comensal-select.util';
+import {
+  construirOrderByComensales,
+  construirWhereComensales,
+} from '../utils/comensal-where.util';
 
 @Injectable()
 export class ListarComensalesUseCase implements UseCase<
@@ -22,23 +25,8 @@ export class ListarComensalesUseCase implements UseCase<
   async execute(
     query: ListarComensalesQueryDto,
   ): Promise<PaginatedDto<ComensalResponseDto>> {
-    const activo = query.activo === undefined ? true : query.activo === 'true';
-
-    const where: Prisma.ComensalWhereInput = { activo };
-
-    const busqueda = query.busqueda?.trim();
-    if (busqueda) {
-      const folioBuscado = Number(busqueda);
-      where.OR = [
-        { nombres: { contains: busqueda, mode: 'insensitive' } },
-        { apellidos: { contains: busqueda, mode: 'insensitive' } },
-        ...(Number.isInteger(folioBuscado) ? [{ folio: folioBuscado }] : []),
-      ];
-    }
-
-    const orden = query.orden ?? 'desc';
-    const orderBy: Prisma.ComensalOrderByWithRelationInput[] =
-      query.ordenarPor === 'nombre' ? [{ nombres: orden }, { apellidos: orden }] : [{ folio: orden }];
+    const where = construirWhereComensales(query);
+    const orderBy = construirOrderByComensales(query);
 
     const { skip, take } = toSkipTake(query);
     const [comensales, total] = await Promise.all([

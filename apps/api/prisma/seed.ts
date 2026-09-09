@@ -86,11 +86,27 @@ function leerComensalesDesdeCsv(): { nombres: string; apellidos: string; fechaNa
 async function main() {
   console.log('Limpiando y sembrando base de datos del Comedor Solanus...');
 
-  // ── Usuario admin ────────────────────────────────────────────
-  await prisma.usuario.upsert({
-    where: { username: 'admin' },
+  // ── Usuarios (uno por rol; password Solanus2026!) ────────────
+  const contrasena = await hash('Solanus2026!');
+  await Promise.all(
+    [
+      { username: 'admin', nombre: 'Administrador General', rol: 'ADMINISTRADOR' as const },
+      { username: 'operativo', nombre: 'Coordinador Operativo', rol: 'USUARIO' as const },
+      { username: 'captura', nombre: 'Voluntario de Captura', rol: 'USUARIO_SIMPLE' as const },
+    ].map((u) =>
+      prisma.usuario.upsert({
+        where: { username: u.username },
+        update: {},
+        create: { ...u, password: contrasena },
+      }),
+    ),
+  );
+
+  // ── Bienhechor por defecto para donativos anónimos ───────────
+  await prisma.bienhechor.upsert({
+    where: { id: 1 },
     update: {},
-    create: { username: 'admin', nombre: 'Administrador General', rol: 'ADMINISTRADOR', password: await hash('Solanus2026!') },
+    create: { nombre: 'Público en General', contacto: null },
   });
 
   // ── Categorías de productos ──────────────────────────────────
@@ -130,11 +146,35 @@ async function main() {
     ].map((u) => prisma.unidadMedida.upsert({ where: { nombre: u.nombre }, update: {}, create: u })),
   );
 
-  // ── Comensales (docs/Lista Comensales.csv) ──────────────────
-  const comensales = leerComensalesDesdeCsv();
-  await prisma.comensal.createMany({ data: comensales });
+  // ── Motivos de movimiento ────────────────────────────────────
+  await Promise.all(
+    [
+      { clave: 'COMPRA', nombre: 'Compra' },
+      { clave: 'DONACION', nombre: 'Donación' },
+      { clave: 'CONSUMO', nombre: 'Consumo en comida' },
+      { clave: 'MERMA', nombre: 'Merma', esMerma: true },
+      { clave: 'CADUCADO', nombre: 'Caducado', esMerma: true },
+      { clave: 'AJUSTE', nombre: 'Ajuste' },
+    ].map((m) =>
+      prisma.motivoMovimiento.upsert({
+        where: { clave: m.clave },
+        update: {},
+        create: { ...m, esSistema: true },
+      }),
+    ),
+  );
 
-  console.log(`Seed completado: ${comensales.length} comensales.`);
+  // ── Comensales (docs/Lista Comensales.csv) ──────────────────
+  // `createMany` no es idempotente (folio es autoincrement, no choca): solo se
+  // siembra si la tabla está vacía, para poder re-correr el seed sin duplicar el padrón.
+  const comensalesExistentes = await prisma.comensal.count();
+  if (comensalesExistentes === 0) {
+    const comensales = leerComensalesDesdeCsv();
+    await prisma.comensal.createMany({ data: comensales });
+    console.log(`Seed completado: ${comensales.length} comensales.`);
+  } else {
+    console.log(`Seed: ${comensalesExistentes} comensales ya presentes, no se re-siembran.`);
+  }
 }
 
 main()

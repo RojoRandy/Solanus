@@ -1,17 +1,22 @@
-import { Info, Package } from 'lucide-react';
+import { ClipboardList, Info, Package } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Skeleton } from '@/components/ui/skeleton';
+import { PaginationControls } from '@/components/ui/pagination';
 import { EmptyState } from '@/components/shared/EmptyState';
-import { ETIQUETA_ESTADO } from '@/features/inventario/types';
+import { usePaginacion } from '@/lib/pagination';
+import { useMovimientos } from '@/features/inventario/api';
+import { formatCantidad, formatFechaCorta } from '@/features/inventario/format';
 import { useReporteInventario } from '../api';
-import type { RangoFecha } from '../types';
+import { rangoDelMes, type Periodo } from '../periodo';
 
-function formatFecha(iso: string): string {
-  return new Date(iso).toLocaleDateString('es-MX', { day: '2-digit', month: 'short' });
-}
+const ETIQUETA_TIPO: Record<string, string> = {
+  ENTRADA: 'Entrada',
+  SALIDA: 'Salida',
+  AJUSTE: 'Ajuste',
+};
 
 function TituloConTooltip({ titulo, explicacion }: { titulo: string; explicacion: string }) {
   return (
@@ -25,8 +30,11 @@ function TituloConTooltip({ titulo, explicacion }: { titulo: string; explicacion
   );
 }
 
-export function ReporteInventarioView({ rango }: { rango: RangoFecha }) {
+export function ReporteInventarioView({ periodo }: { periodo: Periodo }) {
+  const rango = rangoDelMes(periodo);
   const { data, isLoading, isError, refetch } = useReporteInventario(rango);
+  const { page, limit, setPage } = usePaginacion(25);
+  const movimientos = useMovimientos({ ...rango, page, limit });
 
   if (isLoading) {
     return (
@@ -59,8 +67,8 @@ export function ReporteInventarioView({ rango }: { rango: RangoFecha }) {
           <CardContent className="flex flex-col gap-1">
             <span className="text-2xl font-semibold text-success">+{data.movimientosPorTipo.entradas}</span>
             <TituloConTooltip
-              titulo="Entradas del periodo"
-              explicacion="Cantidad total que ingresó por compra o donación en el periodo seleccionado."
+              titulo="Entradas del mes"
+              explicacion="Cantidad total que ingresó por compra o donación en el mes seleccionado."
             />
           </CardContent>
         </Card>
@@ -68,7 +76,7 @@ export function ReporteInventarioView({ rango }: { rango: RangoFecha }) {
           <CardContent className="flex flex-col gap-1">
             <span className="text-2xl font-semibold text-destructive">−{data.movimientosPorTipo.salidas}</span>
             <TituloConTooltip
-              titulo="Salidas del periodo"
+              titulo="Salidas del mes"
               explicacion="Cantidad consumida en turnos de comida, más mermas y productos caducados."
             />
           </CardContent>
@@ -79,7 +87,7 @@ export function ReporteInventarioView({ rango }: { rango: RangoFecha }) {
               +{data.movimientosPorTipo.ajustesPositivos} / −{data.movimientosPorTipo.ajustesNegativos}
             </span>
             <TituloConTooltip
-              titulo="Ajustes del periodo"
+              titulo="Ajustes del mes"
               explicacion="Correcciones manuales de existencia (no ligadas a una compra, donativo o consumo). Se muestra lo agregado y lo descontado por separado."
             />
           </CardContent>
@@ -88,48 +96,49 @@ export function ReporteInventarioView({ rango }: { rango: RangoFecha }) {
 
       <Card>
         <CardHeader>
-          <CardTitle>Existencias actuales</CardTitle>
+          <CardTitle>Movimientos del mes</CardTitle>
         </CardHeader>
         <CardContent>
-          {data.existencias.length === 0 ? (
-            <EmptyState icon={Package} title="Sin productos en el catálogo" />
+          {movimientos.isLoading ? (
+            <Skeleton className="h-64 w-full" />
+          ) : !movimientos.data || movimientos.data.items.length === 0 ? (
+            <EmptyState icon={ClipboardList} title="Sin movimientos en este mes" />
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Producto</TableHead>
-                  <TableHead>Categoría</TableHead>
-                  <TableHead>Estado</TableHead>
-                  <TableHead className="text-right">Existencia</TableHead>
-                  <TableHead className="text-right">Mínimo</TableHead>
-                  <TableHead />
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {data.existencias.map((item) => (
-                  <TableRow key={item.varianteId}>
-                    <TableCell className="font-medium">{item.nombre}</TableCell>
-                    <TableCell className="text-muted-foreground">{item.categoria}</TableCell>
-                    <TableCell>
-                      <Badge variant="secondary">{ETIQUETA_ESTADO[item.estado]}</Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {item.stockActual} {item.unidad}
-                    </TableCell>
-                    <TableCell className="text-right text-muted-foreground">
-                      {item.stockMinimo} {item.unidad}
-                    </TableCell>
-                    <TableCell>
-                      {item.stockBajo && (
-                        <Badge variant="outline" className="border-destructive text-destructive">
-                          Stock bajo
-                        </Badge>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+            <div className="flex flex-col gap-3">
+              <div className="overflow-hidden rounded-xl border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Fecha</TableHead>
+                      <TableHead>Producto</TableHead>
+                      <TableHead>Unidad</TableHead>
+                      <TableHead>Tipo</TableHead>
+                      <TableHead>Motivo</TableHead>
+                      <TableHead className="text-right">Cantidad</TableHead>
+                      <TableHead>Registró</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {movimientos.data.items.map((movimiento) => (
+                      <TableRow key={movimiento.id}>
+                        <TableCell>{formatFechaCorta(movimiento.fecha)}</TableCell>
+                        <TableCell>{movimiento.producto.nombre}</TableCell>
+                        <TableCell>{movimiento.variante.unidad.abrevia}</TableCell>
+                        <TableCell>
+                          <Badge variant={movimiento.tipo === 'SALIDA' ? 'destructive' : 'secondary'}>
+                            {ETIQUETA_TIPO[movimiento.tipo] ?? movimiento.tipo}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>{movimiento.motivo.nombre}</TableCell>
+                        <TableCell className="text-right">{formatCantidad(movimiento.cantidad)}</TableCell>
+                        <TableCell className="text-muted-foreground">{movimiento.registradoPor.nombre}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+              <PaginationControls meta={movimientos.data.meta} onPageChange={setPage} />
+            </div>
           )}
         </CardContent>
       </Card>
@@ -147,7 +156,7 @@ export function ReporteInventarioView({ rango }: { rango: RangoFecha }) {
           </CardHeader>
           <CardContent>
             {data.mermas.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Sin mermas registradas en este periodo.</p>
+              <p className="text-sm text-muted-foreground">Sin mermas registradas en este mes.</p>
             ) : (
               <div className="flex flex-col divide-y divide-border">
                 {data.mermas.map((m, i) => (
@@ -157,7 +166,7 @@ export function ReporteInventarioView({ rango }: { rango: RangoFecha }) {
                       <span className="text-xs text-muted-foreground">{m.motivo}</span>
                     </div>
                     <span className="text-muted-foreground">
-                      −{m.cantidad} {m.unidad} · {formatFecha(m.fecha)}
+                      −{m.cantidad} {m.unidad} · {formatFechaCorta(m.fecha)}
                     </span>
                   </div>
                 ))}
@@ -172,14 +181,14 @@ export function ReporteInventarioView({ rango }: { rango: RangoFecha }) {
           </CardHeader>
           <CardContent>
             {data.caducados.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Sin productos caducados en este periodo.</p>
+              <p className="text-sm text-muted-foreground">Sin productos caducados en este mes.</p>
             ) : (
               <div className="flex flex-col divide-y divide-border">
                 {data.caducados.map((m, i) => (
                   <div key={i} className="flex items-center justify-between py-2 text-sm">
                     <span>{m.productoNombre}</span>
                     <span className="text-muted-foreground">
-                      −{m.cantidad} {m.unidad} · {formatFecha(m.fecha)}
+                      −{m.cantidad} {m.unidad} · {formatFechaCorta(m.fecha)}
                     </span>
                   </div>
                 ))}

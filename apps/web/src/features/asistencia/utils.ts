@@ -1,12 +1,10 @@
 import * as React from 'react';
-
-const API_BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3000/api';
-const API_ORIGIN = API_BASE_URL.replace(/\/api\/?$/, '');
+import { resolverUrlArchivo } from '@/lib/api-client';
 
 /** Convierte una ruta pública ("/uploads/comensales/3/foto.jpg") en URL absoluta cargable. */
 export function resolverFoto(fotoPath: string | null | undefined): string | undefined {
   if (!fotoPath) return undefined;
-  return `${API_ORIGIN}${fotoPath}`;
+  return resolverUrlArchivo(fotoPath);
 }
 
 export function useDebouncedValue<T>(value: T, delayMs = 250): T {

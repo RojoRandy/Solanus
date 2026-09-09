@@ -24,13 +24,29 @@ export class ActualizarUsuarioUseCase implements UseCase<
     const usuario = await this.prisma.usuario.findUnique({ where: { id } });
     if (!usuario) throw AuthErrors.Exceptions.USER_NOT_FOUND({ id });
 
+    if (dto.username && dto.username !== usuario.username) {
+      const existente = await this.prisma.usuario.findUnique({
+        where: { username: dto.username },
+      });
+      if (existente)
+        throw AuthErrors.Exceptions.USER_ALREADY_EXISTS({
+          username: dto.username,
+        });
+    }
+
     const password = dto.password
       ? await bcrypt.hash(dto.password, await bcrypt.genSalt(10))
       : undefined;
 
     return this.prisma.usuario.update({
       where: { id },
-      data: { nombre: dto.nombre, rol: dto.rol, activo: dto.activo, password },
+      data: {
+        username: dto.username,
+        nombre: dto.nombre,
+        rol: dto.rol,
+        activo: dto.activo,
+        password,
+      },
       select: {
         id: true,
         username: true,

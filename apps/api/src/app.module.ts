@@ -10,11 +10,13 @@ import { UsuariosModule } from './modules/usuarios/usuarios.module';
 import { ComensalesModule } from './modules/comensales/comensales.module';
 import { InventarioModule } from './modules/inventario/inventario.module';
 import { BienhechoresModule } from './modules/bienhechores/bienhechores.module';
+import { DonativosModule } from './modules/donativos/donativos.module';
 import { VoluntariosModule } from './modules/voluntarios/voluntarios.module';
 import { AgendaModule } from './modules/agenda/agenda.module';
 import { AsistenciaModule } from './modules/asistencia/asistencia.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { ReportesModule } from './modules/reportes/reportes.module';
+import { EvidenciasModule } from './modules/evidencias/evidencias.module';
 
 @Module({
   imports: [
@@ -27,11 +29,13 @@ import { ReportesModule } from './modules/reportes/reportes.module';
     ComensalesModule,
     InventarioModule,
     BienhechoresModule,
+    DonativosModule,
     VoluntariosModule,
     AgendaModule,
     AsistenciaModule,
     DashboardModule,
     ReportesModule,
+    EvidenciasModule,
   ],
   controllers: [HealthController, ArchivosController],
 })

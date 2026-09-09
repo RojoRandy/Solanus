@@ -7,7 +7,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { useLotesVariante, useMovimientos, useVariante } from './api';
-import { formatFechaCorta, formatMoneda } from './format';
+import { etiquetaMarcaLote, formatFechaCorta, formatMoneda } from './format';
 import { ETIQUETA_ESTADO } from './types';
 
 export function VarianteDetallePage() {
@@ -105,7 +105,7 @@ export function VarianteDetallePage() {
                 <TableBody>
                   {lotes.map((lote) => (
                     <TableRow key={lote.id}>
-                      <TableCell>{lote.marca ?? '—'}</TableCell>
+                      <TableCell>{etiquetaMarcaLote(lote)}</TableCell>
                       <TableCell className="text-right">{lote.cantidadDisponible}</TableCell>
                       <TableCell>{lote.fechaCaducidad ? formatFechaCorta(lote.fechaCaducidad) : 'No caduca'}</TableCell>
                       <TableCell>{formatFechaCorta(lote.fechaIngreso)}</TableCell>
