@@ -1,6 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsDateString, IsOptional } from 'class-validator';
-import { EstadoProducto } from '@prisma/client';
 
 export class RangoFechaQueryDto {
   @ApiProperty({
@@ -45,17 +44,9 @@ export class ReporteAsistenciaResponseDto {
 }
 
 // ── Reporte de Inventario ──
-
-class ExistenciaReporteDto {
-  @ApiProperty() varianteId: number;
-  @ApiProperty() nombre: string;
-  @ApiProperty() categoria: string;
-  @ApiProperty() unidad: string;
-  @ApiProperty({ enum: EstadoProducto, enumName: 'EstadoProducto' }) estado: EstadoProducto;
-  @ApiProperty() stockActual: number;
-  @ApiProperty() stockMinimo: number;
-  @ApiProperty() stockBajo: boolean;
-}
+// El listado de movimientos del periodo se consulta directo en GET /inventario/movimientos
+// (la web ya lo hace, paginado); este reporte agrega totales y mermas/caducados, que no
+// tienen otro endpoint.
 
 class MovimientoResumenDto {
   @ApiProperty() productoNombre: string;
@@ -80,8 +71,6 @@ class MovimientosPorTipoDto {
 }
 
 export class ReporteInventarioResponseDto {
-  @ApiProperty({ type: [ExistenciaReporteDto] })
-  existencias: ExistenciaReporteDto[];
   @ApiProperty({ type: MovimientosPorTipoDto }) movimientosPorTipo: MovimientosPorTipoDto;
   @ApiProperty({ type: [MovimientoResumenDto] }) mermas: MovimientoResumenDto[];
   @ApiProperty({ type: [MovimientoResumenDto] })

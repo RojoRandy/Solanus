@@ -1,6 +1,12 @@
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
-import type { RangoFecha, ReporteAsistencia, ReporteDonativos, ReporteInventario } from './types';
+import type { ReporteAsistencia, ReporteDonativos, ReporteInventario } from './types';
+import { queryPeriodo, type Periodo } from './periodo';
+
+interface RangoFecha {
+  desde?: string;
+  hasta?: string;
+}
 
 function buildQuery(rango: RangoFecha): string {
   const search = new URLSearchParams();
@@ -10,10 +16,10 @@ function buildQuery(rango: RangoFecha): string {
   return qs ? `?${qs}` : '';
 }
 
-export function useReporteAsistencia(rango: RangoFecha) {
+export function useReporteAsistencia(periodo: Periodo) {
   return useQuery({
-    queryKey: ['reportes', 'asistencia', rango],
-    queryFn: () => api.get<ReporteAsistencia>(`/reportes/asistencia${buildQuery(rango)}`),
+    queryKey: ['reportes', 'asistencia', periodo],
+    queryFn: () => api.get<ReporteAsistencia>(`/reportes/asistencia${queryPeriodo(periodo)}`),
   });
 }
 

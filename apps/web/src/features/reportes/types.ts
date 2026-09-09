@@ -1,28 +1,20 @@
-export interface AsistenciaPorDia {
-  fecha: string;
-  desayuno: number;
-  comida: number;
-  cena: number;
+export interface FilaAsistencia {
+  folio: number;
+  nombre: string;
+  dias: number[];
   total: number;
 }
 
 export interface ReporteAsistencia {
+  anio: number;
+  mes: number;
+  diasDelMes: number;
+  comensales: FilaAsistencia[];
+  totalesPorDia: number[];
   totalAsistencias: number;
   desayuno: number;
   comida: number;
   cena: number;
-  porDia: AsistenciaPorDia[];
-}
-
-export interface ExistenciaReporte {
-  varianteId: number;
-  nombre: string;
-  categoria: string;
-  unidad: string;
-  estado: 'CRUDO' | 'COCIDO' | 'NO_APLICA';
-  stockActual: number;
-  stockMinimo: number;
-  stockBajo: boolean;
 }
 
 export interface MovimientoResumen {
@@ -42,7 +34,6 @@ export interface MovimientosPorTipo {
 }
 
 export interface ReporteInventario {
-  existencias: ExistenciaReporte[];
   movimientosPorTipo: MovimientosPorTipo;
   mermas: MovimientoResumen[];
   caducados: MovimientoResumen[];
@@ -61,7 +52,3 @@ export interface ReporteDonativos {
   porBienhechor: DonativosPorBienhechor[];
 }
 
-export interface RangoFecha {
-  desde?: string;
-  hasta?: string;
-}

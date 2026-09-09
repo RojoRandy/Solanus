@@ -23,12 +23,20 @@ import { usePaginacion } from '@/lib/pagination';
 import { useDonativosDinero, useEliminarDonativoDinero } from '../api';
 import { ETIQUETA_METODO_PAGO } from '../types';
 
-export function HistorialDonativos({ bienhechorId }: { bienhechorId: number }) {
+interface HistorialDonativosProps {
+  bienhechorId?: number;
+  desde?: string;
+  hasta?: string;
+  /** Agrega la columna Bienhechor — para la vista sin un bienhechor fijo (reportes). */
+  mostrarBienhechor?: boolean;
+}
+
+export function HistorialDonativos({ bienhechorId, desde, hasta, mostrarBienhechor }: HistorialDonativosProps) {
   const { user } = useAuth();
   const esAdministrador = user?.rol === 'ADMINISTRADOR';
   const { page, limit, setPage } = usePaginacion(10);
 
-  const { data, isLoading } = useDonativosDinero({ bienhechorId, page, limit });
+  const { data, isLoading } = useDonativosDinero({ bienhechorId, desde, hasta, page, limit });
   const eliminar = useEliminarDonativoDinero();
 
   function handleEliminar(id: number) {
@@ -63,6 +71,7 @@ export function HistorialDonativos({ bienhechorId }: { bienhechorId: number }) {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Fecha</TableHead>
+                    {mostrarBienhechor && <TableHead>Bienhechor</TableHead>}
                     <TableHead className="text-right">Monto</TableHead>
                     <TableHead>Método</TableHead>
                     <TableHead>Folio</TableHead>
@@ -74,6 +83,7 @@ export function HistorialDonativos({ bienhechorId }: { bienhechorId: number }) {
                   {donativos.map((donativo) => (
                     <TableRow key={donativo.id}>
                       <TableCell>{formatFechaCorta(donativo.fecha)}</TableCell>
+                      {mostrarBienhechor && <TableCell>{donativo.bienhechor.nombre}</TableCell>}
                       <TableCell className="text-right font-medium">{formatMoneda(donativo.monto)}</TableCell>
                       <TableCell>{ETIQUETA_METODO_PAGO[donativo.metodoPago]}</TableCell>
                       <TableCell className="text-muted-foreground">{donativo.folioRecibo ?? '—'}</TableCell>

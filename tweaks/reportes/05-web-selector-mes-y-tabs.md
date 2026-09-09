@@ -134,3 +134,29 @@ cambios, como resumen de lo donado en especie ese mes.
   turnos, la fila de totales suma correctamente, el tab Inventario muestra movimientos paginados
   del mes, el tab Donativos muestra la tabla de donativos en dinero con su total, y las flechas
   del selector cambian de mes correctamente.
+
+---
+
+> **Hecho:** `periodo.ts` (Periodo, periodoActual, queryPeriodo, rangoDelMes, etiquetaPeriodo,
+> mesAnterior/Siguiente) + `SelectorMes.tsx` (dos `Select` + flechas). `RangoFechaPicker.tsx`
+> borrado. `ReportesPage.tsx`: estado `periodo`, 4° tab "Evidencias" con placeholder (se llena
+> en el paso 6). `ReporteAsistenciaView.tsx` reescrito con la matriz (columna sticky
+> folio+nombre en `<th scope="row">`, celdas ámbar `#FFBF00`/texto `#2A2020` fijo con `title`
+> por celda, `TableFooter` con fila de totales sin celda final). `ReporteInventarioView.tsx`:
+> tabla de existencias reemplazada por `useMovimientos` + `usePaginacion` (molde de
+> `MovimientosPage`); API: `reporte-inventario.usecase.ts` y su DTO ya no traen `existencias`.
+> `ReporteDonativosView.tsx`: `HistorialDonativos` generalizado (`bienhechorId?`, `desde?`,
+> `hasta?`, `mostrarBienhechor?`) y reusado aquí; las 2 cards de especie se conservan como
+> resumen. `pnpm --filter web typecheck`/`lint` (0 errores, 4 warnings preexistentes) y
+> `pnpm --filter api test`/`build` verdes.
+>
+> **Verificado en navegador** (`preview_start` api+web, esquema Postgres aislado
+> `wt_reportes_066566` — el `reportes_wt` inicial resultó compartido con otra sesión
+> concurrente en el mismo Postgres del host, se migró a un nombre único por worktree) con datos
+> reales: matriz de asistencia con celda ámbar en el día correcto, fila de totales, tabla de
+> movimientos, tabla de donativos en dinero con su total, flechas cambiando de mes (agosto
+> vacío). **Bug encontrado y corregido durante la verificación:** el `<Select>` del mes/año no
+> tenía la prop `items`, así que el trigger cerrado mostraba el valor crudo ("9") en vez de la
+> etiqueta ("Septiembre") — Base UI Select necesita `items={{value: label}}` para que
+> `SelectValue` resuelva el texto, igual que el patrón ya usado en `MovimientosPage`. Sin
+> errores en consola del navegador.
