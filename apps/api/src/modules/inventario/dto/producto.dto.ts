@@ -12,11 +12,6 @@ export class CrearProductoDto {
   @IsString()
   nombre: string;
 
-  @ApiProperty({ required: false })
-  @IsOptional()
-  @IsString()
-  codigoBarras?: string;
-
   @ApiProperty({ example: 1 })
   @IsInt()
   categoriaId: number;
@@ -27,11 +22,6 @@ export class ActualizarProductoDto {
   @IsOptional()
   @IsString()
   nombre?: string;
-
-  @ApiProperty({ required: false })
-  @IsOptional()
-  @IsString()
-  codigoBarras?: string;
 
   @ApiProperty({ required: false })
   @IsOptional()
@@ -73,8 +63,6 @@ export class ProductoResponseDto {
   id: number;
   @ApiProperty()
   nombre: string;
-  @ApiProperty({ required: false, nullable: true })
-  codigoBarras: string | null;
   @ApiProperty({ type: CategoriaRefDto })
   categoria: CategoriaRefDto;
   @ApiProperty()

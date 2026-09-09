@@ -65,10 +65,19 @@ export class RegistrarEntradaDto {
   @IsInt()
   unidadId: number;
 
-  @ApiProperty({ required: false, description: 'No aplica si el lote es cocido' })
+  @ApiProperty({ required: false, description: 'No aplica si el lote es cocido o a granel' })
   @IsOptional()
   @IsString()
   marca?: string;
+
+  @ApiProperty({
+    required: false,
+    default: false,
+    description: 'Producto a granel: el lote no lleva marca',
+  })
+  @IsOptional()
+  @IsBoolean()
+  granel?: boolean;
 
   @ApiProperty({ required: false, description: 'CFDI / número de factura' })
   @IsOptional()
@@ -141,6 +150,8 @@ export class LoteResponseDto {
   variante: LoteVarianteRefDto;
   @ApiProperty({ required: false, nullable: true })
   marca: string | null;
+  @ApiProperty()
+  granel: boolean;
   @ApiProperty({ required: false, nullable: true })
   presentacion: string | null;
   @ApiProperty({ required: false, nullable: true })

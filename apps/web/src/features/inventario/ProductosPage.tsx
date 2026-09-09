@@ -149,28 +149,33 @@ export function ProductosPage() {
                       {producto.activo ? <Badge variant="secondary">Activo</Badge> : <Badge variant="outline">Dado de baja</Badge>}
                     </TableCell>
                     <TableCell className="text-right">
-                      {esAdministrador && producto.activo && (
-                        <AlertDialog>
-                          <AlertDialogTrigger render={<Button variant="ghost" size="sm" />}>
-                            Dar de baja
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>¿Dar de baja este producto?</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                &quot;{producto.nombre}&quot; dejará de aparecer en el catálogo activo. Su historial de
-                                variantes, lotes y movimientos se conserva.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                              <AlertDialogAction onClick={() => void handleEliminar(producto)}>
-                                Dar de baja
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      )}
+                      <div className="flex justify-end gap-1">
+                        <Button variant="ghost" size="sm" render={<Link to={`${producto.id}/editar`} />}>
+                          Editar
+                        </Button>
+                        {esAdministrador && producto.activo && (
+                          <AlertDialog>
+                            <AlertDialogTrigger render={<Button variant="ghost" size="sm" />}>
+                              Dar de baja
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>¿Dar de baja este producto?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  &quot;{producto.nombre}&quot; dejará de aparecer en el catálogo activo. Su historial de
+                                  variantes, lotes y movimientos se conserva.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => void handleEliminar(producto)}>
+                                  Dar de baja
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        )}
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}

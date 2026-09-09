@@ -12,6 +12,8 @@ import { SubirIneReversoComensalUseCase } from './usecases/subir-ine-reverso-com
 import { FirmarCartaUsoImagenUseCase } from './usecases/firmar-carta-uso-imagen.usecase';
 import { GenerarPdfExpedienteUseCase } from './usecases/generar-pdf-expediente.usecase';
 import { ListarAsistenciasComensalUseCase } from './usecases/listar-asistencias-comensal.usecase';
+import { ExportarComensalesXlsxUseCase } from './usecases/exportar-comensales-xlsx.usecase';
+import { ExportarComensalesPdfUseCase } from './usecases/exportar-comensales-pdf.usecase';
 
 @Module({
   // AuthModule debe importarse aquí: @Auth() usa AuthGuard() de @nestjs/passport,
@@ -31,6 +33,8 @@ import { ListarAsistenciasComensalUseCase } from './usecases/listar-asistencias-
     FirmarCartaUsoImagenUseCase,
     GenerarPdfExpedienteUseCase,
     ListarAsistenciasComensalUseCase,
+    ExportarComensalesXlsxUseCase,
+    ExportarComensalesPdfUseCase,
   ],
 })
 export class ComensalesModule {}

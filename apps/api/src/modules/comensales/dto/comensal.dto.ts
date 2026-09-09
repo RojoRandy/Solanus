@@ -13,6 +13,7 @@ import {
   Min,
 } from 'class-validator';
 import { PaginationQueryDto } from '@/common/dto/pagination.dto';
+import type { GrupoEdad } from '../utils/edad.util';
 
 export class CrearComensalDto {
   @ApiProperty({ example: 'María' })
@@ -117,6 +118,15 @@ export class ListarComensalesQueryDto extends PaginationQueryDto {
   @IsOptional()
   @IsIn(['asc', 'desc'])
   orden?: 'asc' | 'desc';
+
+  @ApiProperty({
+    required: false,
+    enum: ['ninos', 'adultos_mayores'],
+    description: 'Grupo etario: niños (menores de 18) o adultos mayores (60 o más)',
+  })
+  @IsOptional()
+  @IsIn(['ninos', 'adultos_mayores'])
+  grupoEdad?: GrupoEdad;
 }
 
 export class FirmarCartaUsoImagenDto {

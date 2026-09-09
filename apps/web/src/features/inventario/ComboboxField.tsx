@@ -38,7 +38,7 @@ export function ComboboxField({
       itemToStringLabel={(option: ComboboxOption) => option.label}
     >
       <ComboboxInput placeholder={placeholder} />
-      <ComboboxContent>
+      <ComboboxContent className="w-auto min-w-(--anchor-width) max-w-(--available-width)">
         <ComboboxEmpty>{emptyText}</ComboboxEmpty>
         <ComboboxList>
           {(option: ComboboxOption) => (

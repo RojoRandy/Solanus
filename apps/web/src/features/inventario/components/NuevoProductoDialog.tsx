@@ -17,7 +17,11 @@ interface NuevoProductoDialogProps {
   onCreado: (producto: Producto) => void;
 }
 
-/** Alta rápida de producto (solo nombre + categoría) — usado en Registrar entrada, insumos y donativos. */
+/**
+ * Alta rápida de producto (solo nombre + categoría) — usado desde los insumos del turno y el
+ * donativo en especie. Registrar entrada tiene su propio bloque inline porque crea el producto
+ * dentro de la misma transacción del lote; los campos capturados son los mismos.
+ */
 export function NuevoProductoDialog({ open, onOpenChange, onCreado }: NuevoProductoDialogProps) {
   const [nombre, setNombre] = React.useState('');
   const [categoriaId, setCategoriaId] = React.useState<number>();
@@ -67,7 +71,7 @@ export function NuevoProductoDialog({ open, onOpenChange, onCreado }: NuevoProdu
               <div className="flex gap-2">
                 <Select
                   items={Object.fromEntries((categorias ?? []).map((c) => [String(c.id), c.nombre]))}
-                  value={categoriaId ? String(categoriaId) : undefined}
+                  value={categoriaId ? String(categoriaId) : null}
                   onValueChange={(value) => setCategoriaId(Number(value))}
                 >
                   <SelectTrigger className="w-full">

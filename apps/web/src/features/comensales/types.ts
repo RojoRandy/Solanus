@@ -49,9 +49,12 @@ export interface CrearComensalPayload {
 
 export type ActualizarComensalPayload = Partial<CrearComensalPayload>;
 
+export type GrupoEdad = 'ninos' | 'adultos_mayores';
+
 export interface ListarComensalesParams {
   busqueda?: string;
   activo?: 'true' | 'false';
+  grupoEdad?: GrupoEdad;
   page?: number;
   limit?: number;
   ordenarPor?: 'folio' | 'nombre';

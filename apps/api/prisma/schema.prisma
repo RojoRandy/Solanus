@@ -34,6 +34,7 @@ model Usuario {
   asistenciasRegistradas Asistencia[]          @relation("AsistenciaRegistradaPor")
   movimientosRegistrados MovimientoInventario[] @relation("MovimientoRegistradoPor")
   movimientosEditados    MovimientoInventario[] @relation("MovimientoEditadoPor")
+  donativosDineroRegistrados DonativoDinero[]  @relation("DonativoDineroRegistradoPor")
 
   @@map("usuarios")
 }
@@ -101,9 +102,41 @@ model Bienhechor {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  lotes LoteInventario[]
+  lotes           LoteInventario[]
+  donativosDinero DonativoDinero[]
 
   @@map("bienhechores")
+}
+
+enum MetodoPagoDonativo {
+  EFECTIVO
+  TRANSFERENCIA
+  CHEQUE
+  DEPOSITO
+}
+
+// Donativo en dinero. No toca inventario: no hay variante, unidad ni movimiento.
+// El donativo en especie sigue siendo un LoteInventario con origen DONADO.
+model DonativoDinero {
+  id              Int                @id @default(autoincrement())
+  bienhechorId    Int
+  bienhechor      Bienhechor         @relation(fields: [bienhechorId], references: [id])
+  monto           Decimal            @db.Decimal(12, 2)
+  fecha           DateTime           @db.Date
+  metodoPago      MetodoPagoDonativo
+  folioRecibo     String?
+  nota            String?
+  // Se llena cuando la captura ocurre desde la pantalla de Turno de comida.
+  turnoId         Int?
+  turno           TurnoComida?       @relation(fields: [turnoId], references: [id])
+  registradoPorId Int
+  registradoPor   Usuario            @relation("DonativoDineroRegistradoPor", fields: [registradoPorId], references: [id])
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+
+  @@index([fecha])
+  @@index([bienhechorId, fecha])
+  @@map("donativos_dinero")
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -127,9 +160,10 @@ model TurnoComida {
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
 
-  asistencias  Asistencia[]
-  voluntarios  TurnoVoluntario[]
-  movimientos  MovimientoInventario[]
+  asistencias     Asistencia[]
+  voluntarios     TurnoVoluntario[]
+  movimientos     MovimientoInventario[]
+  donativosDinero DonativoDinero[]
 
   @@unique([fecha, horario])
   @@map("turnos_comida")
@@ -200,7 +234,6 @@ model UnidadMedida {
 model Producto {
   id           Int                 @id @default(autoincrement())
   nombre       String
-  codigoBarras String?
   categoriaId  Int
   categoria    CategoriaInventario @relation(fields: [categoriaId], references: [id])
   activo       Boolean             @default(true)
@@ -253,6 +286,7 @@ model LoteInventario {
   varianteId         Int
   variante           VarianteInventario @relation(fields: [varianteId], references: [id])
   marca              String?
+  granel             Boolean            @default(false)
   presentacion       String?
   ubicacion          String?
   cantidadInicial    Decimal            @db.Decimal(12, 3)

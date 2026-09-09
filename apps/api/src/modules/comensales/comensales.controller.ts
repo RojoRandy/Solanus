@@ -40,6 +40,8 @@ import { SubirIneReversoComensalUseCase } from './usecases/subir-ine-reverso-com
 import { FirmarCartaUsoImagenUseCase } from './usecases/firmar-carta-uso-imagen.usecase';
 import { GenerarPdfExpedienteUseCase } from './usecases/generar-pdf-expediente.usecase';
 import { ListarAsistenciasComensalUseCase } from './usecases/listar-asistencias-comensal.usecase';
+import { ExportarComensalesXlsxUseCase } from './usecases/exportar-comensales-xlsx.usecase';
+import { ExportarComensalesPdfUseCase } from './usecases/exportar-comensales-pdf.usecase';
 
 const ROLES_LECTURA = [
   UserRoles.ADMINISTRADOR,
@@ -74,6 +76,10 @@ export class ComensalesController {
     private readonly generarPdfExpediente: GenerarPdfExpedienteUseCase,
     @Inject(ListarAsistenciasComensalUseCase)
     private readonly listarAsistenciasComensal: ListarAsistenciasComensalUseCase,
+    @Inject(ExportarComensalesXlsxUseCase)
+    private readonly exportarComensalesXlsx: ExportarComensalesXlsxUseCase,
+    @Inject(ExportarComensalesPdfUseCase)
+    private readonly exportarComensalesPdf: ExportarComensalesPdfUseCase,
   ) {}
 
   @Post()
@@ -88,6 +94,31 @@ export class ComensalesController {
   @ApiOkSchemaResponse(ComensalResponseDto)
   findAll(@Query() query: ListarComensalesQueryDto) {
     return this.listarComensales.execute(query);
+  }
+
+  // Las dos rutas de exportación van ANTES de `:id`: si no, Nest hace match con
+  // `:id` y `IdParamDto` recibe "exportar.xlsx" y responde 400.
+  @Get('exportar.xlsx')
+  @Auth(...ROLES_ESCRITURA)
+  @Header(
+    'Content-Type',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  )
+  async exportarXlsx(@Query() query: ListarComensalesQueryDto) {
+    const { buffer, filename } = await this.exportarComensalesXlsx.execute(query);
+    return new StreamableFile(buffer, {
+      disposition: `attachment; filename="${filename}"`,
+    });
+  }
+
+  @Get('exportar.pdf')
+  @Auth(...ROLES_ESCRITURA)
+  @Header('Content-Type', 'application/pdf')
+  async exportarPdf(@Query() query: ListarComensalesQueryDto) {
+    const { buffer, filename } = await this.exportarComensalesPdf.execute(query);
+    return new StreamableFile(buffer, {
+      disposition: `attachment; filename="${filename}"`,
+    });
   }
 
   @Get(':id')

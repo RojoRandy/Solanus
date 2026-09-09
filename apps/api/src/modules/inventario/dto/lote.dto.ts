@@ -14,6 +14,8 @@ export class LoteVivoResponseDto {
   @ApiProperty({ nullable: true })
   marca: string | null;
   @ApiProperty()
+  granel: boolean;
+  @ApiProperty()
   cantidadDisponible: number;
   @ApiProperty({ nullable: true })
   fechaCaducidad: Date | null;

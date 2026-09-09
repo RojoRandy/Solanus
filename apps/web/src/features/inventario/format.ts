@@ -22,3 +22,9 @@ export function formatCantidad(valor: number, unidad?: string): string {
   const numero = new Intl.NumberFormat('es-MX', { maximumFractionDigits: 3 }).format(valor);
   return unidad ? `${numero} ${unidad}` : numero;
 }
+
+/** Marca de un lote para mostrar: "A granel" si lo es, la marca capturada, o guion. */
+export function etiquetaMarcaLote(lote: { marca: string | null; granel: boolean }): string {
+  if (lote.granel) return 'A granel';
+  return lote.marca ?? '—';
+}
