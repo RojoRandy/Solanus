@@ -1,11 +1,10 @@
 import * as React from 'react';
-import { ImageOff } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { EmptyState } from '@/components/shared/EmptyState';
 import { SelectorMes } from './components/SelectorMes';
 import { ReporteAsistenciaView } from './components/ReporteAsistenciaView';
 import { ReporteInventarioView } from './components/ReporteInventarioView';
 import { ReporteDonativosView } from './components/ReporteDonativosView';
+import { EvidenciasView } from './components/EvidenciasView';
 import { periodoActual } from './periodo';
 
 export function ReportesPage() {
@@ -38,7 +37,7 @@ export function ReportesPage() {
           <ReporteDonativosView periodo={periodo} />
         </TabsContent>
         <TabsContent value="evidencias">
-          <EmptyState icon={ImageOff} title="Próximamente" description="La sección de evidencias se agrega en el siguiente paso." />
+          <EvidenciasView periodo={periodo} />
         </TabsContent>
       </Tabs>
     </div>

@@ -73,3 +73,22 @@ paso 5 dejó como placeholder.
 En navegador: subir 3 fotos a un mes, verlas en la rejilla; cambiar de mes con las flechas del
 selector → rejilla vacía con el `EmptyState`; volver al mes anterior → las 3 fotos siguen ahí;
 borrar una → quedan 2 tras confirmar en el `AlertDialog`.
+
+---
+
+> **Hecho:** `types.ts` gana `Evidencia`; `api.ts` gana `useEvidencias/useSubirEvidencia/
+> useEliminarEvidencia` (invalidan `['reportes','evidencias',periodo]`).
+> `EvidenciasView.tsx`: input oculto multi-archivo + botón, validación de tipo/tamaño en
+> cliente antes de subir (toast por archivo, no aborta el resto del lote), rejilla responsive,
+> borrado con `AlertDialog` gated a `esAdministrador` (coincide con `@Auth(ADMINISTRADOR)` del
+> DELETE en la API). `ReportesPage.tsx`: tab real montado. `pnpm --filter web typecheck`/`lint`
+> limpios (0 errores).
+>
+> **Verificado en navegador** con datos reales: subida real disparando un evento `change`
+> sintético sobre el `<input type=file>` con un `File` construido en JS (no hay diálogo nativo
+> de archivos scriptable) → `POST /evidencias 201` → refetch automático → imagen visible en la
+> rejilla; borrado con confirmación → toast "Evidencia eliminada" → `EmptyState` correcto.
+> Cambio de mes (paso 5) también limpia la rejilla. Un error de consola
+> ("EmptyState is not defined") observado durante la edición en vivo resultó ser ruido
+> transitorio de React Fast Refresh en esta sesión de HMR, no un bug real — desapareció tras
+> reiniciar el servidor y no reaparece en reloads limpios ni en `typecheck`.

@@ -52,3 +52,12 @@ export interface ReporteDonativos {
   porBienhechor: DonativosPorBienhechor[];
 }
 
+export interface Evidencia {
+  id: number;
+  anio: number;
+  mes: number;
+  rutaArchivo: string;
+  subidoPor: { id: number; nombre: string };
+  createdAt: string;
+}
+
