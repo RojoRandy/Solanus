@@ -105,3 +105,15 @@ sentido mantener las dos formas.
 - `pnpm --filter api test` verde, incluyendo el spec nuevo.
 - `GET /api/reportes/asistencia?anio=2026&mes=9` en Swagger (`/api/docs`) devuelve la matriz con
   la forma de arriba.
+
+---
+
+> **Hecho:** `reporte-asistencia.usecase.ts` reescrito — `asistencia.findMany` con `orderBy` por
+> relación (apellidos, nombres, comensalId), agregación en memoria indexando con
+> `turno.fecha.getUTCDate()` (nunca `.getDate()`). DTO nuevo en `dto/reportes.dto.ts`:
+> `FilaAsistenciaDto { folio, nombre, dias[], total }` + `ReporteAsistenciaResponseDto { anio,
+> mes, diasDelMes, comensales[], totalesPorDia[], totalAsistencias, desayuno, comida, cena }`.
+> Se borró `AsistenciaPorDiaDto`/`porDia` (la fila de totales de la matriz es esa misma
+> información). Controller: `asistencia(@Query() query: PeriodoMensualQueryDto)`. Spec nuevo con
+> 4 casos, incluido el que falla si alguien usa `.getDate()` en vez de `.getUTCDate()`.
+> `pnpm --filter api test` (43 ✓) y `build` verdes.

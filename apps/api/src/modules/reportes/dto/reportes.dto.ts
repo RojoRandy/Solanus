@@ -22,20 +22,26 @@ export class RangoFechaQueryDto {
 
 // ── Reporte de Asistencia ──
 
-class AsistenciaPorDiaDto {
-  @ApiProperty() fecha: string;
-  @ApiProperty() desayuno: number;
-  @ApiProperty() comida: number;
-  @ApiProperty() cena: number;
-  @ApiProperty() total: number;
+class FilaAsistenciaDto {
+  @ApiProperty() folio: number;
+  @ApiProperty({ description: 'Apellidos y nombres, ya concatenados' }) nombre: string;
+  @ApiProperty({ type: [Number], description: 'Número de turnos por día del mes (0 si no asistió); longitud = diasDelMes' })
+  dias: number[];
+  @ApiProperty({ description: 'Suma de dias[]' }) total: number;
 }
 
 export class ReporteAsistenciaResponseDto {
+  @ApiProperty() anio: number;
+  @ApiProperty() mes: number;
+  @ApiProperty({ description: '28-31 según el mes' }) diasDelMes: number;
+  @ApiProperty({ type: [FilaAsistenciaDto], description: 'Solo comensales que asistieron al menos una vez ese mes' })
+  comensales: FilaAsistenciaDto[];
+  @ApiProperty({ type: [Number], description: 'Suma de asistencias de todos los comensales por día; longitud = diasDelMes' })
+  totalesPorDia: number[];
   @ApiProperty() totalAsistencias: number;
   @ApiProperty() desayuno: number;
   @ApiProperty() comida: number;
   @ApiProperty() cena: number;
-  @ApiProperty({ type: [AsistenciaPorDiaDto] }) porDia: AsistenciaPorDiaDto[];
 }
 
 // ── Reporte de Inventario ──

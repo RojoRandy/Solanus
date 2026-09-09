@@ -3,6 +3,7 @@ import { ApiTags } from '@nestjs/swagger';
 import { Auth } from '../auth/decorators/auth.decorator';
 import { UserRoles } from '@/common/interfaces/enums';
 import { ApiOkSchemaResponse } from '@/common/dto/response.dto';
+import { PeriodoMensualQueryDto } from '@/common/dto/periodo.dto';
 import {
   RangoFechaQueryDto,
   ReporteAsistenciaResponseDto,
@@ -28,7 +29,7 @@ export class ReportesController {
 
   @Get('asistencia')
   @ApiOkSchemaResponse(ReporteAsistenciaResponseDto)
-  asistencia(@Query() query: RangoFechaQueryDto) {
+  asistencia(@Query() query: PeriodoMensualQueryDto) {
     return this.reporteAsistencia.execute(query);
   }
 
