@@ -99,3 +99,15 @@ hasta que el paso 5 les pase el rango derivado del período mensual.
 pnpm --filter api test
 ```
 verde, incluyendo `periodo.util.spec.ts`.
+
+---
+
+> **Hecho:** `common/utils/periodo.util.ts` (`resolverPeriodoMensual`, todo con `Date.UTC`) +
+> `common/dto/periodo.dto.ts` (`PeriodoMensualQueryDto`) + spec con 5 casos (bisiesto, no
+> bisiesto, rollover de diciembre, medianoche UTC exacta, default con fake timers).
+> `listar-movimientos.usecase.ts`: `hasta` pasa de `lte` a `lt` del día siguiente (helper local
+> `diaSiguiente`), arregla la pérdida del último día del filtro. `rango-fecha.util.ts`: defaults
+> reconstruidos con `Date.UTC(hoy.year(), hoy.month(), ...)` en vez de `now().startOf('month')`
+> local — dejó de mezclar husos con los límites explícitos (siempre UTC). No se borró
+> `rango-fecha.util.ts`: lo siguen usando `/reportes/inventario` y `/reportes/donativos` hasta
+> el paso 5. `pnpm --filter api test` (39 ✓, incluye el spec nuevo) y `build` verdes.
