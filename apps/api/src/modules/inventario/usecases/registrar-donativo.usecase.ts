@@ -52,7 +52,6 @@ export class RegistrarDonativoUseCase implements UseCase<
           const productoNuevo = await tx.producto.create({
             data: {
               nombre: linea.productoNuevo.nombre,
-              codigoBarras: linea.productoNuevo.codigoBarras,
               categoriaId: linea.productoNuevo.categoriaId,
             },
           });

@@ -17,6 +17,8 @@ const Exceptions = {
     new ConflictException(Responses.VARIANTE_DUPLICADA(data)),
   MARCA_NO_PERMITIDA_EN_COCIDO: (data?: any) =>
     new BadRequestException(Responses.MARCA_NO_PERMITIDA_EN_COCIDO(data)),
+  MARCA_NO_PERMITIDA_EN_GRANEL: (data?: any) =>
+    new BadRequestException(Responses.MARCA_NO_PERMITIDA_EN_GRANEL(data)),
   LOTE_NOT_FOUND: (data?: any) =>
     new NotFoundException(Responses.LOTE_NOT_FOUND(data)),
   BIENHECHOR_NOT_FOUND: (data?: any) =>
@@ -90,6 +92,12 @@ const Responses = {
     new ErrorResponseDto(
       'MARCA_NO_PERMITIDA_EN_COCIDO',
       'Un lote cocido no lleva marca',
+      data,
+    ),
+  MARCA_NO_PERMITIDA_EN_GRANEL: (data?: any) =>
+    new ErrorResponseDto(
+      'MARCA_NO_PERMITIDA_EN_GRANEL',
+      'Un producto a granel no lleva marca',
       data,
     ),
   LOTE_NOT_FOUND: (data?: any) =>

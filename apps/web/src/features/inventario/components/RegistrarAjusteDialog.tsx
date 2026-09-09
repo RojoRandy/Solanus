@@ -37,7 +37,7 @@ export function RegistrarAjusteDialog({ open, onOpenChange }: RegistrarAjusteDia
   }));
   const opcionesLotes = (lotes ?? []).map((l) => ({
     value: l.id,
-    label: `${l.marca ?? 'Sin marca'} · disponible ${l.cantidadDisponible}`,
+    label: `${l.granel ? 'A granel' : (l.marca ?? 'Sin marca')} · disponible ${l.cantidadDisponible}`,
   }));
 
   function limpiar() {

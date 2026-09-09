@@ -31,12 +31,12 @@ const schema = z
     productoId: z.number().optional(),
     productoNuevoNombre: z.string().trim().optional(),
     productoNuevoCategoriaId: z.number().optional(),
-    productoNuevoCodigoBarras: z.string().trim().optional(),
     estado: z.enum(['CRUDO', 'COCIDO', 'NO_APLICA']),
     cantidadInicial: z.coerce.number({ message: 'Indica la cantidad' }).positive('Debe ser mayor a cero'),
     costoUnitario: z.coerce.number({ message: 'Indica el costo unitario' }).positive('Debe ser mayor a cero'),
     unidadId: z.number({ message: 'Selecciona una unidad' }),
     marca: z.string().trim().optional(),
+    granel: z.boolean(),
     cfdi: z.string().trim().optional(),
     noCaduca: z.boolean(),
     fechaCaducidad: z.string().optional(),
@@ -87,6 +87,7 @@ export function RegistrarEntradaPage() {
     defaultValues: {
       origenProducto: 'existente',
       estado: 'CRUDO',
+      granel: false,
       noCaduca: false,
       fechaIngreso: hoyISO(),
       origen: 'COMPRADO',
@@ -97,6 +98,7 @@ export function RegistrarEntradaPage() {
   const productoId = watch('productoId');
   const productoNuevoCategoriaId = watch('productoNuevoCategoriaId');
   const estado = watch('estado');
+  const granel = watch('granel');
   const cantidadInicial = watch('cantidadInicial');
   const costoUnitario = watch('costoUnitario');
   const unidadId = watch('unidadId');
@@ -114,8 +116,8 @@ export function RegistrarEntradaPage() {
   }, [cantidadInicial, costoUnitario]);
 
   useEffect(() => {
-    if (estado === 'COCIDO') setValue('marca', '');
-  }, [estado, setValue]);
+    if (estado === 'COCIDO' || granel) setValue('marca', '');
+  }, [estado, granel, setValue]);
 
   const opcionesProductos = useMemo(
     () => (productosPag?.items ?? []).map((producto) => ({ value: producto.id, label: producto.nombre })),
@@ -135,7 +137,6 @@ export function RegistrarEntradaPage() {
             ? {
                 nombre: values.productoNuevoNombre!,
                 categoriaId: values.productoNuevoCategoriaId!,
-                codigoBarras: values.productoNuevoCodigoBarras || undefined,
               }
             : undefined,
         estado: values.estado as EstadoProducto,
@@ -143,7 +144,8 @@ export function RegistrarEntradaPage() {
         costoUnitario: values.costoUnitario,
         costoTotal,
         unidadId: values.unidadId,
-        marca: values.estado === 'COCIDO' ? undefined : values.marca || undefined,
+        marca: values.estado === 'COCIDO' || values.granel ? undefined : values.marca || undefined,
+        granel: values.granel,
         cfdi: values.cfdi || undefined,
         fechaCaducidad: values.noCaduca ? undefined : values.fechaCaducidad,
         noCaduca: values.noCaduca,
@@ -208,7 +210,7 @@ export function RegistrarEntradaPage() {
                   <div className="flex gap-2">
                     <Select
                       items={Object.fromEntries((categorias ?? []).map((c) => [String(c.id), c.nombre]))}
-                      value={productoNuevoCategoriaId ? String(productoNuevoCategoriaId) : undefined}
+                      value={productoNuevoCategoriaId ? String(productoNuevoCategoriaId) : null}
                       onValueChange={(value) => setValue('productoNuevoCategoriaId', Number(value), { shouldValidate: true })}
                     >
                       <SelectTrigger className="w-full">
@@ -227,10 +229,6 @@ export function RegistrarEntradaPage() {
                     </Button>
                   </div>
                   {errors.productoNuevoNombre && <p className="text-xs text-destructive">{errors.productoNuevoNombre.message}</p>}
-                </div>
-                <div className="flex flex-col gap-1.5 sm:col-span-2">
-                  <Label htmlFor="productoNuevoCodigoBarras">Código de barras</Label>
-                  <Input id="productoNuevoCodigoBarras" {...register('productoNuevoCodigoBarras')} placeholder="Opcional" />
                 </div>
               </div>
             )}
@@ -290,7 +288,7 @@ export function RegistrarEntradaPage() {
                 <div className="flex gap-2">
                   <Select
                     items={Object.fromEntries((unidades ?? []).map((u) => [String(u.id), `${u.nombre} (${u.abrevia})`]))}
-                    value={unidadId ? String(unidadId) : undefined}
+                    value={unidadId ? String(unidadId) : null}
                     onValueChange={(value) => setValue('unidadId', Number(value), { shouldValidate: true })}
                   >
                     <SelectTrigger className="w-full">
@@ -313,7 +311,19 @@ export function RegistrarEntradaPage() {
               {estado !== 'COCIDO' && (
                 <div className="flex flex-col gap-1.5">
                   <Label htmlFor="marca">Marca</Label>
-                  <Input id="marca" {...register('marca')} placeholder="Opcional" />
+                  <Input
+                    id="marca"
+                    {...register('marca')}
+                    placeholder="Opcional"
+                    disabled={granel}
+                  />
+                  <label className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
+                    <Checkbox
+                      checked={granel}
+                      onCheckedChange={(checked) => setValue('granel', Boolean(checked))}
+                    />
+                    Producto a granel (sin marca)
+                  </label>
                 </div>
               )}
             </div>

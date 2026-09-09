@@ -28,7 +28,6 @@ export class ActualizarProductoUseCase implements UseCase<
       where: { id },
       data: {
         nombre: dto.nombre,
-        codigoBarras: dto.codigoBarras,
         categoriaId: dto.categoriaId,
         activo: dto.activo,
       },

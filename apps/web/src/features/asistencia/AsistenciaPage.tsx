@@ -14,6 +14,7 @@ import { ListaAsistencias } from './components/ListaAsistencias';
 import { VoluntariosTurno } from './components/VoluntariosTurno';
 import { MenuTurno } from './components/MenuTurno';
 import { InsumosTurno } from './components/InsumosTurno';
+import { DonativosTurno } from './components/DonativosTurno';
 import { SeleccionTurnoDialog } from './components/SeleccionTurnoDialog';
 
 const HORARIOS: { value: HorarioComida; label: string }[] = [
@@ -113,6 +114,7 @@ export function AsistenciaPage() {
               <div className="flex flex-col gap-6">
                 <MenuTurno key={turno.id} turno={turno} />
                 <VoluntariosTurno turno={turno} />
+                <DonativosTurno turnoId={turno.id} />
                 {puedeVerInsumos && <InsumosTurno turnoId={turno.id} />}
               </div>
             </div>

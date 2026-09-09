@@ -1,14 +1,33 @@
 import * as React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Users, UserPlus, AlertCircle, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
+import { toast } from 'sonner';
+import {
+  Search,
+  Users,
+  UserPlus,
+  AlertCircle,
+  ArrowUp,
+  ArrowDown,
+  ArrowUpDown,
+  FileSpreadsheet,
+  FileText,
+} from 'lucide-react';
 import { UserRoles } from '@comedor-solanus/shared';
 import { useAuth } from '@/lib/auth-context';
+import { ApiError } from '@/lib/api-client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { SpinnerOverlay } from '@/components/ui/spinner';
 import { PaginationControls } from '@/components/ui/pagination';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import {
   Table,
   TableBody,
@@ -19,8 +38,14 @@ import {
 } from '@/components/ui/table';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { usePaginacion } from '@/lib/pagination';
-import { useComensales } from './api';
-import type { Comensal, ListarComensalesParams } from './types';
+import { descargarComensales, useComensales } from './api';
+import type { Comensal, GrupoEdad, ListarComensalesParams } from './types';
+
+const OPCIONES_GRUPO_EDAD: Record<'todas' | GrupoEdad, string> = {
+  todas: 'Todas las edades',
+  ninos: 'Niños (menores de 18)',
+  adultos_mayores: 'Adultos mayores (60+)',
+};
 
 const DEBOUNCE_MS = 350;
 
@@ -30,11 +55,13 @@ type DireccionOrden = NonNullable<ListarComensalesParams['orden']>;
 export function ComensalesListView() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const puedeCrear = user?.rol !== UserRoles.USUARIO_SIMPLE;
+  const puedeGestionar = user?.rol !== UserRoles.USUARIO_SIMPLE;
+  const [exportando, setExportando] = React.useState<'xlsx' | 'pdf' | null>(null);
 
   const [busquedaInput, setBusquedaInput] = React.useState('');
   const [busqueda, setBusqueda] = React.useState('');
   const [activo, setActivo] = React.useState<'true' | 'false'>('true');
+  const [grupoEdad, setGrupoEdad] = React.useState<GrupoEdad>();
   const [ordenarPor, setOrdenarPor] = React.useState<CampoOrden>('folio');
   const [orden, setOrden] = React.useState<DireccionOrden>('desc');
   const { page, limit, setPage, resetPagina } = usePaginacion();
@@ -47,7 +74,7 @@ export function ComensalesListView() {
   React.useEffect(() => {
     resetPagina();
     // eslint-disable-next-line react-hooks/exhaustive-deps -- resetear página solo cuando cambian los filtros, no en cada render
-  }, [busqueda, activo, ordenarPor, orden]);
+  }, [busqueda, activo, grupoEdad, ordenarPor, orden]);
 
   const ordenarPorCampo = React.useCallback(
     (campo: CampoOrden) => {
@@ -64,11 +91,23 @@ export function ComensalesListView() {
   const { data, isLoading, isFetching, isError, refetch } = useComensales({
     busqueda: busqueda || undefined,
     activo,
+    grupoEdad,
     page,
     limit,
     ordenarPor,
     orden,
   });
+
+  async function exportar(formato: 'xlsx' | 'pdf') {
+    setExportando(formato);
+    try {
+      await descargarComensales(formato, { busqueda: busqueda || undefined, activo, grupoEdad, ordenarPor, orden });
+    } catch (error) {
+      toast.error(error instanceof ApiError ? error.message : 'No se pudo exportar el listado.');
+    } finally {
+      setExportando(null);
+    }
+  }
 
   return (
     <div className="flex flex-col gap-6">
@@ -79,15 +118,35 @@ export function ComensalesListView() {
             Registro y expedientes de las personas que reciben apoyo en el comedor.
           </p>
         </div>
-        {puedeCrear && (
-          <Button onClick={() => navigate('/comensales/nuevo')}>
-            <UserPlus data-icon="inline-start" />
-            Nuevo comensal
-          </Button>
+        {puedeGestionar && (
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={exportando !== null}
+              onClick={() => void exportar('xlsx')}
+            >
+              <FileSpreadsheet />
+              {exportando === 'xlsx' ? 'Exportando…' : 'Excel'}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={exportando !== null}
+              onClick={() => void exportar('pdf')}
+            >
+              <FileText />
+              {exportando === 'pdf' ? 'Exportando…' : 'PDF'}
+            </Button>
+            <Button onClick={() => navigate('/comensales/nuevo')}>
+              <UserPlus data-icon="inline-start" />
+              Nuevo comensal
+            </Button>
+          </div>
         )}
       </div>
 
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-wrap items-center gap-3">
         <div className="relative w-full sm:max-w-xs">
           <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
@@ -97,7 +156,23 @@ export function ComensalesListView() {
             className="pl-8"
           />
         </div>
-        <div className="flex gap-1 rounded-lg bg-muted p-[3px]">
+        <Select
+          items={OPCIONES_GRUPO_EDAD}
+          value={grupoEdad ?? 'todas'}
+          onValueChange={(value) => setGrupoEdad(value === 'todas' ? undefined : (value as GrupoEdad))}
+        >
+          <SelectTrigger className="w-52">
+            <SelectValue placeholder="Todas las edades" />
+          </SelectTrigger>
+          <SelectContent>
+            {Object.entries(OPCIONES_GRUPO_EDAD).map(([value, label]) => (
+              <SelectItem key={value} value={value}>
+                {label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <div className="flex gap-1 rounded-lg bg-muted p-[3px] sm:ml-auto">
           <Button
             type="button"
             size="sm"
@@ -135,14 +210,16 @@ export function ComensalesListView() {
       {!isLoading && !isError && data && data.items.length === 0 && (
         <EmptyState
           icon={Users}
-          title={busqueda ? 'Sin resultados' : 'Todavía no hay comensales registrados'}
+          title={busqueda || grupoEdad ? 'Sin resultados' : 'Todavía no hay comensales registrados'}
           description={
             busqueda
               ? `No encontramos comensales que coincidan con "${busqueda}".`
-              : 'Da de alta al primer comensal para comenzar a construir su expediente.'
+              : grupoEdad
+                ? `Ningún comensal ${activo === 'true' ? 'activo' : 'inactivo'} cae en "${OPCIONES_GRUPO_EDAD[grupoEdad]}".`
+                : 'Da de alta al primer comensal para comenzar a construir su expediente.'
           }
           action={
-            puedeCrear && !busqueda ? (
+            puedeGestionar && !busqueda && !grupoEdad ? (
               <Button onClick={() => navigate('/comensales/nuevo')}>Nuevo comensal</Button>
             ) : undefined
           }

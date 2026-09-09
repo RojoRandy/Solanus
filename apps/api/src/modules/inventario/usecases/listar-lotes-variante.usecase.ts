@@ -19,6 +19,7 @@ export class ListarLotesVarianteUseCase implements UseCase<number, LoteVivoRespo
       select: {
         id: true,
         marca: true,
+        granel: true,
         cantidadDisponible: true,
         fechaCaducidad: true,
         fechaIngreso: true,
@@ -31,6 +32,7 @@ export class ListarLotesVarianteUseCase implements UseCase<number, LoteVivoRespo
     return lotes.map((lote) => ({
       id: lote.id,
       marca: lote.marca,
+      granel: lote.granel,
       cantidadDisponible: Number(lote.cantidadDisponible),
       fechaCaducidad: lote.fechaCaducidad,
       fechaIngreso: lote.fechaIngreso,

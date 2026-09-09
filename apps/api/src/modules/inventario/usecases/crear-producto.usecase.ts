@@ -35,7 +35,6 @@ export class CrearProductoUseCase implements UseCase<CrearProductoDto, ProductoR
     const producto = await this.prisma.producto.create({
       data: {
         nombre: dto.nombre,
-        codigoBarras: dto.codigoBarras,
         categoriaId: dto.categoriaId,
       },
       select: PRODUCTO_SELECT,

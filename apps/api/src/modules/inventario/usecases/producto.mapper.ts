@@ -5,7 +5,6 @@ import { ProductoResponseDto } from '../dto/producto.dto';
 export const PRODUCTO_SELECT = {
   id: true,
   nombre: true,
-  codigoBarras: true,
   activo: true,
   createdAt: true,
   categoria: { select: { id: true, nombre: true } },
@@ -19,7 +18,6 @@ export function mapProducto(producto: ProductoConCategoria): ProductoResponseDto
   return {
     id: producto.id,
     nombre: producto.nombre,
-    codigoBarras: producto.codigoBarras,
     categoria: producto.categoria,
     activo: producto.activo,
     createdAt: producto.createdAt,

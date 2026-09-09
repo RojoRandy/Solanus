@@ -14,6 +14,6 @@ export interface CrearUsuarioInput {
   rol: Usuario['rol'];
 }
 
-export type ActualizarUsuarioInput = Partial<Omit<CrearUsuarioInput, 'username'>> & {
+export type ActualizarUsuarioInput = Partial<CrearUsuarioInput> & {
   activo?: boolean;
 };

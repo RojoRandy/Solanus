@@ -33,6 +33,7 @@ function construirQueryString(params: ListarComensalesParams): string {
   const query = new URLSearchParams();
   if (params.busqueda) query.set('busqueda', params.busqueda);
   if (params.activo) query.set('activo', params.activo);
+  if (params.grupoEdad) query.set('grupoEdad', params.grupoEdad);
   if (params.page) query.set('page', String(params.page));
   if (params.limit) query.set('limit', String(params.limit));
   if (params.ordenarPor) query.set('ordenarPor', params.ordenarPor);
@@ -204,6 +205,48 @@ export async function descargarExpedientePdf(id: number, folio: number): Promise
   const link = document.createElement('a');
   link.href = url;
   link.download = `expediente-${folio}.pdf`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.URL.revokeObjectURL(url);
+}
+
+/**
+ * Descarga el listado de comensales con los filtros activos. Usa `fetch` crudo
+ * (no `api-client`) porque la respuesta es binaria: el cliente fuerza
+ * `Content-Type: application/json` y hace `.json()`.
+ */
+export async function descargarComensales(
+  formato: 'xlsx' | 'pdf',
+  params: ListarComensalesParams,
+): Promise<void> {
+  const token = getToken();
+  const headers: HeadersInit = {};
+  if (token) headers.Authorization = `Bearer ${token}`;
+
+  // El export no pagina: se omiten page/limit para que el archivo cubra todo lo filtrado.
+  const filtros: ListarComensalesParams = { ...params, page: undefined, limit: undefined };
+  const response = await fetch(
+    `${API_BASE_URL}/comensales/exportar.${formato}${construirQueryString(filtros)}`,
+    { headers },
+  );
+
+  if (!response.ok) {
+    let description = 'No se pudo exportar el listado';
+    try {
+      const body = (await response.json()) as { description?: string };
+      description = body.description ?? description;
+    } catch {
+      // El cuerpo no era JSON; se mantiene el mensaje genérico.
+    }
+    throw new ApiError(response.status, 'ERROR_EXPORTANDO_COMENSALES', description);
+  }
+
+  const blob = await response.blob();
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `comensales-${new Date().toISOString().slice(0, 10)}.${formato}`;
   document.body.appendChild(link);
   link.click();
   link.remove();
