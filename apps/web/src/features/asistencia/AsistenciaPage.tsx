@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { SpinnerOverlay } from '@/components/ui/spinner';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { useAuth } from '@/lib/auth-context';
+import { hoyISO, horaEnMexico } from '@/lib/fecha';
 import { useTurno, useTurnosDelDia } from './api';
 import type { HorarioComida } from './types';
 import { CapturaFolio } from './components/CapturaFolio';
@@ -24,14 +25,10 @@ const HORARIOS: { value: HorarioComida; label: string }[] = [
 ];
 
 function horarioSugerido(): HorarioComida {
-  const hora = new Date().getHours();
+  const hora = horaEnMexico();
   if (hora < 11) return 'DESAYUNO';
   if (hora < 17) return 'COMIDA';
   return 'CENA';
-}
-
-function hoyISO(): string {
-  return new Date().toISOString().slice(0, 10);
 }
 
 function formatFechaLarga(fecha: string): string {

@@ -21,14 +21,16 @@ interface SeleccionTurnoDialogProps {
 }
 
 /**
- * Modal de apertura de turno: obliga a confirmar fecha y horario antes de
+ * Modal de apertura de turno: pide confirmar fecha y horario antes de
  * cargar el turno — evita crear turnos por accidente al solo entrar a la
- * pantalla (el GET /asistencia/turno hace upsert). Sin estado propio: los
- * campos están ligados directamente al estado del padre.
+ * pantalla (el GET /asistencia/turno hace upsert). Cerrar con click afuera
+ * o Esc equivale a confirmar con lo que ya esté seleccionado (fecha/horario
+ * arrancan con los valores sugeridos del padre), no deja el modal atorado.
+ * Sin estado propio: los campos están ligados directamente al estado del padre.
  */
 export function SeleccionTurnoDialog({ open, fecha, horario, onFechaChange, onHorarioChange, onConfirmar }: SeleccionTurnoDialogProps) {
   return (
-    <Dialog open={open}>
+    <Dialog open={open} onOpenChange={(nuevoOpen) => !nuevoOpen && onConfirmar()}>
       <DialogContent showCloseButton={false}>
         <DialogHeader>
           <DialogTitle>Turno de comida</DialogTitle>

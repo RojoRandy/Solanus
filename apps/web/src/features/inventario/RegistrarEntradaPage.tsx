@@ -6,6 +6,7 @@ import { z } from 'zod';
 import { toast } from 'sonner';
 import { ArrowLeft, Info, Plus } from 'lucide-react';
 import { ApiError } from '@/lib/api-client';
+import { hoyISO } from '@/lib/fecha';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -22,8 +23,6 @@ import { NuevaCategoriaDialog } from './components/NuevaCategoriaDialog';
 import { NuevaUnidadDialog } from './components/NuevaUnidadDialog';
 import { useCategorias, useProductos, useRegistrarEntrada, useUnidades } from './api';
 import type { EstadoProducto, OrigenLote } from './types';
-
-const hoyISO = () => new Date().toISOString().slice(0, 10);
 
 const schema = z
   .object({

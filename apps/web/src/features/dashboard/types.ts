@@ -1,17 +1,6 @@
-export interface ProximoAVencer {
-  loteId: number;
-  itemId: number;
-  itemNombre: string;
-  cantidadDisponible: number;
-  fechaCaducidad: string;
-}
+import type { ProximoAVencer, StockBajoItem } from '@/features/inventario/types';
 
-export interface StockBajoItem {
-  itemId: number;
-  nombre: string;
-  stockActual: number;
-  stockMinimo: number;
-}
+export type { ProximoAVencer, StockBajoItem };
 
 export interface ResumenDashboard {
   totalComensales: number;

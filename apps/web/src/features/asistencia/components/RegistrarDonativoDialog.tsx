@@ -16,6 +16,7 @@ import { useBienhechores } from '@/features/bienhechores/api';
 import { NuevoBienhechorDialog } from '@/features/bienhechores/components/NuevoBienhechorDialog';
 import type { EstadoProducto, LineaDonativoInput } from '@/features/inventario/types';
 import { ApiError } from '@/lib/api-client';
+import { hoyISO } from '@/lib/fecha';
 
 interface RegistrarDonativoDialogProps {
   open: boolean;
@@ -45,7 +46,7 @@ function nuevaLinea(): LineaForm {
  */
 export function RegistrarDonativoDialog({ open, onOpenChange }: RegistrarDonativoDialogProps) {
   const [bienhechorId, setBienhechorId] = React.useState<number>();
-  const [fechaIngreso, setFechaIngreso] = React.useState<string | undefined>(new Date().toISOString().slice(0, 10));
+  const [fechaIngreso, setFechaIngreso] = React.useState<string | undefined>(hoyISO());
   const [lineas, setLineas] = React.useState<LineaForm[]>([nuevaLinea()]);
 
   const [nuevoBienhechorAbierto, setNuevoBienhechorAbierto] = React.useState(false);
@@ -62,7 +63,7 @@ export function RegistrarDonativoDialog({ open, onOpenChange }: RegistrarDonativ
 
   function limpiar() {
     setBienhechorId(undefined);
-    setFechaIngreso(new Date().toISOString().slice(0, 10));
+    setFechaIngreso(hoyISO());
     setLineas([nuevaLinea()]);
   }
 

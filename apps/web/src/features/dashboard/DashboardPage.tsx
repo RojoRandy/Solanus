@@ -4,20 +4,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { useAuth } from '@/lib/auth-context';
+import { diasHastaSoloDia, formatFechaCortaSoloDia } from '@/lib/fecha';
 import { CalendarioProximosDias } from '@/features/agenda/components/CalendarioProximosDias';
+import { formatCantidad } from '@/features/inventario/format';
 import { useResumenDashboard } from './api';
 import { StatCard } from './components/StatCard';
-
-function formatFecha(iso: string): string {
-  return new Date(iso).toLocaleDateString('es-MX', { day: '2-digit', month: 'short' });
-}
-
-function diasRestantes(iso: string): number {
-  const hoy = new Date();
-  hoy.setHours(0, 0, 0, 0);
-  const fecha = new Date(iso);
-  return Math.round((fecha.getTime() - hoy.getTime()) / (1000 * 60 * 60 * 24));
-}
 
 function formatMoneda(valor: number): string {
   return valor.toLocaleString('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 0 });
@@ -92,15 +83,17 @@ export function DashboardPage() {
                     {resumen.proximosAVencer.map((lote) => (
                       <Link
                         key={lote.loteId}
-                        to={`/inventario/${lote.itemId}`}
+                        to={`/inventario/variantes/${lote.varianteId}`}
                         className="flex items-center justify-between py-2.5 hover:text-primary"
                       >
                         <div className="flex flex-col">
-                          <span className="text-sm font-medium">{lote.itemNombre}</span>
-                          <span className="text-xs text-muted-foreground">{lote.cantidadDisponible} disponibles</span>
+                          <span className="text-sm font-medium">{lote.productoNombre}</span>
+                          <span className="text-xs text-muted-foreground">
+                            {formatCantidad(lote.cantidadDisponible, lote.unidad)} disponibles
+                          </span>
                         </div>
                         <Badge variant="outline" className="border-warning text-warning">
-                          {formatFecha(lote.fechaCaducidad)} · {diasRestantes(lote.fechaCaducidad)} días
+                          {formatFechaCortaSoloDia(lote.fechaCaducidad)} · {diasHastaSoloDia(lote.fechaCaducidad)} días
                         </Badge>
                       </Link>
                     ))}
@@ -120,13 +113,13 @@ export function DashboardPage() {
                   <div className="flex flex-col divide-y divide-border">
                     {resumen.stockBajo.map((item) => (
                       <Link
-                        key={item.itemId}
-                        to={`/inventario/${item.itemId}`}
+                        key={item.varianteId}
+                        to={`/inventario/variantes/${item.varianteId}`}
                         className="flex items-center justify-between py-2.5 hover:text-primary"
                       >
-                        <span className="text-sm font-medium">{item.nombre}</span>
+                        <span className="text-sm font-medium">{item.productoNombre}</span>
                         <Badge variant="outline" className="border-destructive text-destructive">
-                          {item.stockActual} / {item.stockMinimo}
+                          {formatCantidad(item.stockActual, item.unidad)} / {formatCantidad(item.stockMinimo, item.unidad)}
                         </Badge>
                       </Link>
                     ))}
