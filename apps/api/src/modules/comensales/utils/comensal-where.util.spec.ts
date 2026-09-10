@@ -16,12 +16,14 @@ describe('construirWhereComensales', () => {
 
   it('ninos = nacidos después del corte de hace 18 años (quien cumple 18 hoy queda fuera)', () => {
     const where = construirWhereComensales({ grupoEdad: 'ninos' });
-    expect(where.fechaNacimiento).toEqual({ gt: new Date('2008-09-08T00:00:00') });
+    // El corte se ancla al día calendario en América/Ciudad de México, no al de la
+    // máquina que corre el test — por eso se compara contra medianoche UTC explícita.
+    expect(where.fechaNacimiento).toEqual({ gt: new Date('2008-09-08T00:00:00.000Z') });
   });
 
   it('adultos_mayores = nacidos en o antes del corte de hace 60 años (quien cumple 60 hoy queda dentro)', () => {
     const where = construirWhereComensales({ grupoEdad: 'adultos_mayores' });
-    expect(where.fechaNacimiento).toEqual({ lte: new Date('1966-09-08T00:00:00') });
+    expect(where.fechaNacimiento).toEqual({ lte: new Date('1966-09-08T00:00:00.000Z') });
   });
 
   it('la búsqueda numérica agrega { folio } al OR; la no numérica no', () => {

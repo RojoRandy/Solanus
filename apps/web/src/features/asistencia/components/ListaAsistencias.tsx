@@ -6,16 +6,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { useAuth } from '@/lib/auth-context';
 import { ApiError } from '@/lib/api-client';
+import { formatHora } from '@/lib/fecha';
 import { useEliminarAsistencia } from '../api';
 import { resolverFoto } from '../utils';
 import type { Turno } from '../types';
 
 function iniciales(nombres: string, apellidos: string): string {
   return `${nombres[0] ?? ''}${apellidos[0] ?? ''}`.toUpperCase();
-}
-
-function formatHora(iso: string): string {
-  return new Date(iso).toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
 }
 
 export function ListaAsistencias({ turno }: { turno: Turno }) {

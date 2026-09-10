@@ -1,16 +1,18 @@
-import { format, parseISO } from 'date-fns';
-import { es } from 'date-fns/locale';
-
+/**
+ * `fecha`/`fechaCorta` formatean campos *solo-fecha* del API (`@db.Date`:
+ * caducidad, ingreso de lote, fecha de donativo) — llegan serializados como
+ * medianoche UTC. Se leen en UTC (no en la zona del navegador ni en la de
+ * México) para no correr el día calendario un día atrás; ver `formatFechaCortaTz`
+ * en `@/lib/fecha` para campos que sí son un instante real (con hora).
+ */
 export function formatFecha(fecha: string | Date | null | undefined): string {
   if (!fecha) return '—';
-  const date = typeof fecha === 'string' ? parseISO(fecha) : fecha;
-  return format(date, "d 'de' MMMM yyyy", { locale: es });
+  return new Date(fecha).toLocaleDateString('es-MX', { timeZone: 'UTC', day: 'numeric', month: 'long', year: 'numeric' });
 }
 
 export function formatFechaCorta(fecha: string | Date | null | undefined): string {
   if (!fecha) return '—';
-  const date = typeof fecha === 'string' ? parseISO(fecha) : fecha;
-  return format(date, 'dd/MM/yyyy');
+  return new Date(fecha).toLocaleDateString('es-MX', { timeZone: 'UTC', day: '2-digit', month: '2-digit', year: 'numeric' });
 }
 
 export function formatMoneda(valor: number | null | undefined): string {

@@ -29,6 +29,7 @@ import { formatMoneda } from '@/features/inventario/format';
 import { useBienhechores } from '@/features/bienhechores/api';
 import { NuevoBienhechorDialog } from '@/features/bienhechores/components/NuevoBienhechorDialog';
 import { ApiError } from '@/lib/api-client';
+import { hoyISO } from '@/lib/fecha';
 import { useRegistrarDonativoDinero } from '../api';
 import { ETIQUETA_METODO_PAGO, type MetodoPago } from '../types';
 
@@ -52,10 +53,6 @@ interface Props {
   bienhechorId?: number;
   /** Se manda al API cuando la captura viene de la pantalla de Turno. */
   turnoId?: number;
-}
-
-function hoyISO(): string {
-  return new Date().toISOString().slice(0, 10);
 }
 
 export function RegistrarDonativoDineroDialog({ open, onOpenChange, bienhechorId, turnoId }: Props) {

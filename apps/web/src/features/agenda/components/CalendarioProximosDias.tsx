@@ -1,10 +1,10 @@
 import * as React from 'react';
-import { addDays, format, isSameDay } from 'date-fns';
-import { es } from 'date-fns/locale';
+import { addDays } from 'date-fns';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
+import { claveDiaMexico, formatFechaGuionesTz, formatFechaLargaTz, formatHoraEvento } from '@/lib/fecha';
 import { useEventosAgenda } from '../api';
 import { estiloEvento } from '../estilo-evento';
 import type { EventoAgenda } from '../types';
@@ -12,9 +12,8 @@ import { EventosDelDiaDialog } from './EventosDelDiaDialog';
 
 const DIAS_A_MOSTRAR = 5;
 
-function claveDia(fecha: Date): string {
-  return format(fecha, 'yyyy-MM-dd');
-}
+// Alias local: el día calendario se agrupa por México, no por la zona del navegador.
+const claveDia = claveDiaMexico;
 
 /**
  * Calendario de los próximos 5 días. Agrupa en cliente sobre todos los
@@ -64,21 +63,21 @@ export function CalendarioProximosDias() {
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-5">
         {dias.map((dia) => {
           const eventosDelDia = (eventosPorDia.get(claveDia(dia)) ?? []).slice().sort((a, b) => a.fechaHora.localeCompare(b.fechaHora));
-          const esHoy = isSameDay(dia, hoy);
+          const esHoy = claveDia(dia) === claveDia(hoy);
 
           return (
             <Card key={claveDia(dia)} className="gap-0 overflow-hidden p-0">
               <button
                 type="button"
                 onClick={() => setDiaSeleccionado(dia)}
-                aria-label={`Ver eventos del ${format(dia, "d 'de' MMMM 'de' yyyy", { locale: es })}`}
+                aria-label={`Ver eventos del ${formatFechaLargaTz(dia)}`}
                 className={cn(
                   'flex w-full flex-col gap-2 p-3 text-left transition-colors hover:bg-muted/50',
                   esHoy && 'bg-accent/40',
                 )}
               >
                 <span className={cn('text-xs font-medium', esHoy ? 'text-foreground' : 'text-muted-foreground')}>
-                  {format(dia, 'd - MMMM - yyyy', { locale: es })}
+                  {formatFechaGuionesTz(dia)}
                 </span>
                 {eventosDelDia.length === 0 ? (
                   <span className="py-3 text-center text-xs text-muted-foreground">Sin eventos programados</span>
@@ -87,7 +86,7 @@ export function CalendarioProximosDias() {
                   <div className="flex max-h-36 flex-col gap-1.5 overflow-y-auto overscroll-contain pr-1">
                     {eventosDelDia.map((evento) => (
                       <div key={evento.id} className="flex flex-col gap-1 rounded-md border px-2 py-1" style={estiloEvento(evento.color)}>
-                        <span className="text-[11px] font-semibold">{format(new Date(evento.fechaHora), 'h:mm a')}</span>
+                        <span className="text-[11px] font-semibold">{formatHoraEvento(evento.fechaHora)}</span>
                         <Tooltip>
                           <TooltipTrigger render={<span className="truncate text-xs" />}>{evento.descripcion}</TooltipTrigger>
                           <TooltipContent>{evento.descripcion}</TooltipContent>

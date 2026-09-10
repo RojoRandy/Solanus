@@ -3,16 +3,16 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { toast } from 'sonner';
-import { format } from 'date-fns';
 import { COLOR_EVENTO_DEFAULT, colorEventoRegex } from '@comedor-solanus/shared';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { DatePicker, fechaAIso } from '@/components/ui/date-picker';
+import { DatePicker } from '@/components/ui/date-picker';
 import { TimePicker } from '@/components/ui/time-picker';
 import { ColorPicker } from '@/components/shared/ColorPicker';
 import { ApiError } from '@/lib/api-client';
+import { combinarFechaHoraMexico, fechaYHoraMexico, hoyISO } from '@/lib/fecha';
 import { useActualizarEvento, useCrearEvento } from '../api';
 import type { EventoAgenda } from '../types';
 
@@ -29,17 +29,6 @@ interface EventoFormDialogProps {
   evento: EventoAgenda | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-}
-
-function fechaYHoraDeEvento(fechaHora: string): { fecha: string; hora: string } {
-  const fecha = new Date(fechaHora);
-  return { fecha: fechaAIso(fecha), hora: format(fecha, 'HH:mm') };
-}
-
-function combinarFechaHora(fecha: string, hora: string): string {
-  const [anio, mes, dia] = fecha.split('-').map(Number);
-  const [horas, minutos] = hora.split(':').map(Number);
-  return new Date(anio, mes - 1, dia, horas, minutos).toISOString();
 }
 
 const VALORES_VACIOS: FormValues = { fecha: '', hora: '', descripcion: '', color: COLOR_EVENTO_DEFAULT };
@@ -63,7 +52,7 @@ export function EventoFormDialog({ evento, open, onOpenChange }: EventoFormDialo
 
   useEffect(() => {
     if (open) {
-      reset(evento ? { ...fechaYHoraDeEvento(evento.fechaHora), descripcion: evento.descripcion, color: evento.color } : VALORES_VACIOS);
+      reset(evento ? { ...fechaYHoraMexico(new Date(evento.fechaHora)), descripcion: evento.descripcion, color: evento.color } : VALORES_VACIOS);
     }
   }, [open, evento, reset]);
 
@@ -72,12 +61,12 @@ export function EventoFormDialog({ evento, open, onOpenChange }: EventoFormDialo
   const color = watch('color');
 
   async function onSubmit(values: FormValues) {
-    if (!esEdicion && values.fecha < fechaAIso(new Date())) {
+    if (!esEdicion && values.fecha < hoyISO()) {
       toast.error('La fecha no puede ser anterior a hoy.');
       return;
     }
     const dto = {
-      fechaHora: combinarFechaHora(values.fecha, values.hora),
+      fechaHora: combinarFechaHoraMexico(values.fecha, values.hora),
       descripcion: values.descripcion,
       color: values.color,
     };

@@ -1,6 +1,4 @@
 import * as React from 'react';
-import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
 import { CalendarDays, Plus, TriangleAlert } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -19,6 +17,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { ApiError } from '@/lib/api-client';
+import { formatFechaLargaTz, formatHoraEvento } from '@/lib/fecha';
 import { useEliminarEvento, useEventosAgenda } from './api';
 import { CalendarioProximosDias } from './components/CalendarioProximosDias';
 import { EventoFormDialog } from './components/EventoFormDialog';
@@ -131,10 +130,10 @@ export function AgendaPage() {
                 className="flex shrink-0 flex-col items-center justify-center rounded-md border px-3 py-1.5 text-xs font-medium"
                 style={estiloEvento(evento.color)}
               >
-                {format(new Date(evento.fechaHora), 'h:mm a')}
+                {formatHoraEvento(evento.fechaHora)}
               </div>
               <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-                <p className="text-sm font-medium">{format(new Date(evento.fechaHora), "d 'de' MMMM 'de' yyyy", { locale: es })}</p>
+                <p className="text-sm font-medium">{formatFechaLargaTz(evento.fechaHora)}</p>
                 <p className="truncate text-sm text-muted-foreground">{evento.descripcion}</p>
               </div>
               {filtro === 'proximos' && (
