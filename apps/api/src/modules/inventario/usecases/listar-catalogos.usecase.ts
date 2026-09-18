@@ -36,7 +36,7 @@ export class ListarUnidadesUseCase implements UseCase<
     return this.prisma.unidadMedida.findMany({
       where: { activo: true },
       orderBy: { nombre: 'asc' },
-      select: { id: true, nombre: true, abrevia: true, activo: true },
+      select: { id: true, nombre: true, abrevia: true, activo: true, indicarContenido: true },
     });
   }
 }

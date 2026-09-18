@@ -26,7 +26,8 @@ export function RegistrarAjusteDialog({ open, onOpenChange }: RegistrarAjusteDia
   const [motivoId, setMotivoId] = React.useState<number>();
   const [notas, setNotas] = React.useState('');
 
-  const { data: variantesPag } = useVariantes({ limit: 200, incluirInactivas: true });
+  // ponytail: limit fijo, pasar a búsqueda remota si el catálogo crece más de 500
+  const { data: variantesPag } = useVariantes({ limit: 500, incluirInactivas: true });
   const { data: lotes } = useLotesVariante(signo === 'aumentar' ? varianteId : undefined);
   const { data: motivos } = useMotivos();
   const registrarAjuste = useRegistrarAjuste();

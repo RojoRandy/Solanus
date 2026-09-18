@@ -19,6 +19,10 @@ const Exceptions = {
     new BadRequestException(Responses.MARCA_NO_PERMITIDA_EN_COCIDO(data)),
   MARCA_NO_PERMITIDA_EN_GRANEL: (data?: any) =>
     new BadRequestException(Responses.MARCA_NO_PERMITIDA_EN_GRANEL(data)),
+  CONTENIDO_REQUERIDO: (data?: any) =>
+    new BadRequestException(Responses.CONTENIDO_REQUERIDO(data)),
+  CONTENIDO_NO_APLICA: (data?: any) =>
+    new BadRequestException(Responses.CONTENIDO_NO_APLICA(data)),
   LOTE_NOT_FOUND: (data?: any) =>
     new NotFoundException(Responses.LOTE_NOT_FOUND(data)),
   BIENHECHOR_NOT_FOUND: (data?: any) =>
@@ -98,6 +102,18 @@ const Responses = {
     new ErrorResponseDto(
       'MARCA_NO_PERMITIDA_EN_GRANEL',
       'Un producto a granel no lleva marca',
+      data,
+    ),
+  CONTENIDO_REQUERIDO: (data?: any) =>
+    new ErrorResponseDto(
+      'CONTENIDO_REQUERIDO',
+      'Esta unidad requiere indicar el contenido (cantidad y unidad).',
+      data,
+    ),
+  CONTENIDO_NO_APLICA: (data?: any) =>
+    new ErrorResponseDto(
+      'CONTENIDO_NO_APLICA',
+      'Esta unidad de medida no admite contenido.',
       data,
     ),
   LOTE_NOT_FOUND: (data?: any) =>

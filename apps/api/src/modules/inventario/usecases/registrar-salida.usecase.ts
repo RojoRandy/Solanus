@@ -3,6 +3,7 @@ import { TipoMovimiento } from '@prisma/client';
 import { UseCase } from '@/common/interfaces/use-case.interface';
 import { PrismaService } from '@/prisma/prisma.service';
 import { InventarioErrors } from '@/common/errors/inventario.errors';
+import { parseFechaSoloDia } from '@/common/utils/date';
 
 export interface RegistrarSalidaArgs {
   varianteId: number;
@@ -88,6 +89,10 @@ export class RegistrarSalidaInventarioUseCase implements UseCase<
             turnoId,
             registradoPorId,
             notas,
+            // Ver el comentario en registrar-entrada.usecase.ts: el día del
+            // movimiento se captura sin hora, now() lo correría un día tras
+            // las 18:00 hora de México al mostrarlo en UTC.
+            fecha: parseFechaSoloDia(),
           },
         });
 

@@ -30,32 +30,32 @@ model Usuario {
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
 
-  turnosRegistrados      TurnoComida[]         @relation("TurnoRegistradoPor")
-  asistenciasRegistradas Asistencia[]          @relation("AsistenciaRegistradaPor")
-  movimientosRegistrados MovimientoInventario[] @relation("MovimientoRegistradoPor")
-  movimientosEditados    MovimientoInventario[] @relation("MovimientoEditadoPor")
-  donativosDineroRegistrados DonativoDinero[]  @relation("DonativoDineroRegistradoPor")
-  evidenciasSubidas      EvidenciaMensual[]    @relation("EvidenciaSubidaPor")
+  turnosRegistrados          TurnoComida[]          @relation("TurnoRegistradoPor")
+  asistenciasRegistradas     Asistencia[]           @relation("AsistenciaRegistradaPor")
+  movimientosRegistrados     MovimientoInventario[] @relation("MovimientoRegistradoPor")
+  movimientosEditados        MovimientoInventario[] @relation("MovimientoEditadoPor")
+  donativosDineroRegistrados DonativoDinero[]       @relation("DonativoDineroRegistradoPor")
+  evidenciasSubidas          EvidenciaMensual[]     @relation("EvidenciaSubidaPor")
 
   @@map("usuarios")
 }
 
 model Comensal {
-  id              Int       @id @default(autoincrement())
-  folio           Int       @unique @default(autoincrement())
+  id              Int        @id @default(autoincrement())
+  folio           Int        @unique @default(autoincrement())
   nombres         String
   apellidos       String
-  fechaNacimiento DateTime
+  fechaNacimiento DateTime   @db.Date
   curp            String?
   ineFrontPath    String?
   ineBackPath     String?
   fotoPath        String?
   tutorId         Int?
-  tutor           Comensal? @relation("TutorMenores", fields: [tutorId], references: [id])
+  tutor           Comensal?  @relation("TutorMenores", fields: [tutorId], references: [id])
   menores         Comensal[] @relation("TutorMenores")
-  activo          Boolean   @default(true)
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  activo          Boolean    @default(true)
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
 
   cartaUsoImagen CartaUsoImagen?
   asistencias    Asistencia[]
@@ -65,15 +65,15 @@ model Comensal {
 }
 
 model CartaUsoImagen {
-  id           Int       @id @default(autoincrement())
-  comensalId   Int       @unique
-  comensal     Comensal  @relation(fields: [comensalId], references: [id])
+  id         Int       @id @default(autoincrement())
+  comensalId Int       @unique
+  comensal   Comensal  @relation(fields: [comensalId], references: [id])
   // Quien firma: el propio comensal si es mayor de edad, o su tutor si es menor.
-  firmanteId   Int?
-  autoriza     Boolean   @default(false)
-  fechaFirma   DateTime?
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  firmanteId Int?
+  autoriza   Boolean   @default(false)
+  fechaFirma DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
 
   @@map("cartas_uso_imagen")
 }
@@ -200,7 +200,7 @@ model TurnoComida {
 }
 
 model TurnoVoluntario {
-  id           Int        @id @default(autoincrement())
+  id           Int         @id @default(autoincrement())
   turnoId      Int
   turno        TurnoComida @relation(fields: [turnoId], references: [id])
   voluntarioId Int
@@ -248,31 +248,42 @@ model CategoriaInventario {
 }
 
 model UnidadMedida {
-  id      Int     @id @default(autoincrement())
-  nombre  String  @unique
-  abrevia String  @unique
-  activo  Boolean @default(true)
+  id               Int     @id @default(autoincrement())
+  nombre           String  @unique
+  abrevia          String  @unique
+  activo           Boolean @default(true)
+  indicarContenido Boolean @default(false)
 
-  variantes VarianteInventario[]
+  variantes          VarianteInventario[]
+  productos          Producto[]           @relation("ProductoUnidad")
+  productosContenido Producto[]           @relation("ProductoContenidoUnidad")
 
   @@map("unidades_medida")
 }
 
-// El producto es solo qué cosa es: nombre y categoría. Marca, presentación,
-// ubicación y unidad de medida cambian en cada compra o donación, así que
-// viven en el lote (ver LoteInventario), no aquí.
+// El producto es la presentación única que se compra o dona: nombre + marca +
+// contenido (ej. "Leche Lala 1 L"). Dos marcas del mismo artículo son dos
+// productos distintos. Ubicación y CFDI siguen viviendo en el lote (ver
+// LoteInventario), porque cambian en cada entrada aunque el producto no cambie.
 model Producto {
-  id           Int                 @id @default(autoincrement())
-  nombre       String
-  categoriaId  Int
-  categoria    CategoriaInventario @relation(fields: [categoriaId], references: [id])
-  activo       Boolean             @default(true)
-  createdAt    DateTime            @default(now())
-  updatedAt    DateTime            @updatedAt
+  id                Int                 @id @default(autoincrement())
+  nombre            String
+  categoriaId       Int
+  categoria         CategoriaInventario @relation(fields: [categoriaId], references: [id])
+  unidadId          Int
+  unidad            UnidadMedida        @relation("ProductoUnidad", fields: [unidadId], references: [id])
+  estado            EstadoProducto      @default(NO_APLICA)
+  marca             String?
+  granel            Boolean             @default(false)
+  contenidoCantidad Decimal?            @db.Decimal(12, 3)
+  contenidoUnidadId Int?
+  contenidoUnidad   UnidadMedida?       @relation("ProductoContenidoUnidad", fields: [contenidoUnidadId], references: [id])
+  activo            Boolean             @default(true)
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
 
   variantes VarianteInventario[]
 
-  @@unique([nombre, categoriaId])
   @@index([nombre])
   @@map("productos")
 }

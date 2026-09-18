@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import { OrigenLote, Prisma, EstadoProducto } from '@prisma/client';
+import { OrigenLote, Prisma, Producto } from '@prisma/client';
 import { UseCase } from '@/common/interfaces/use-case.interface';
 import { PrismaService } from '@/prisma/prisma.service';
 import { InventarioErrors } from '@/common/errors/inventario.errors';
-import { now } from '@/common/utils/date';
+import { parseFechaSoloDia } from '@/common/utils/date';
 import { RegistrarEntradaDto, LoteResponseDto } from '../dto/entrada.dto';
 import { validarCategoria } from './crear-producto.usecase';
 import { upsertVariante } from './upsert-variante.util';
@@ -94,12 +94,6 @@ export class RegistrarEntradaUseCase implements UseCase<
     if (dto.origen === OrigenLote.DONADO && !dto.bienhechorId)
       throw InventarioErrors.Exceptions.BIENHECHOR_REQUERIDO();
 
-    if (dto.estado === EstadoProducto.COCIDO && dto.marca)
-      throw InventarioErrors.Exceptions.MARCA_NO_PERMITIDA_EN_COCIDO();
-
-    if (dto.granel && dto.marca)
-      throw InventarioErrors.Exceptions.MARCA_NO_PERMITIDA_EN_GRANEL();
-
     if (!dto.noCaduca && !dto.fechaCaducidad)
       throw InventarioErrors.Exceptions.CADUCIDAD_REQUERIDA();
 
@@ -107,20 +101,44 @@ export class RegistrarEntradaUseCase implements UseCase<
     const claveMotivo = CLAVE_MOTIVO_POR_ORIGEN[dto.origen];
 
     const lote = await this.prisma.$transaction(async (tx) => {
-      let productoId = dto.productoId;
+      let producto: Producto;
 
-      if (productoId) {
-        const producto = await tx.producto.findUnique({ where: { id: productoId } });
-        if (!producto) throw InventarioErrors.Exceptions.PRODUCTO_NOT_FOUND({ id: productoId });
-      } else if (dto.productoNuevo) {
-        await validarCategoria(tx, dto.productoNuevo.categoriaId);
-        const productoNuevo = await tx.producto.create({
+      if (dto.productoId) {
+        const existente = await tx.producto.findUnique({ where: { id: dto.productoId } });
+        if (!existente)
+          throw InventarioErrors.Exceptions.PRODUCTO_NOT_FOUND({ id: dto.productoId });
+        producto = existente;
+      } else {
+        // La validación inicial garantiza que se recibieron los datos del producto nuevo.
+        const productoNuevo = dto.productoNuevo!;
+        await validarCategoria(tx, productoNuevo.categoriaId);
+        const unidad = await tx.unidadMedida.findUnique({
+          where: { id: productoNuevo.unidadId },
+        });
+        if (!unidad)
+          throw InventarioErrors.Exceptions.UNIDAD_NOT_FOUND({
+            unidadId: productoNuevo.unidadId,
+          });
+
+        if (unidad.indicarContenido) {
+          if (productoNuevo.contenidoCantidad == null || productoNuevo.contenidoUnidadId == null)
+            throw InventarioErrors.Exceptions.CONTENIDO_REQUERIDO();
+        } else if (productoNuevo.contenidoCantidad != null || productoNuevo.contenidoUnidadId != null) {
+          throw InventarioErrors.Exceptions.CONTENIDO_NO_APLICA();
+        }
+
+        producto = await tx.producto.create({
           data: {
-            nombre: dto.productoNuevo.nombre,
-            categoriaId: dto.productoNuevo.categoriaId,
+            nombre: productoNuevo.nombre,
+            categoriaId: productoNuevo.categoriaId,
+            unidadId: productoNuevo.unidadId,
+            estado: productoNuevo.estado,
+            marca: productoNuevo.marca ?? null,
+            granel: productoNuevo.granel ?? false,
+            contenidoCantidad: productoNuevo.contenidoCantidad ?? null,
+            contenidoUnidadId: productoNuevo.contenidoUnidadId ?? null,
           },
         });
-        productoId = productoNuevo.id;
       }
 
       if (dto.bienhechorId) {
@@ -132,25 +150,23 @@ export class RegistrarEntradaUseCase implements UseCase<
       const motivo = await tx.motivoMovimiento.findUnique({ where: { clave: claveMotivo } });
       if (!motivo) throw InventarioErrors.Exceptions.MOTIVO_NOT_FOUND({ clave: claveMotivo });
 
-      // productoId siempre está definido en este punto: o vino en el DTO, o se
-      // creó arriba (una de las dos ramas es obligatoria por la validación inicial).
       const variante = await upsertVariante(tx, {
-        productoId: productoId!,
-        unidadId: dto.unidadId,
-        estado: dto.estado,
+        productoId: producto.id,
+        unidadId: producto.unidadId,
+        estado: producto.estado,
       });
 
       const loteCreado = await tx.loteInventario.create({
         data: {
           varianteId: variante.id,
-          marca: dto.estado === EstadoProducto.COCIDO || dto.granel ? undefined : dto.marca,
-          granel: dto.granel ?? false,
+          marca: producto.granel ? null : producto.marca,
+          granel: producto.granel,
           presentacion: dto.presentacion,
           ubicacion: dto.ubicacion,
           cantidadInicial: dto.cantidadInicial,
           cantidadDisponible: dto.cantidadInicial,
-          fechaCaducidad: dto.noCaduca ? null : new Date(dto.fechaCaducidad!),
-          fechaIngreso: dto.fechaIngreso ? new Date(dto.fechaIngreso) : now().toDate(),
+          fechaCaducidad: dto.noCaduca ? null : parseFechaSoloDia(dto.fechaCaducidad),
+          fechaIngreso: parseFechaSoloDia(dto.fechaIngreso),
           costoUnitario: dto.costoUnitario,
           costoTotal,
           origen: dto.origen,
@@ -168,6 +184,10 @@ export class RegistrarEntradaUseCase implements UseCase<
           motivoId: motivo.id,
           cantidad: dto.cantidadInicial,
           registradoPorId,
+          // El día del movimiento se captura sin hora (se edita con un DatePicker,
+          // ver actualizar-movimiento.usecase.ts) — usar now() aquí correría la
+          // fecha un día después de las 18:00 hora de México al mostrarla en UTC.
+          fecha: parseFechaSoloDia(),
         },
       });
 

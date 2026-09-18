@@ -3,7 +3,7 @@ import { UseCase } from '@/common/interfaces/use-case.interface';
 import { PrismaService } from '@/prisma/prisma.service';
 import { InventarioErrors } from '@/common/errors/inventario.errors';
 import { AsistenciaErrors } from '@/common/errors/asistencia.errors';
-import { now } from '@/common/utils/date';
+import { parseFechaSoloDia } from '@/common/utils/date';
 import { RegistrarDonativoDineroDto, DonativoDineroResponseDto } from '../dto/donativo-dinero.dto';
 import { DONATIVO_DINERO_SELECT, mapDonativoDinero } from './donativo-dinero.mapper';
 
@@ -44,9 +44,7 @@ export class RegistrarDonativoDineroUseCase implements UseCase<
         throw AsistenciaErrors.Exceptions.TURNO_NOT_FOUND({ turnoId: dto.turnoId });
     }
 
-    const fecha = dto.fecha
-      ? new Date(dto.fecha)
-      : now().startOf('day').toDate();
+    const fecha = parseFechaSoloDia(dto.fecha);
 
     const donativo = await this.prisma.donativoDinero.create({
       data: {

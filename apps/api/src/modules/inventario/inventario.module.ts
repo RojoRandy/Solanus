@@ -6,7 +6,6 @@ import { ListarProductosUseCase } from './usecases/listar-productos.usecase';
 import { ObtenerProductoUseCase } from './usecases/obtener-producto.usecase';
 import { ActualizarProductoUseCase } from './usecases/actualizar-producto.usecase';
 import { EliminarProductoUseCase } from './usecases/eliminar-producto.usecase';
-import { CrearVarianteUseCase } from './usecases/crear-variante.usecase';
 import { ListarVariantesUseCase } from './usecases/listar-variantes.usecase';
 import { ObtenerVarianteUseCase } from './usecases/obtener-variante.usecase';
 import { ActualizarVarianteUseCase } from './usecases/actualizar-variante.usecase';
@@ -43,7 +42,6 @@ import {
     ObtenerProductoUseCase,
     ActualizarProductoUseCase,
     EliminarProductoUseCase,
-    CrearVarianteUseCase,
     ListarVariantesUseCase,
     ObtenerVarianteUseCase,
     ActualizarVarianteUseCase,

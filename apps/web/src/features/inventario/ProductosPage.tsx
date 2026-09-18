@@ -34,6 +34,7 @@ import { useDebouncedValue } from '@/features/voluntarios/use-debounced-value';
 import { usePaginacion } from '@/lib/pagination';
 import { useEliminarProducto, useProductos } from './api';
 import type { Producto } from './types';
+import { etiquetaProducto } from './format';
 
 export function ProductosPage() {
   const navigate = useNavigate();
@@ -64,7 +65,7 @@ export function ProductosPage() {
           </Button>
           <div>
             <h1 className="text-2xl font-semibold tracking-tight">Catálogo de productos</h1>
-            <p className="text-sm text-muted-foreground">Nombre y categoría — marca, unidad y presentación se capturan en cada entrada</p>
+            <p className="text-sm text-muted-foreground">Nombre, categoría, unidad, marca, contenido y crudo/cocido se capturan en el catálogo</p>
           </div>
         </div>
         <Button render={<Link to="nuevo" />}>
@@ -131,7 +132,7 @@ export function ProductosPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Producto</TableHead>
-                  <TableHead>Categoría</TableHead>
+                  <TableHead>Presentación</TableHead>
                   <TableHead>Estado</TableHead>
                   <TableHead />
                 </TableRow>
@@ -144,7 +145,7 @@ export function ProductosPage() {
                         {producto.nombre}
                       </Link>
                     </TableCell>
-                    <TableCell>{producto.categoria.nombre}</TableCell>
+                    <TableCell className="max-w-sm whitespace-normal">{etiquetaProducto(producto)}</TableCell>
                     <TableCell>
                       {producto.activo ? <Badge variant="secondary">Activo</Badge> : <Badge variant="outline">Dado de baja</Badge>}
                     </TableCell>

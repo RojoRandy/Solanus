@@ -5,16 +5,15 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DatePicker } from '@/components/ui/date-picker';
 import { Separator } from '@/components/ui/separator';
 import { ComboboxField } from '@/features/inventario/ComboboxField';
-import { useProductos, useRegistrarDonativo, useUnidades } from '@/features/inventario/api';
-import { NuevaUnidadDialog } from '@/features/inventario/components/NuevaUnidadDialog';
+import { useProducto, useProductos, useRegistrarDonativo } from '@/features/inventario/api';
 import { NuevoProductoDialog } from '@/features/inventario/components/NuevoProductoDialog';
 import { useBienhechores } from '@/features/bienhechores/api';
 import { NuevoBienhechorDialog } from '@/features/bienhechores/components/NuevoBienhechorDialog';
-import type { EstadoProducto, LineaDonativoInput } from '@/features/inventario/types';
+import { ETIQUETA_ESTADO, type LineaDonativoInput } from '@/features/inventario/types';
+import { etiquetaMarcaLote, etiquetaProducto } from '@/features/inventario/format';
 import { ApiError } from '@/lib/api-client';
 import { hoyISO } from '@/lib/fecha';
 
@@ -26,9 +25,7 @@ interface RegistrarDonativoDialogProps {
 interface LineaForm {
   key: number;
   productoId?: number;
-  estado: EstadoProducto;
   cantidad: string;
-  unidadId?: number;
   costoUnitario: string;
   fechaCaducidad?: string;
 }
@@ -36,13 +33,24 @@ interface LineaForm {
 let contadorLinea = 0;
 function nuevaLinea(): LineaForm {
   contadorLinea += 1;
-  return { key: contadorLinea, estado: 'CRUDO', cantidad: '', costoUnitario: '' };
+  return { key: contadorLinea, cantidad: '', costoUnitario: '' };
+}
+
+function InformacionProducto({ productoId }: { productoId: number }) {
+  const { data: producto } = useProducto(productoId);
+  if (!producto) return null;
+
+  return (
+    <p className="text-xs text-muted-foreground">
+      {producto.unidad.nombre} ({producto.unidad.abrevia}) · {ETIQUETA_ESTADO[producto.estado]} · {etiquetaMarcaLote(producto)}
+    </p>
+  );
 }
 
 /**
  * Registro de donativos recibidos durante el turno: primero el bienhechor
  * (con alta rápida si es nuevo), luego una o más líneas de producto — cada
- * una puede dar de alta producto y unidad de medida sin salir del diálogo.
+ * una puede dar de alta un producto sin salir del diálogo.
  */
 export function RegistrarDonativoDialog({ open, onOpenChange }: RegistrarDonativoDialogProps) {
   const [bienhechorId, setBienhechorId] = React.useState<number>();
@@ -51,15 +59,14 @@ export function RegistrarDonativoDialog({ open, onOpenChange }: RegistrarDonativ
 
   const [nuevoBienhechorAbierto, setNuevoBienhechorAbierto] = React.useState(false);
   const [nuevoProductoLinea, setNuevoProductoLinea] = React.useState<number | null>(null);
-  const [nuevaUnidadLinea, setNuevaUnidadLinea] = React.useState<number | null>(null);
 
   const { data: bienhechores } = useBienhechores();
-  const { data: productosPag } = useProductos({ limit: 200 });
-  const { data: unidades } = useUnidades();
+  // ponytail: limit fijo, pasar a búsqueda remota si el catálogo crece más de 500
+  const { data: productosPag } = useProductos({ limit: 500 });
   const registrarDonativo = useRegistrarDonativo();
 
   const opcionesBienhechor = (bienhechores ?? []).map((b) => ({ value: b.id, label: b.nombre }));
-  const opcionesProducto = (productosPag?.items ?? []).map((p) => ({ value: p.id, label: p.nombre }));
+  const opcionesProducto = (productosPag?.items ?? []).map((p) => ({ value: p.id, label: etiquetaProducto(p) }));
 
   function limpiar() {
     setBienhechorId(undefined);
@@ -83,15 +90,13 @@ export function RegistrarDonativoDialog({ open, onOpenChange }: RegistrarDonativ
     const lineasValidas: LineaDonativoInput[] = [];
     for (const linea of lineas) {
       const cantidadNum = Number(linea.cantidad);
-      if (!linea.productoId || !cantidadNum || cantidadNum <= 0 || !linea.unidadId) {
-        toast.error('Completa producto, cantidad y unidad en cada línea.');
+      if (!linea.productoId || !cantidadNum || cantidadNum <= 0) {
+        toast.error('Completa producto y cantidad en cada línea.');
         return;
       }
       lineasValidas.push({
         productoId: linea.productoId,
-        estado: linea.estado,
         cantidad: cantidadNum,
-        unidadId: linea.unidadId,
         costoUnitario: linea.costoUnitario ? Number(linea.costoUnitario) : undefined,
         fechaCaducidad: linea.fechaCaducidad,
       });
@@ -159,51 +164,16 @@ export function RegistrarDonativoDialog({ open, onOpenChange }: RegistrarDonativ
                   </Button>
                 </div>
 
-                <div className="grid grid-cols-2 gap-2">
-                  <Select
-                    items={{ CRUDO: 'Crudo', COCIDO: 'Cocido' }}
-                    value={linea.estado}
-                    onValueChange={(value) => actualizarLinea(linea.key, { estado: value as EstadoProducto })}
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="CRUDO">Crudo</SelectItem>
-                      <SelectItem value="COCIDO">Cocido</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Input
-                    type="number"
-                    min={0}
-                    step="0.001"
-                    placeholder="Cantidad"
-                    value={linea.cantidad}
-                    onChange={(event) => actualizarLinea(linea.key, { cantidad: event.target.value })}
-                  />
-                </div>
+                {linea.productoId !== undefined && <InformacionProducto productoId={linea.productoId} />}
 
-                <div className="flex gap-2">
-                  <Select
-                    items={Object.fromEntries((unidades ?? []).map((u) => [String(u.id), `${u.nombre} (${u.abrevia})`]))}
-                    value={linea.unidadId ? String(linea.unidadId) : null}
-                    onValueChange={(value) => actualizarLinea(linea.key, { unidadId: Number(value) })}
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Unidad" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {unidades?.map((unidad) => (
-                        <SelectItem key={unidad.id} value={String(unidad.id)}>
-                          {unidad.nombre} ({unidad.abrevia})
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Button type="button" variant="outline" size="icon" onClick={() => setNuevaUnidadLinea(linea.key)} title="Nueva unidad">
-                    <Plus />
-                  </Button>
-                </div>
+                <Input
+                  type="number"
+                  min={0}
+                  step="0.001"
+                  placeholder="Cantidad"
+                  value={linea.cantidad}
+                  onChange={(event) => actualizarLinea(linea.key, { cantidad: event.target.value })}
+                />
 
                 <div className="grid grid-cols-2 gap-2">
                   <Input
@@ -244,11 +214,6 @@ export function RegistrarDonativoDialog({ open, onOpenChange }: RegistrarDonativ
         open={nuevoProductoLinea !== null}
         onOpenChange={(open) => !open && setNuevoProductoLinea(null)}
         onCreado={(producto) => nuevoProductoLinea !== null && actualizarLinea(nuevoProductoLinea, { productoId: producto.id })}
-      />
-      <NuevaUnidadDialog
-        open={nuevaUnidadLinea !== null}
-        onOpenChange={(open) => !open && setNuevaUnidadLinea(null)}
-        onCreada={(unidad) => nuevaUnidadLinea !== null && actualizarLinea(nuevaUnidadLinea, { unidadId: unidad.id })}
       />
     </>
   );

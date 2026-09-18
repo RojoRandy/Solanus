@@ -12,26 +12,6 @@ import {
 import { PaginationQueryDto } from '@/common/dto/pagination.dto';
 import { CategoriaRefDto } from './producto.dto';
 
-export class CrearVarianteDto {
-  @ApiProperty()
-  @IsInt()
-  productoId: number;
-
-  @ApiProperty()
-  @IsInt()
-  unidadId: number;
-
-  @ApiProperty({ enum: EstadoProducto, enumName: 'EstadoProducto' })
-  @IsEnum(EstadoProducto)
-  estado: EstadoProducto;
-
-  @ApiProperty({ required: false, default: 0 })
-  @IsOptional()
-  @IsNumber()
-  @Min(0)
-  stockMinimo?: number;
-}
-
 export class ActualizarVarianteDto {
   @ApiProperty({ required: false })
   @IsOptional()

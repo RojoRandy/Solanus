@@ -3,6 +3,7 @@ import { AuthModule } from '../auth/auth.module';
 import { ComensalesController } from './comensales.controller';
 import { CrearComensalUseCase } from './usecases/crear-comensal.usecase';
 import { ListarComensalesUseCase } from './usecases/listar-comensales.usecase';
+import { ListarTutoresUseCase } from './usecases/listar-tutores.usecase';
 import { ObtenerComensalUseCase } from './usecases/obtener-comensal.usecase';
 import { ActualizarComensalUseCase } from './usecases/actualizar-comensal.usecase';
 import { EliminarComensalUseCase } from './usecases/eliminar-comensal.usecase';
@@ -24,6 +25,7 @@ import { ExportarComensalesPdfUseCase } from './usecases/exportar-comensales-pdf
   providers: [
     CrearComensalUseCase,
     ListarComensalesUseCase,
+    ListarTutoresUseCase,
     ObtenerComensalUseCase,
     ActualizarComensalUseCase,
     EliminarComensalUseCase,

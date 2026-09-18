@@ -17,7 +17,8 @@ export function InsumosTurno({ turnoId }: { turnoId: number }) {
   const [cantidad, setCantidad] = React.useState('');
   const [nuevoProductoAbierto, setNuevoProductoAbierto] = React.useState(false);
 
-  const { data: variantesPag } = useVariantes({ limit: 200 });
+  // ponytail: limit fijo, pasar a búsqueda remota si el catálogo crece más de 500
+  const { data: variantesPag } = useVariantes({ limit: 500 });
   const { data: movimientosPag } = useMovimientos({ turnoId });
   const registrarInsumo = useRegistrarInsumoTurno();
 

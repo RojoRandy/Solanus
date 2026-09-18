@@ -6,7 +6,7 @@ import {
   ComboboxItem,
   ComboboxList,
 } from '@/components/ui/combobox';
-import { useComensales } from '../api';
+import { useTutores } from '../api';
 
 interface TutorOption {
   value: number;
@@ -21,17 +21,17 @@ interface TutorComboboxProps {
   disabled?: boolean;
 }
 
-/** Combobox de búsqueda de tutor: solo ofrece comensales activos y mayores de edad. */
+/** Combobox de búsqueda de tutor: ofrece comensales activos, mayores de edad y sin tutor propio. */
 export function TutorCombobox({
   value,
   onChange,
   excluirComensalId,
   disabled,
 }: TutorComboboxProps) {
-  const { data, isLoading } = useComensales({ activo: 'true', limit: 200 });
+  const { data, isLoading } = useTutores();
 
-  const opciones: TutorOption[] = (data?.items ?? [])
-    .filter((c) => c.edad >= 18 && c.id !== excluirComensalId)
+  const opciones: TutorOption[] = (data ?? [])
+    .filter((c) => c.id !== excluirComensalId)
     .map((c) => ({
       value: c.id,
       label: `${c.nombres} ${c.apellidos} — folio ${c.folio}`,
@@ -50,7 +50,7 @@ export function TutorCombobox({
       <ComboboxInput placeholder="Buscar tutor por nombre o folio..." />
       <ComboboxContent>
         <ComboboxEmpty>
-          {isLoading ? 'Cargando comensales...' : 'No se encontraron comensales mayores de edad.'}
+          {isLoading ? 'Cargando tutores...' : 'No se encontraron tutores disponibles.'}
         </ComboboxEmpty>
         <ComboboxList>
           {(item: TutorOption) => (

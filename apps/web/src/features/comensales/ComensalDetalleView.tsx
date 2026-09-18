@@ -48,7 +48,7 @@ import {
   useSubirIneFrenteComensal,
   useSubirIneReversoComensal,
 } from './api';
-import { formatearFecha } from './utils/edad';
+import { formatearFecha, formatearFechaHora } from './utils/edad';
 
 const ETIQUETA_HORARIO: Record<string, string> = {
   DESAYUNO: 'Desayuno',
@@ -356,7 +356,7 @@ export function ComensalDetalleView() {
               {comensal.cartaUsoImagen?.autoriza ? 'Autoriza' : 'No autoriza'}
             </Badge>{' '}
             {comensal.cartaUsoImagen?.fechaFirma
-              ? `— firmada el ${formatearFecha(comensal.cartaUsoImagen.fechaFirma)}`
+              ? `— firmada el ${formatearFechaHora(comensal.cartaUsoImagen.fechaFirma)}`
               : '— sin firma registrada'}
           </p>
         </CardContent>

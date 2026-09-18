@@ -26,7 +26,6 @@ import {
 } from './dto/producto.dto';
 import {
   ActualizarVarianteDto,
-  CrearVarianteDto,
   ListarVariantesQueryDto,
   VarianteResponseDto,
 } from './dto/variante.dto';
@@ -60,7 +59,6 @@ import { ListarProductosUseCase } from './usecases/listar-productos.usecase';
 import { ObtenerProductoUseCase } from './usecases/obtener-producto.usecase';
 import { ActualizarProductoUseCase } from './usecases/actualizar-producto.usecase';
 import { EliminarProductoUseCase } from './usecases/eliminar-producto.usecase';
-import { CrearVarianteUseCase } from './usecases/crear-variante.usecase';
 import { ListarVariantesUseCase } from './usecases/listar-variantes.usecase';
 import { ObtenerVarianteUseCase } from './usecases/obtener-variante.usecase';
 import { ActualizarVarianteUseCase } from './usecases/actualizar-variante.usecase';
@@ -98,7 +96,6 @@ export class InventarioController {
     @Inject(ObtenerProductoUseCase) private readonly obtenerProducto: ObtenerProductoUseCase,
     @Inject(ActualizarProductoUseCase) private readonly actualizarProducto: ActualizarProductoUseCase,
     @Inject(EliminarProductoUseCase) private readonly eliminarProducto: EliminarProductoUseCase,
-    @Inject(CrearVarianteUseCase) private readonly crearVariante: CrearVarianteUseCase,
     @Inject(ListarVariantesUseCase) private readonly listarVariantes: ListarVariantesUseCase,
     @Inject(ObtenerVarianteUseCase) private readonly obtenerVariante: ObtenerVarianteUseCase,
     @Inject(ActualizarVarianteUseCase) private readonly actualizarVariante: ActualizarVarianteUseCase,
@@ -255,12 +252,6 @@ export class InventarioController {
   @ApiOkSchemaResponse(VarianteResponseDto)
   findVariantes(@Query() query: ListarVariantesQueryDto) {
     return this.listarVariantes.execute(query);
-  }
-
-  @Post('variantes')
-  @ApiOkSchemaResponse(VarianteResponseDto)
-  crearVarianteInventario(@Body() dto: CrearVarianteDto) {
-    return this.crearVariante.execute(dto);
   }
 
   @Get('variantes/:id')

@@ -2,8 +2,15 @@ import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { UseCase } from '@/common/interfaces/use-case.interface';
 import { PrismaService } from '@/prisma/prisma.service';
-import { PaginatedDto, paginado, toSkipTake } from '@/common/dto/pagination.dto';
-import { ListarProductosQueryDto, ProductoResponseDto } from '../dto/producto.dto';
+import {
+  PaginatedDto,
+  paginado,
+  toSkipTake,
+} from '@/common/dto/pagination.dto';
+import {
+  ListarProductosQueryDto,
+  ProductoResponseDto,
+} from '../dto/producto.dto';
 import { PRODUCTO_SELECT, mapProducto } from './producto.mapper';
 
 @Injectable()
@@ -20,7 +27,12 @@ export class ListarProductosUseCase implements UseCase<
       activo: query.incluirInactivos ? undefined : true,
       categoriaId: query.categoriaId,
       ...(query.buscar
-        ? { nombre: { contains: query.buscar, mode: 'insensitive' } }
+        ? {
+            OR: [
+              { nombre: { contains: query.buscar, mode: 'insensitive' } },
+              { marca: { contains: query.buscar, mode: 'insensitive' } },
+            ],
+          }
         : {}),
     };
 

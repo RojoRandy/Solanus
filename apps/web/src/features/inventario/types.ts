@@ -8,6 +8,7 @@ export interface UnidadRef {
   id: number;
   nombre: string;
   abrevia: string;
+  indicarContenido: boolean;
   activo?: boolean;
 }
 
@@ -30,6 +31,11 @@ export interface Producto {
   id: number;
   nombre: string;
   categoria: CategoriaRef;
+  unidad: UnidadRef;
+  estado: EstadoProducto;
+  marca: string | null;
+  granel: boolean;
+  contenido: { cantidad: number; unidad: UnidadRef } | null;
   activo: boolean;
   createdAt: string;
 }
@@ -37,6 +43,12 @@ export interface Producto {
 export interface CrearProductoInput {
   nombre: string;
   categoriaId: number;
+  unidadId: number;
+  estado: EstadoProducto;
+  marca?: string;
+  granel?: boolean;
+  contenidoCantidad?: number;
+  contenidoUnidadId?: number;
 }
 
 export type ActualizarProductoInput = Partial<CrearProductoInput> & { activo?: boolean };
@@ -61,20 +73,16 @@ export interface ActualizarVarianteInput {
 export type OrigenLote = 'COMPRADO' | 'DONADO';
 
 /**
- * Orden de captura de la pantalla "Registrar entrada": estado → cantidad →
- * costo unitario → costo total → unidad → marca → cfdi → caducidad →
+ * Orden de captura de la pantalla "Registrar entrada": cantidad →
+ * costo unitario → costo total → cfdi → caducidad →
  * ingreso → origen → bienhechor → presentación/ubicación (opcionales).
  */
 export interface RegistrarEntradaInput {
   productoId?: number;
   productoNuevo?: CrearProductoInput;
-  estado: EstadoProducto;
   cantidadInicial: number;
   costoUnitario: number;
   costoTotal?: number;
-  unidadId: number;
-  marca?: string;
-  granel?: boolean;
   cfdi?: string;
   fechaCaducidad?: string;
   noCaduca?: boolean;
@@ -125,9 +133,7 @@ export interface LoteVivo {
 export interface LineaDonativoInput {
   productoId?: number;
   productoNuevo?: CrearProductoInput;
-  estado: EstadoProducto;
   cantidad: number;
-  unidadId: number;
   costoUnitario?: number;
   fechaCaducidad?: string;
 }
@@ -200,6 +206,7 @@ export interface StockBajoItem {
 export interface CrearUnidadInput {
   nombre: string;
   abrevia: string;
+  indicarContenido?: boolean;
 }
 export type ActualizarUnidadInput = Partial<CrearUnidadInput> & { activo?: boolean };
 

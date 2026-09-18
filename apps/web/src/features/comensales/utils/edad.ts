@@ -1,3 +1,5 @@
+import { TZ } from '@/lib/fecha';
+
 /** Edad exacta en años cumplidos — misma lógica que el backend (comparar día/mes/año). */
 export function calcularEdad(fechaNacimiento: Date): number {
   const hoy = new Date();
@@ -18,7 +20,9 @@ export function esMayorDeEdad(fechaNacimiento: Date): boolean {
 
 export function formatearFecha(fecha: string | Date): string {
   const valor = typeof fecha === 'string' ? new Date(fecha) : fecha;
+  // Solo-fecha: UTC conserva el día, según @/lib/fecha e inventario/format.ts, sin depender del navegador.
   return new Intl.DateTimeFormat('es-MX', {
+    timeZone: 'UTC',
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',
@@ -27,7 +31,9 @@ export function formatearFecha(fecha: string | Date): string {
 
 export function formatearFechaHora(fecha: string | Date): string {
   const valor = typeof fecha === 'string' ? new Date(fecha) : fecha;
+  // Sin llamadores actuales: fecha+hora representa un instante real en la zona de México.
   return new Intl.DateTimeFormat('es-MX', {
+    timeZone: TZ,
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',

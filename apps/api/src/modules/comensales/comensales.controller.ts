@@ -17,7 +17,10 @@ import { ApiConsumes, ApiTags } from '@nestjs/swagger';
 import { Auth } from '../auth/decorators/auth.decorator';
 import { UserRoles } from '@/common/interfaces/enums';
 import { IdParamDto } from '@/common/dto/api-validator.dto';
-import { ApiOkSchemaResponse } from '@/common/dto/response.dto';
+import {
+  ApiOkSchemaArrayResponse,
+  ApiOkSchemaResponse,
+} from '@/common/dto/response.dto';
 import { PaginationQueryDto } from '@/common/dto/pagination.dto';
 import { ImageUploadInterceptor } from '@/common/uploads/image-upload.interceptor';
 import {
@@ -28,9 +31,11 @@ import {
   CrearComensalDto,
   FirmarCartaUsoImagenDto,
   ListarComensalesQueryDto,
+  TutorResponseDto,
 } from './dto/comensal.dto';
 import { CrearComensalUseCase } from './usecases/crear-comensal.usecase';
 import { ListarComensalesUseCase } from './usecases/listar-comensales.usecase';
+import { ListarTutoresUseCase } from './usecases/listar-tutores.usecase';
 import { ObtenerComensalUseCase } from './usecases/obtener-comensal.usecase';
 import { ActualizarComensalUseCase } from './usecases/actualizar-comensal.usecase';
 import { EliminarComensalUseCase } from './usecases/eliminar-comensal.usecase';
@@ -58,6 +63,8 @@ export class ComensalesController {
     private readonly crearComensal: CrearComensalUseCase,
     @Inject(ListarComensalesUseCase)
     private readonly listarComensales: ListarComensalesUseCase,
+    @Inject(ListarTutoresUseCase)
+    private readonly listarTutores: ListarTutoresUseCase,
     @Inject(ObtenerComensalUseCase)
     private readonly obtenerComensal: ObtenerComensalUseCase,
     @Inject(ActualizarComensalUseCase)
@@ -119,6 +126,15 @@ export class ComensalesController {
     return new StreamableFile(buffer, {
       disposition: `attachment; filename="${filename}"`,
     });
+  }
+
+  // Esta ruta va ANTES de `:id`: si no, Nest hace match con `:id` y
+  // `IdParamDto` recibe "tutores" y responde 400.
+  @Get('tutores')
+  @Auth(...ROLES_LECTURA)
+  @ApiOkSchemaArrayResponse(TutorResponseDto)
+  obtenerTutores() {
+    return this.listarTutores.execute();
   }
 
   @Get(':id')

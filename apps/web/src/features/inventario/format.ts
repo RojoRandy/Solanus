@@ -1,3 +1,5 @@
+import type { Producto } from './types';
+
 /**
  * `fecha`/`fechaCorta` formatean campos *solo-fecha* del API (`@db.Date`:
  * caducidad, ingreso de lote, fecha de donativo) — llegan serializados como
@@ -29,4 +31,14 @@ export function formatCantidad(valor: number, unidad?: string): string {
 export function etiquetaMarcaLote(lote: { marca: string | null; granel: boolean }): string {
   if (lote.granel) return 'A granel';
   return lote.marca ?? '—';
+}
+
+export function etiquetaProducto(producto: Producto): string {
+  const { contenido, unidad } = producto;
+  return [
+    producto.nombre,
+    contenido ? formatCantidad(contenido.cantidad, contenido.unidad.abrevia) : '',
+    unidad.abrevia !== contenido?.unidad.abrevia ? unidad.abrevia : '',
+    producto.granel || producto.marca ? etiquetaMarcaLote(producto) : '',
+  ].filter((tramo) => tramo.trim() !== '').join(' · ');
 }

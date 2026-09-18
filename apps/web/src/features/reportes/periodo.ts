@@ -1,11 +1,13 @@
+import { hoyISO } from '@/lib/fecha';
+
 export interface Periodo {
   anio: number;
   mes: number; // 1-12
 }
 
 export function periodoActual(): Periodo {
-  const hoy = new Date();
-  return { anio: hoy.getFullYear(), mes: hoy.getMonth() + 1 };
+  const [anio, mes] = hoyISO().split('-').map(Number);
+  return { anio, mes };
 }
 
 /** Query string `?anio=&mes=` para los endpoints que ya reciben el periodo directo. */

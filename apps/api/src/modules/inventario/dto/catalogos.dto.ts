@@ -37,6 +37,8 @@ export class UnidadMedidaResponseDto {
   abrevia: string;
   @ApiProperty()
   activo: boolean;
+  @ApiProperty()
+  indicarContenido: boolean;
 }
 
 export class CrearUnidadDto {
@@ -47,6 +49,11 @@ export class CrearUnidadDto {
   @ApiProperty({ example: 'kg' })
   @IsString()
   abrevia: string;
+
+  @ApiProperty({ required: false, default: false })
+  @IsOptional()
+  @IsBoolean()
+  indicarContenido?: boolean;
 }
 
 export class ActualizarUnidadDto {
@@ -59,6 +66,11 @@ export class ActualizarUnidadDto {
   @IsOptional()
   @IsString()
   abrevia?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsBoolean()
+  indicarContenido?: boolean;
 
   @ApiProperty({ required: false })
   @IsOptional()

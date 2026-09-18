@@ -1,4 +1,4 @@
-import { now, TZ } from './date';
+import { now, parseFechaSoloDia, TZ } from './date';
 
 describe('now()', () => {
   afterEach(() => {
@@ -18,5 +18,17 @@ describe('now()', () => {
     jest.useFakeTimers().setSystemTime(new Date('2026-03-10T05:00:00.000Z'));
     expect(now().format('YYYY-MM-DD')).toBe('2026-03-09');
     expect(now().startOf('day').format()).toBe('2026-03-09T00:00:00-06:00');
+  });
+});
+
+describe('parseFechaSoloDia()', () => {
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
+  it('devuelve medianoche UTC del mismo día de México a las 19:00', () => {
+    // 01:00 UTC del 10 de marzo = 19:00 del 9 de marzo en México (UTC-6).
+    jest.useFakeTimers().setSystemTime(new Date('2026-03-10T01:00:00.000Z'));
+    expect(parseFechaSoloDia().toISOString()).toBe('2026-03-09T00:00:00.000Z');
   });
 });

@@ -3,6 +3,7 @@ import { TipoMovimiento } from '@prisma/client';
 import { UseCase } from '@/common/interfaces/use-case.interface';
 import { PrismaService } from '@/prisma/prisma.service';
 import { InventarioErrors } from '@/common/errors/inventario.errors';
+import { parseFechaSoloDia } from '@/common/utils/date';
 import { RegistrarAjusteDto } from '../dto/ajuste.dto';
 
 export interface RegistrarAjusteArgs {
@@ -63,6 +64,8 @@ export class RegistrarAjusteUseCase implements UseCase<
             cantidad: dto.cantidad,
             notas: dto.notas,
             registradoPorId,
+            // Ver el comentario en registrar-entrada.usecase.ts.
+            fecha: parseFechaSoloDia(),
           },
         });
 
@@ -116,6 +119,8 @@ export class RegistrarAjusteUseCase implements UseCase<
             cantidad: -aQuitar,
             notas: dto.notas,
             registradoPorId,
+            // Ver el comentario en registrar-entrada.usecase.ts.
+            fecha: parseFechaSoloDia(),
           },
         });
 
