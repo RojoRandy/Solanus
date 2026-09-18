@@ -1,14 +1,10 @@
 import * as React from 'react';
-import { Plus } from 'lucide-react';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ApiError } from '@/lib/api-client';
-import { useCategorias, useCrearProducto } from '../api';
-import { NuevaCategoriaDialog } from './NuevaCategoriaDialog';
+import { useUnidades, useCrearProducto } from '../api';
+import { ProductoFormFields, type ProductoFormFieldsValue } from './ProductoFormFields';
 import type { Producto } from '../types';
 
 interface NuevoProductoDialogProps {
@@ -18,30 +14,35 @@ interface NuevoProductoDialogProps {
 }
 
 /**
- * Alta rápida de producto (solo nombre + categoría) — usado desde los insumos del turno y el
- * donativo en especie. Registrar entrada tiene su propio bloque inline porque crea el producto
- * dentro de la misma transacción del lote; los campos capturados son los mismos.
+ * Alta rápida de producto completo (nombre, categoría, unidad, marca, contenido, crudo/cocido)
+ * — usado desde insumos del turno, donativo en especie y el registro de entrada.
  */
 export function NuevoProductoDialog({ open, onOpenChange, onCreado }: NuevoProductoDialogProps) {
-  const [nombre, setNombre] = React.useState('');
-  const [categoriaId, setCategoriaId] = React.useState<number>();
-  const [nuevaCategoriaAbierta, setNuevaCategoriaAbierta] = React.useState(false);
-
-  const { data: categorias } = useCategorias();
+  const [valor, setValor] = React.useState<ProductoFormFieldsValue>({ nombre: '', granel: false, estado: 'NO_APLICA' });
+  const { data: unidades } = useUnidades();
   const crear = useCrearProducto();
 
   function limpiar() {
-    setNombre('');
-    setCategoriaId(undefined);
+    setValor({ nombre: '', granel: false, estado: 'NO_APLICA' });
   }
 
   function registrar() {
+    const { nombre, categoriaId, unidadId, estado, marca, granel, contenidoCantidad, contenidoUnidadId } = valor;
     if (!nombre.trim() || !categoriaId) {
       toast.error('Indica nombre y categoría del producto.');
       return;
     }
+    if (!unidadId) {
+      toast.error('Selecciona una unidad de medida.');
+      return;
+    }
+    if (unidades?.find((unidad) => unidad.id === unidadId)?.indicarContenido
+      && (contenidoCantidad === undefined || !Number.isFinite(contenidoCantidad) || contenidoCantidad <= 0 || !contenidoUnidadId)) {
+      toast.error('Indica una cantidad de contenido mayor a cero y su unidad.');
+      return;
+    }
     crear.mutate(
-      { nombre: nombre.trim(), categoriaId },
+      { nombre: nombre.trim(), categoriaId, unidadId, estado, marca, granel, contenidoCantidad, contenidoUnidadId },
       {
         onSuccess: (producto) => {
           toast.success(`Producto "${producto.nombre}" creado.`);
@@ -57,39 +58,12 @@ export function NuevoProductoDialog({ open, onOpenChange, onCreado }: NuevoProdu
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent>
+        <DialogContent className="max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Nuevo producto</DialogTitle>
           </DialogHeader>
           <div className="flex flex-col gap-4">
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="nuevo-producto-nombre">Nombre</Label>
-              <Input id="nuevo-producto-nombre" autoFocus value={nombre} onChange={(event) => setNombre(event.target.value)} placeholder="Frijol" />
-            </div>
-            <div className="flex flex-col gap-2">
-              <Label>Categoría</Label>
-              <div className="flex gap-2">
-                <Select
-                  items={Object.fromEntries((categorias ?? []).map((c) => [String(c.id), c.nombre]))}
-                  value={categoriaId ? String(categoriaId) : null}
-                  onValueChange={(value) => setCategoriaId(Number(value))}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Selecciona una categoría" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {categorias?.map((categoria) => (
-                      <SelectItem key={categoria.id} value={String(categoria.id)}>
-                        {categoria.nombre}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Button type="button" variant="outline" size="icon" onClick={() => setNuevaCategoriaAbierta(true)} title="Nueva categoría">
-                  <Plus />
-                </Button>
-              </div>
-            </div>
+            <ProductoFormFields value={valor} onChange={setValor} />
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => onOpenChange(false)}>
@@ -101,7 +75,6 @@ export function NuevoProductoDialog({ open, onOpenChange, onCreado }: NuevoProdu
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      <NuevaCategoriaDialog open={nuevaCategoriaAbierta} onOpenChange={setNuevaCategoriaAbierta} onCreada={(categoria) => setCategoriaId(categoria.id)} />
     </>
   );
 }

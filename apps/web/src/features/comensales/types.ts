@@ -3,6 +3,13 @@
  * (apps/api/src/modules/comensales/dto/comensal.dto.ts). Se mantienen aquí,
  * en el propio feature, porque no forman parte de packages/shared.
  */
+export interface Tutor {
+  id: number;
+  folio: number;
+  nombres: string;
+  apellidos: string;
+}
+
 export interface ComensalTutorResumen {
   id: number;
   folio: number;

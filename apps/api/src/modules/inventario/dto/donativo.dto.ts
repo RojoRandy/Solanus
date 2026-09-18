@@ -4,15 +4,12 @@ import {
   ArrayMinSize,
   IsArray,
   IsDateString,
-  IsEnum,
   IsInt,
   IsNumber,
   IsOptional,
   IsPositive,
-  IsString,
   ValidateNested,
 } from 'class-validator';
-import { EstadoProducto } from '@prisma/client';
 import { CrearProductoDto } from './producto.dto';
 import { LoteResponseDto } from './entrada.dto';
 
@@ -28,18 +25,10 @@ export class LineaDonativoDto {
   @Type(() => CrearProductoDto)
   productoNuevo?: CrearProductoDto;
 
-  @ApiProperty({ enum: EstadoProducto, enumName: 'EstadoProducto' })
-  @IsEnum(EstadoProducto)
-  estado: EstadoProducto;
-
   @ApiProperty()
   @IsNumber()
   @IsPositive()
   cantidad: number;
-
-  @ApiProperty()
-  @IsInt()
-  unidadId: number;
 
   @ApiProperty({ required: false })
   @IsOptional()

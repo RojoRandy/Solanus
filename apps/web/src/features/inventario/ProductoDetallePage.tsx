@@ -8,6 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { EmptyState } from '@/components/shared/EmptyState';
 import { useProducto, useVariantes } from './api';
 import { ETIQUETA_ESTADO } from './types';
+import { etiquetaMarcaLote } from './format';
 
 export function ProductoDetallePage() {
   const navigate = useNavigate();
@@ -64,6 +65,22 @@ export function ProductoDetallePage() {
             <div>
               <dt className="text-muted-foreground">Categoría</dt>
               <dd>{producto.categoria.nombre}</dd>
+            </div>
+            <div>
+              <dt className="text-muted-foreground">Unidad</dt>
+              <dd>{producto.unidad.nombre} ({producto.unidad.abrevia})</dd>
+            </div>
+            <div>
+              <dt className="text-muted-foreground">Crudo/cocido</dt>
+              <dd>{ETIQUETA_ESTADO[producto.estado]}</dd>
+            </div>
+            <div>
+              <dt className="text-muted-foreground">Marca</dt>
+              <dd>{etiquetaMarcaLote(producto)}</dd>
+            </div>
+            <div>
+              <dt className="text-muted-foreground">Contenido</dt>
+              <dd>{producto.contenido ? `${producto.contenido.cantidad} ${producto.contenido.unidad.abrevia}` : '—'}</dd>
             </div>
             <div>
               <dt className="text-muted-foreground">Estado</dt>

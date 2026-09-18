@@ -14,11 +14,13 @@ import type {
   ComensalDetalle,
   CrearComensalPayload,
   ListarComensalesParams,
+  Tutor,
 } from './types';
 
 export { resolverUrlArchivo } from '@/lib/api-client';
 
 const queryKeys = {
+  tutores: ['comensales', 'tutores'] as const,
   lista: (params: ListarComensalesParams) => ['comensales', 'lista', params] as const,
   detalle: (id: number) => ['comensales', 'detalle', id] as const,
 };
@@ -41,6 +43,13 @@ export function useComensales(params: ListarComensalesParams) {
     queryKey: queryKeys.lista(params),
     queryFn: () => api.get<Paginated<Comensal>>(`/comensales${construirQueryString(params)}`),
     placeholderData: keepPreviousData,
+  });
+}
+
+export function useTutores() {
+  return useQuery({
+    queryKey: queryKeys.tutores,
+    queryFn: () => api.get<Tutor[]>('/comensales/tutores'),
   });
 }
 
@@ -71,6 +80,7 @@ export function useCrearComensal(): UseMutationResult<Comensal, ApiError, CrearC
     mutationFn: (payload: CrearComensalPayload) => api.post<Comensal>('/comensales', payload),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['comensales', 'lista'] });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.tutores });
     },
   });
 }
@@ -84,6 +94,7 @@ export function useActualizarComensal(
       api.patch<Comensal>(`/comensales/${id}`, payload),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['comensales', 'lista'] });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.tutores });
       void queryClient.invalidateQueries({ queryKey: queryKeys.detalle(id) });
     },
   });

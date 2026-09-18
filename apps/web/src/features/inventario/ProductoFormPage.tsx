@@ -1,24 +1,16 @@
 import { useNavigate, useParams } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { toast } from 'sonner';
 import { ArrowLeft } from 'lucide-react';
 import { ApiError } from '@/lib/api-client';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useActualizarProducto, useCategorias, useCrearProducto, useProducto } from './api';
+import { useActualizarProducto, useCrearProducto, useProducto, useUnidades } from './api';
 
-const schema = z.object({
-  nombre: z.string().trim().min(1, 'Indica el nombre del producto'),
-  categoriaId: z.coerce.number({ message: 'Selecciona una categoría' }).int().positive(),
-});
-
-type FormValues = z.infer<typeof schema>;
+import { ProductoFormFields, type ProductoFormFieldsValue } from './components/ProductoFormFields';
 
 export function ProductoFormPage() {
   const navigate = useNavigate();
@@ -27,24 +19,60 @@ export function ProductoFormPage() {
   const productoId = id ? Number(id) : undefined;
 
   const { data: producto, isLoading: cargandoProducto } = useProducto(productoId);
-  const { data: categorias, isLoading: cargandoCategorias } = useCategorias();
+  const { data: unidades, isLoading: cargandoUnidades } = useUnidades();
+
+  const schema = z.object({
+    nombre: z.string().trim().min(1, 'Indica el nombre del producto'),
+    categoriaId: z.number({ message: 'Selecciona una categoría' }).int().positive(),
+    unidadId: z.number({ message: 'Selecciona una unidad' }).int().positive(),
+    estado: z.enum(['CRUDO', 'COCIDO', 'NO_APLICA']).default('NO_APLICA'),
+    marca: z.string().trim().optional(),
+    granel: z.boolean().default(false),
+    contenidoCantidad: z.number().optional(),
+    contenidoUnidadId: z.number().optional(),
+  }).superRefine((data, ctx) => {
+    if (unidades?.find((unidad) => unidad.id === data.unidadId)?.indicarContenido) {
+      if (data.contenidoCantidad === undefined || data.contenidoCantidad <= 0) {
+        ctx.addIssue({ code: 'custom', path: ['contenidoCantidad'], message: 'Indica una cantidad mayor a cero' });
+      }
+      if (!data.contenidoUnidadId) {
+        ctx.addIssue({ code: 'custom', path: ['contenidoUnidadId'], message: 'Selecciona una unidad de contenido' });
+      }
+    }
+  });
+  type FormValues = z.infer<typeof schema>;
 
   const crear = useCrearProducto();
   const actualizar = useActualizarProducto();
 
   const {
-    register,
     handleSubmit,
     setValue,
-    watch,
+    control,
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: { nombre: '' },
-    values: producto ? { nombre: producto.nombre, categoriaId: producto.categoria.id } : undefined,
+    defaultValues: { nombre: '', estado: 'NO_APLICA', granel: false },
+    values: producto ? {
+      nombre: producto.nombre,
+      categoriaId: producto.categoria.id,
+      unidadId: producto.unidad.id,
+      estado: producto.estado,
+      marca: producto.marca ?? '',
+      granel: producto.granel,
+      contenidoCantidad: producto.contenido?.cantidad,
+      contenidoUnidadId: producto.contenido?.unidad.id,
+    } : undefined,
   });
 
-  const categoriaId = watch('categoriaId');
+  const valor = useWatch({ control });
+
+  function cambiarValor(nuevoValor: ProductoFormFieldsValue) {
+    function actualizarCampo(campo: keyof ProductoFormFieldsValue) {
+      setValue(campo, nuevoValor[campo], { shouldDirty: true, shouldValidate: true });
+    }
+    (Object.keys(nuevoValor) as (keyof ProductoFormFieldsValue)[]).forEach(actualizarCampo);
+  }
 
   async function onSubmit(values: FormValues) {
     try {
@@ -61,7 +89,7 @@ export function ProductoFormPage() {
     }
   }
 
-  const cargando = (esEdicion && cargandoProducto) || cargandoCategorias;
+  const cargando = (esEdicion && cargandoProducto) || cargandoUnidades;
 
   return (
     <div className="flex flex-col gap-6">
@@ -74,7 +102,7 @@ export function ProductoFormPage() {
             {esEdicion ? 'Editar producto' : 'Nuevo producto'}
           </h1>
           <p className="text-sm text-muted-foreground">
-            Marca, unidad, presentación y estado (crudo/cocido) se capturan al registrar cada entrada
+            Nombre, categoría, unidad, marca, contenido y si es crudo o cocido — la presentación y ubicación del lote se capturan en cada entrada
           </p>
         </div>
       </div>
@@ -91,32 +119,11 @@ export function ProductoFormPage() {
             </div>
           ) : (
             <form onSubmit={(event) => void handleSubmit(onSubmit)(event)} className="flex flex-col gap-4">
-              <div className="flex flex-col gap-1.5">
-                <Label htmlFor="nombre">Nombre</Label>
-                <Input id="nombre" {...register('nombre')} placeholder="Frijol" />
-                {errors.nombre && <p className="text-xs text-destructive">{errors.nombre.message}</p>}
-              </div>
-
-              <div className="flex flex-col gap-1.5">
-                <Label>Categoría</Label>
-                <Select
-                  items={Object.fromEntries((categorias ?? []).map((c) => [String(c.id), c.nombre]))}
-                  value={categoriaId ? String(categoriaId) : null}
-                  onValueChange={(value) => setValue('categoriaId', Number(value), { shouldValidate: true })}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Selecciona una categoría" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {categorias?.map((categoria) => (
-                      <SelectItem key={categoria.id} value={String(categoria.id)}>
-                        {categoria.nombre}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {errors.categoriaId && <p className="text-xs text-destructive">{errors.categoriaId.message}</p>}
-              </div>
+              <ProductoFormFields
+                value={{ ...valor, nombre: valor.nombre ?? '', estado: valor.estado ?? 'NO_APLICA', granel: valor.granel ?? false }}
+                onChange={cambiarValor}
+                errors={Object.fromEntries(Object.entries(errors).map(([campo, error]) => [campo, error.message]))}
+              />
 
               <div className="flex justify-end gap-2 pt-2">
                 <Button type="button" variant="outline" onClick={() => void navigate(-1)}>

@@ -1,12 +1,17 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsBoolean, IsInt, IsOptional, IsString } from 'class-validator';
+import {
+  IsBoolean,
+  IsEnum,
+  IsInt,
+  IsNumber,
+  IsOptional,
+  IsPositive,
+  IsString,
+} from 'class-validator';
+import { EstadoProducto } from '@prisma/client';
 import { PaginationQueryDto } from '@/common/dto/pagination.dto';
 
-/**
- * El producto es solo "qué cosa es": nombre y categoría. Marca, presentación,
- * ubicación, unidad de medida y si es crudo/cocido cambian en cada entrada,
- * así que se capturan en el lote (ver RegistrarEntradaDto), no aquí.
- */
+/** El producto identifica una presentación única del catálogo. */
 export class CrearProductoDto {
   @ApiProperty({ example: 'Frijol bayo' })
   @IsString()
@@ -15,6 +20,35 @@ export class CrearProductoDto {
   @ApiProperty({ example: 1 })
   @IsInt()
   categoriaId: number;
+
+  @ApiProperty()
+  @IsInt()
+  unidadId: number;
+
+  @ApiProperty({ enum: EstadoProducto })
+  @IsEnum(EstadoProducto)
+  estado: EstadoProducto;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  marca?: string;
+
+  @ApiProperty({ required: false, default: false })
+  @IsOptional()
+  @IsBoolean()
+  granel?: boolean = false;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsNumber()
+  @IsPositive()
+  contenidoCantidad?: number;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsInt()
+  contenidoUnidadId?: number;
 }
 
 export class ActualizarProductoDto {
@@ -27,6 +61,37 @@ export class ActualizarProductoDto {
   @IsOptional()
   @IsInt()
   categoriaId?: number;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsInt()
+  unidadId?: number;
+
+  @ApiProperty({ required: false, enum: EstadoProducto })
+  @IsOptional()
+  @IsEnum(EstadoProducto)
+  estado?: EstadoProducto;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  marca?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsBoolean()
+  granel?: boolean;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsNumber()
+  @IsPositive()
+  contenidoCantidad?: number;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsInt()
+  contenidoUnidadId?: number;
 
   @ApiProperty({ required: false })
   @IsOptional()
@@ -58,6 +123,22 @@ export class CategoriaRefDto {
   nombre: string;
 }
 
+export class UnidadRefDto {
+  @ApiProperty()
+  id: number;
+  @ApiProperty()
+  nombre: string;
+  @ApiProperty()
+  abrevia: string;
+}
+
+export class ContenidoProductoDto {
+  @ApiProperty()
+  cantidad: number;
+  @ApiProperty({ type: UnidadRefDto })
+  unidad: UnidadRefDto;
+}
+
 export class ProductoResponseDto {
   @ApiProperty()
   id: number;
@@ -65,6 +146,16 @@ export class ProductoResponseDto {
   nombre: string;
   @ApiProperty({ type: CategoriaRefDto })
   categoria: CategoriaRefDto;
+  @ApiProperty({ type: UnidadRefDto })
+  unidad: UnidadRefDto;
+  @ApiProperty({ enum: EstadoProducto })
+  estado: EstadoProducto;
+  @ApiProperty({ type: String, nullable: true })
+  marca: string | null;
+  @ApiProperty()
+  granel: boolean;
+  @ApiProperty({ type: ContenidoProductoDto, nullable: true })
+  contenido: ContenidoProductoDto | null;
   @ApiProperty()
   activo: boolean;
   @ApiProperty()

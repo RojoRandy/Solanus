@@ -2,6 +2,7 @@ import * as React from 'react';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ApiError } from '@/lib/api-client';
@@ -21,12 +22,13 @@ interface EditarUnidadDialogProps {
 export function EditarUnidadDialog({ unidad, onOpenChange }: EditarUnidadDialogProps) {
   const [nombre, setNombre] = React.useState(unidad?.nombre ?? '');
   const [abrevia, setAbrevia] = React.useState(unidad?.abrevia ?? '');
+  const [indicarContenido, setIndicarContenido] = React.useState(unidad?.indicarContenido ?? false);
   const actualizar = useActualizarUnidad();
 
   function guardar() {
     if (!unidad) return;
     actualizar.mutate(
-      { id: unidad.id, dto: { nombre, abrevia } },
+      { id: unidad.id, dto: { nombre, abrevia, indicarContenido } },
       {
         onSuccess: () => {
           toast.success('Unidad actualizada');
@@ -52,6 +54,19 @@ export function EditarUnidadDialog({ unidad, onOpenChange }: EditarUnidadDialogP
             <Label htmlFor="editar-unidad-abrevia">Abreviatura</Label>
             <Input id="editar-unidad-abrevia" value={abrevia} onChange={(event) => setAbrevia(event.target.value)} />
           </div>
+        </div>
+        <div className="flex flex-col gap-2">
+          <label className="flex items-center gap-2 text-sm">
+            <Checkbox
+              checked={indicarContenido}
+              onCheckedChange={(checked) => setIndicarContenido(Boolean(checked))}
+              aria-describedby="editar-unidad-contenido-ayuda"
+            />
+            Indicar contenido
+          </label>
+          <p id="editar-unidad-contenido-ayuda" className="text-sm text-muted-foreground">
+            La unidad es un envase: al dar de alta un producto se pedirá cuánto trae dentro.
+          </p>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>

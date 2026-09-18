@@ -15,3 +15,9 @@ export const TZ = 'America/Mexico_City';
 export const now = (): Dayjs => {
   return dayjs().tz(TZ);
 };
+
+/** Normaliza una fecha (o hoy en México) a medianoche UTC para columnas @db.Date. */
+export function parseFechaSoloDia(fecha?: string): Date {
+  const isoDia = fecha ?? now().format('YYYY-MM-DD');
+  return new Date(`${isoDia}T00:00:00.000Z`);
+}

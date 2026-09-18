@@ -16,8 +16,8 @@ import { CrearProductoDto } from './producto.dto';
 
 /**
  * El orden de los campos aquí refleja el orden de captura en la pantalla
- * "Registrar entrada": estado → cantidad → costo unitario → costo total →
- * unidad → marca → cfdi → caducidad → ingreso → origen → bienhechor.
+ * "Registrar entrada": cantidad → costo unitario → costo total →
+ * cfdi → caducidad → ingreso → origen → bienhechor.
  */
 export class RegistrarEntradaDto {
   @ApiProperty({
@@ -39,10 +39,6 @@ export class RegistrarEntradaDto {
   @Type(() => CrearProductoDto)
   productoNuevo?: CrearProductoDto;
 
-  @ApiProperty({ enum: EstadoProducto, enumName: 'EstadoProducto' })
-  @IsEnum(EstadoProducto)
-  estado: EstadoProducto;
-
   @ApiProperty({ example: 20 })
   @IsNumber()
   @IsPositive()
@@ -60,24 +56,6 @@ export class RegistrarEntradaDto {
   @IsOptional()
   @IsNumber()
   costoTotal?: number;
-
-  @ApiProperty()
-  @IsInt()
-  unidadId: number;
-
-  @ApiProperty({ required: false, description: 'No aplica si el lote es cocido o a granel' })
-  @IsOptional()
-  @IsString()
-  marca?: string;
-
-  @ApiProperty({
-    required: false,
-    default: false,
-    description: 'Producto a granel: el lote no lleva marca',
-  })
-  @IsOptional()
-  @IsBoolean()
-  granel?: boolean;
 
   @ApiProperty({ required: false, description: 'CFDI / número de factura' })
   @IsOptional()

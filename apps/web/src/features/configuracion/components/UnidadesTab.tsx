@@ -59,6 +59,7 @@ export function UnidadesTab() {
               <TableRow>
                 <TableHead>Nombre</TableHead>
                 <TableHead>Abreviatura</TableHead>
+                <TableHead>Contenido</TableHead>
                 <TableHead />
               </TableRow>
             </TableHeader>
@@ -67,6 +68,7 @@ export function UnidadesTab() {
                 <TableRow key={unidad.id}>
                   <TableCell className="font-medium">{unidad.nombre}</TableCell>
                   <TableCell>{unidad.abrevia}</TableCell>
+                  <TableCell>{unidad.indicarContenido ? 'Sí' : 'No'}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-1">
                       <Button variant="ghost" size="icon-sm" onClick={() => setUnidadEditar(unidad)} title="Editar">

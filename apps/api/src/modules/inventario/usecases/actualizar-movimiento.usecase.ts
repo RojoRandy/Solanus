@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { UseCase } from '@/common/interfaces/use-case.interface';
 import { PrismaService } from '@/prisma/prisma.service';
 import { InventarioErrors } from '@/common/errors/inventario.errors';
+import { parseFechaSoloDia } from '@/common/utils/date';
 import { ActualizarMovimientoDto, MovimientoResponseDto } from '../dto/movimiento.dto';
 
 export interface ActualizarMovimientoArgs {
@@ -34,7 +35,7 @@ export class ActualizarMovimientoUseCase implements UseCase<
     const movimiento = await this.prisma.movimientoInventario.update({
       where: { id },
       data: {
-        fecha: dto.fecha ? new Date(dto.fecha) : undefined,
+        fecha: dto.fecha ? parseFechaSoloDia(dto.fecha) : undefined,
         motivoId: dto.motivoId,
         notas: dto.notas,
         editadoPorId,

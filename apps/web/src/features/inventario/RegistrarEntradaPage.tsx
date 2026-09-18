@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -13,29 +13,21 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { DatePicker } from '@/components/ui/date-picker';
 import { useBienhechores } from '@/features/bienhechores/api';
 import { NuevoBienhechorDialog } from '@/features/bienhechores/components/NuevoBienhechorDialog';
 import { ComboboxField } from './ComboboxField';
-import { NuevaCategoriaDialog } from './components/NuevaCategoriaDialog';
-import { NuevaUnidadDialog } from './components/NuevaUnidadDialog';
-import { useCategorias, useProductos, useRegistrarEntrada, useUnidades } from './api';
-import type { EstadoProducto, OrigenLote } from './types';
+import { NuevoProductoDialog } from './components/NuevoProductoDialog';
+import { useProducto, useProductos, useRegistrarEntrada } from './api';
+import { etiquetaMarcaLote, etiquetaProducto } from './format';
+import { ETIQUETA_ESTADO, type OrigenLote, type Producto } from './types';
 
 const schema = z
   .object({
-    origenProducto: z.enum(['existente', 'nuevo']),
     productoId: z.number().optional(),
-    productoNuevoNombre: z.string().trim().optional(),
-    productoNuevoCategoriaId: z.number().optional(),
-    estado: z.enum(['CRUDO', 'COCIDO', 'NO_APLICA']),
     cantidadInicial: z.coerce.number({ message: 'Indica la cantidad' }).positive('Debe ser mayor a cero'),
     costoUnitario: z.coerce.number({ message: 'Indica el costo unitario' }).positive('Debe ser mayor a cero'),
-    unidadId: z.number({ message: 'Selecciona una unidad' }),
-    marca: z.string().trim().optional(),
-    granel: z.boolean(),
     cfdi: z.string().trim().optional(),
     noCaduca: z.boolean(),
     fechaCaducidad: z.string().optional(),
@@ -46,11 +38,8 @@ const schema = z
     ubicacion: z.string().trim().optional(),
   })
   .superRefine((data, ctx) => {
-    if (data.origenProducto === 'existente' && !data.productoId) {
+    if (!data.productoId) {
       ctx.addIssue({ code: 'custom', path: ['productoId'], message: 'Selecciona un producto' });
-    }
-    if (data.origenProducto === 'nuevo' && (!data.productoNuevoNombre || !data.productoNuevoCategoriaId)) {
-      ctx.addIssue({ code: 'custom', path: ['productoNuevoNombre'], message: 'Indica nombre y categoría del producto nuevo' });
     }
     if (!data.noCaduca && !data.fechaCaducidad) {
       ctx.addIssue({ code: 'custom', path: ['fechaCaducidad'], message: 'Indica la fecha o marca "No caduca"' });
@@ -65,14 +54,13 @@ type FormValues = z.infer<typeof schema>;
 export function RegistrarEntradaPage() {
   const navigate = useNavigate();
 
-  const { data: productosPag } = useProductos({ limit: 200 });
-  const { data: categorias } = useCategorias();
-  const { data: unidades } = useUnidades();
+  // ponytail: limit fijo, pasar a búsqueda remota si el catálogo crece más de 500
+  const { data: productosPag } = useProductos({ limit: 500 });
   const { data: bienhechores } = useBienhechores();
   const registrarEntrada = useRegistrarEntrada();
 
-  const [nuevaCategoriaAbierta, setNuevaCategoriaAbierta] = useState(false);
-  const [nuevaUnidadAbierta, setNuevaUnidadAbierta] = useState(false);
+  const [nuevoProductoAbierto, setNuevoProductoAbierto] = useState(false);
+  const [productoCreado, setProductoCreado] = useState<Producto>();
   const [nuevoBienhechorAbierto, setNuevoBienhechorAbierto] = useState(false);
 
   const {
@@ -84,23 +72,16 @@ export function RegistrarEntradaPage() {
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
-      origenProducto: 'existente',
-      estado: 'CRUDO',
-      granel: false,
       noCaduca: false,
       fechaIngreso: hoyISO(),
       origen: 'COMPRADO',
     },
   });
 
-  const origenProducto = watch('origenProducto');
   const productoId = watch('productoId');
-  const productoNuevoCategoriaId = watch('productoNuevoCategoriaId');
-  const estado = watch('estado');
-  const granel = watch('granel');
+  const { data: producto } = useProducto(productoId);
   const cantidadInicial = watch('cantidadInicial');
   const costoUnitario = watch('costoUnitario');
-  const unidadId = watch('unidadId');
   const noCaduca = watch('noCaduca');
   const fechaCaducidad = watch('fechaCaducidad');
   const fechaIngreso = watch('fechaIngreso');
@@ -114,14 +95,14 @@ export function RegistrarEntradaPage() {
     return Math.round(cantidad * costo * 100) / 100;
   }, [cantidadInicial, costoUnitario]);
 
-  useEffect(() => {
-    if (estado === 'COCIDO' || granel) setValue('marca', '');
-  }, [estado, granel, setValue]);
-
-  const opcionesProductos = useMemo(
-    () => (productosPag?.items ?? []).map((producto) => ({ value: producto.id, label: producto.nombre })),
-    [productosPag],
-  );
+  const opcionesProductos = useMemo(() => {
+    const productos = productosPag?.items ?? [];
+    const opciones = productos.map((producto) => ({ value: producto.id, label: etiquetaProducto(producto) }));
+    if (productoCreado && !productos.some((producto) => producto.id === productoCreado.id)) {
+      opciones.push({ value: productoCreado.id, label: etiquetaProducto(productoCreado) });
+    }
+    return opciones;
+  }, [productosPag, productoCreado]);
   const opcionesBienhechores = useMemo(
     () => (bienhechores ?? []).map((b) => ({ value: b.id, label: b.nombre })),
     [bienhechores],
@@ -130,21 +111,10 @@ export function RegistrarEntradaPage() {
   async function onSubmit(values: FormValues) {
     try {
       await registrarEntrada.mutateAsync({
-        productoId: values.origenProducto === 'existente' ? values.productoId : undefined,
-        productoNuevo:
-          values.origenProducto === 'nuevo'
-            ? {
-                nombre: values.productoNuevoNombre!,
-                categoriaId: values.productoNuevoCategoriaId!,
-              }
-            : undefined,
-        estado: values.estado as EstadoProducto,
+        productoId: values.productoId,
         cantidadInicial: values.cantidadInicial,
         costoUnitario: values.costoUnitario,
         costoTotal,
-        unidadId: values.unidadId,
-        marca: values.estado === 'COCIDO' || values.granel ? undefined : values.marca || undefined,
-        granel: values.granel,
         cfdi: values.cfdi || undefined,
         fechaCaducidad: values.noCaduca ? undefined : values.fechaCaducidad,
         noCaduca: values.noCaduca,
@@ -179,16 +149,9 @@ export function RegistrarEntradaPage() {
             <CardTitle>Producto</CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col gap-4">
-            <Tabs value={origenProducto} onValueChange={(value) => setValue('origenProducto', value as 'existente' | 'nuevo')}>
-              <TabsList>
-                <TabsTrigger value="existente">Producto existente</TabsTrigger>
-                <TabsTrigger value="nuevo">Producto nuevo</TabsTrigger>
-              </TabsList>
-            </Tabs>
-
-            {origenProducto === 'existente' ? (
-              <div className="flex flex-col gap-1.5">
-                <Label>Producto</Label>
+            <div className="flex flex-col gap-1.5">
+              <Label>Producto</Label>
+              <div className="flex gap-2">
                 <ComboboxField
                   options={opcionesProductos}
                   value={productoId}
@@ -196,40 +159,34 @@ export function RegistrarEntradaPage() {
                   placeholder="Buscar producto por nombre…"
                   emptyText="No hay productos que coincidan"
                 />
-                {errors.productoId && <p className="text-xs text-destructive">{errors.productoId.message}</p>}
+                <Button type="button" variant="outline" size="icon" onClick={() => setNuevoProductoAbierto(true)} title="Nuevo producto">
+                  <Plus />
+                </Button>
               </div>
-            ) : (
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="flex flex-col gap-1.5 sm:col-span-2">
-                  <Label htmlFor="productoNuevoNombre">Nombre del producto</Label>
-                  <Input id="productoNuevoNombre" {...register('productoNuevoNombre')} placeholder="Frijol bayo" />
+              {errors.productoId && <p className="text-xs text-destructive">{errors.productoId.message}</p>}
+            </div>
+
+            {productoId && producto && (
+              <dl className="grid gap-3 border-t pt-4 text-sm sm:grid-cols-2">
+                <div>
+                  <dt className="text-muted-foreground">Unidad</dt>
+                  <dd>{producto.unidad.nombre} ({producto.unidad.abrevia})</dd>
                 </div>
-                <div className="flex flex-col gap-1.5 sm:col-span-2">
-                  <Label>Categoría</Label>
-                  <div className="flex gap-2">
-                    <Select
-                      items={Object.fromEntries((categorias ?? []).map((c) => [String(c.id), c.nombre]))}
-                      value={productoNuevoCategoriaId ? String(productoNuevoCategoriaId) : null}
-                      onValueChange={(value) => setValue('productoNuevoCategoriaId', Number(value), { shouldValidate: true })}
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Selecciona una categoría" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {categorias?.map((categoria) => (
-                          <SelectItem key={categoria.id} value={String(categoria.id)}>
-                            {categoria.nombre}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <Button type="button" variant="outline" size="icon" onClick={() => setNuevaCategoriaAbierta(true)} title="Nueva categoría">
-                      <Plus />
-                    </Button>
+                <div>
+                  <dt className="text-muted-foreground">Crudo/cocido</dt>
+                  <dd>{ETIQUETA_ESTADO[producto.estado]}</dd>
+                </div>
+                <div>
+                  <dt className="text-muted-foreground">Marca</dt>
+                  <dd>{etiquetaMarcaLote(producto)}</dd>
+                </div>
+                {producto.contenido && (
+                  <div>
+                    <dt className="text-muted-foreground">Contenido</dt>
+                    <dd>{producto.contenido.cantidad} {producto.contenido.unidad.abrevia}</dd>
                   </div>
-                  {errors.productoNuevoNombre && <p className="text-xs text-destructive">{errors.productoNuevoNombre.message}</p>}
-                </div>
-              </div>
+                )}
+              </dl>
             )}
           </CardContent>
         </Card>
@@ -239,24 +196,6 @@ export function RegistrarEntradaPage() {
             <CardTitle>Datos del lote</CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col gap-4">
-            <div className="flex flex-col gap-1.5">
-              <Label>Crudo o cocido</Label>
-              <Select
-                items={{ CRUDO: 'Crudo', COCIDO: 'Cocido', NO_APLICA: 'No aplica' }}
-                value={estado}
-                onValueChange={(value) => setValue('estado', value as EstadoProducto)}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="CRUDO">Crudo</SelectItem>
-                  <SelectItem value="COCIDO">Cocido</SelectItem>
-                  <SelectItem value="NO_APLICA">No aplica</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="flex flex-col gap-1.5">
                 <Label htmlFor="cantidadInicial">Cantidad</Label>
@@ -279,52 +218,6 @@ export function RegistrarEntradaPage() {
                 </Tooltip>
               </Label>
               <Input readOnly disabled value={costoTotal !== undefined ? costoTotal.toFixed(2) : ''} placeholder="—" />
-            </div>
-
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="flex flex-col gap-1.5">
-                <Label>Unidad de medida</Label>
-                <div className="flex gap-2">
-                  <Select
-                    items={Object.fromEntries((unidades ?? []).map((u) => [String(u.id), `${u.nombre} (${u.abrevia})`]))}
-                    value={unidadId ? String(unidadId) : null}
-                    onValueChange={(value) => setValue('unidadId', Number(value), { shouldValidate: true })}
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Selecciona una unidad" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {unidades?.map((unidad) => (
-                        <SelectItem key={unidad.id} value={String(unidad.id)}>
-                          {unidad.nombre} ({unidad.abrevia})
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Button type="button" variant="outline" size="icon" onClick={() => setNuevaUnidadAbierta(true)} title="Nueva unidad">
-                    <Plus />
-                  </Button>
-                </div>
-                {errors.unidadId && <p className="text-xs text-destructive">{errors.unidadId.message}</p>}
-              </div>
-              {estado !== 'COCIDO' && (
-                <div className="flex flex-col gap-1.5">
-                  <Label htmlFor="marca">Marca</Label>
-                  <Input
-                    id="marca"
-                    {...register('marca')}
-                    placeholder="Opcional"
-                    disabled={granel}
-                  />
-                  <label className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
-                    <Checkbox
-                      checked={granel}
-                      onCheckedChange={(checked) => setValue('granel', Boolean(checked))}
-                    />
-                    Producto a granel (sin marca)
-                  </label>
-                </div>
-              )}
             </div>
 
             <div className="flex flex-col gap-1.5 sm:max-w-72">
@@ -414,15 +307,13 @@ export function RegistrarEntradaPage() {
         </div>
       </form>
 
-      <NuevaCategoriaDialog
-        open={nuevaCategoriaAbierta}
-        onOpenChange={setNuevaCategoriaAbierta}
-        onCreada={(categoria) => setValue('productoNuevoCategoriaId', categoria.id, { shouldValidate: true })}
-      />
-      <NuevaUnidadDialog
-        open={nuevaUnidadAbierta}
-        onOpenChange={setNuevaUnidadAbierta}
-        onCreada={(unidad) => setValue('unidadId', unidad.id, { shouldValidate: true })}
+      <NuevoProductoDialog
+        open={nuevoProductoAbierto}
+        onOpenChange={setNuevoProductoAbierto}
+        onCreado={(producto) => {
+          setProductoCreado(producto);
+          setValue('productoId', producto.id, { shouldValidate: true, shouldDirty: true });
+        }}
       />
       <NuevoBienhechorDialog
         open={nuevoBienhechorAbierto}

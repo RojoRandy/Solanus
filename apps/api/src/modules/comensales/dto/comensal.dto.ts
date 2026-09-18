@@ -135,6 +135,17 @@ export class FirmarCartaUsoImagenDto {
   autoriza: boolean;
 }
 
+export class TutorResponseDto {
+  @ApiProperty()
+  id: number;
+  @ApiProperty()
+  folio: number;
+  @ApiProperty()
+  nombres: string;
+  @ApiProperty()
+  apellidos: string;
+}
+
 export class ComensalTutorResumenDto {
   @ApiProperty()
   id: number;

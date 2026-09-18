@@ -31,7 +31,8 @@ export function MovimientosPage() {
   const { user } = useAuth();
   const puedeEditar = user?.rol === 'ADMINISTRADOR' || user?.rol === 'USUARIO';
 
-  const { data: variantesPag } = useVariantes({ limit: 200, incluirInactivas: true });
+  // ponytail: limit fijo, pasar a búsqueda remota si el catálogo crece más de 500
+  const { data: variantesPag } = useVariantes({ limit: 500, incluirInactivas: true });
   const { data: categorias } = useCategorias();
   const [varianteId, setVarianteId] = useState<number | undefined>(undefined);
   const [categoriaId, setCategoriaId] = useState<number | undefined>(undefined);

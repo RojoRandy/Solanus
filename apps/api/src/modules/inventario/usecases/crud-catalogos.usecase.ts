@@ -30,7 +30,7 @@ export class CrearUnidadUseCase implements UseCase<CrearUnidadDto, UnidadMedidaR
 
     return this.prisma.unidadMedida.create({
       data: dto,
-      select: { id: true, nombre: true, abrevia: true, activo: true },
+      select: { id: true, nombre: true, abrevia: true, activo: true, indicarContenido: true },
     });
   }
 }
@@ -49,7 +49,7 @@ export class ActualizarUnidadUseCase implements UseCase<
     return this.prisma.unidadMedida.update({
       where: { id },
       data: dto,
-      select: { id: true, nombre: true, abrevia: true, activo: true },
+      select: { id: true, nombre: true, abrevia: true, activo: true, indicarContenido: true },
     });
   }
 }

@@ -10,7 +10,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 
 function isoAFecha(iso?: string): Date | undefined {
   if (!iso) return undefined
-  const [anio, mes, dia] = iso.split("-").map(Number)
+  // Los campos solo-fecha del API llegan como medianoche UTC; conservamos solo la fecha.
+  const [anio, mes, dia] = iso.slice(0, 10).split("-").map(Number)
   if (!anio || !mes || !dia) return undefined
   return new Date(anio, mes - 1, dia)
 }

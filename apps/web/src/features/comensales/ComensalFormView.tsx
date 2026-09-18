@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Calendar } from '@/components/ui/calendar';
+import { fechaAIso, isoAFecha } from '@/components/ui/date-picker';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyState } from '@/components/shared/EmptyState';
@@ -41,13 +42,6 @@ const comensalSchema = z
   });
 
 type ComensalFormValues = z.infer<typeof comensalSchema>;
-
-function fechaISOSinHora(fecha: Date): string {
-  const anio = fecha.getFullYear();
-  const mes = String(fecha.getMonth() + 1).padStart(2, '0');
-  const dia = String(fecha.getDate()).padStart(2, '0');
-  return `${anio}-${mes}-${dia}`;
-}
 
 export function ComensalFormView() {
   const { id } = useParams<{ id: string }>();
@@ -84,10 +78,12 @@ export function ComensalFormView() {
 
   React.useEffect(() => {
     if (!comensalExistente) return;
+    const fechaNacimiento = isoAFecha(comensalExistente.fechaNacimiento);
+    if (!fechaNacimiento) return;
     reset({
       nombres: comensalExistente.nombres,
       apellidos: comensalExistente.apellidos,
-      fechaNacimiento: new Date(comensalExistente.fechaNacimiento),
+      fechaNacimiento,
       curp: comensalExistente.curp ?? '',
       tutorId: comensalExistente.tutor?.id ?? null,
     });
@@ -105,7 +101,7 @@ export function ComensalFormView() {
     const payload = {
       nombres: values.nombres.trim(),
       apellidos: values.apellidos.trim(),
-      fechaNacimiento: fechaISOSinHora(values.fechaNacimiento),
+      fechaNacimiento: fechaAIso(values.fechaNacimiento),
       curp: values.curp?.trim() || undefined,
       tutorId: esMenor ? (values.tutorId ?? null) : null,
     };

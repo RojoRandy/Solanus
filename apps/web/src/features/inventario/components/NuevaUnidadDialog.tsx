@@ -2,6 +2,7 @@ import * as React from 'react';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ApiError } from '@/lib/api-client';
@@ -18,11 +19,13 @@ interface NuevaUnidadDialogProps {
 export function NuevaUnidadDialog({ open, onOpenChange, onCreada }: NuevaUnidadDialogProps) {
   const [nombre, setNombre] = React.useState('');
   const [abrevia, setAbrevia] = React.useState('');
+  const [indicarContenido, setIndicarContenido] = React.useState(false);
   const crear = useCrearUnidad();
 
   function limpiar() {
     setNombre('');
     setAbrevia('');
+    setIndicarContenido(false);
   }
 
   function registrar() {
@@ -31,7 +34,7 @@ export function NuevaUnidadDialog({ open, onOpenChange, onCreada }: NuevaUnidadD
       return;
     }
     crear.mutate(
-      { nombre: nombre.trim(), abrevia: abrevia.trim() },
+      { nombre: nombre.trim(), abrevia: abrevia.trim(), indicarContenido },
       {
         onSuccess: (unidad) => {
           toast.success(`Unidad "${unidad.nombre}" creada.`);
@@ -59,6 +62,19 @@ export function NuevaUnidadDialog({ open, onOpenChange, onCreada }: NuevaUnidadD
             <Label htmlFor="nueva-unidad-abrevia">Abreviatura</Label>
             <Input id="nueva-unidad-abrevia" value={abrevia} onChange={(event) => setAbrevia(event.target.value)} placeholder="kg" />
           </div>
+        </div>
+        <div className="flex flex-col gap-2">
+          <label className="flex items-center gap-2 text-sm">
+            <Checkbox
+              checked={indicarContenido}
+              onCheckedChange={(checked) => setIndicarContenido(Boolean(checked))}
+              aria-describedby="nueva-unidad-contenido-ayuda"
+            />
+            Indicar contenido
+          </label>
+          <p id="nueva-unidad-contenido-ayuda" className="text-sm text-muted-foreground">
+            La unidad es un envase: al dar de alta un producto se pedirá cuánto trae dentro.
+          </p>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
