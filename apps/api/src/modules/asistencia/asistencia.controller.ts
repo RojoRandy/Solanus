@@ -23,11 +23,13 @@ import {
   ListarTurnosQueryDto,
   ObtenerTurnoQueryDto,
   TurnoResponseDto,
+  PrimeraVezResponseDto,
   TurnoResumenResponseDto,
 } from './dto/turno.dto';
 import {
   AsignarVoluntarioDto,
   RegistrarAsistenciaDto,
+  RegistrarPrimeraVezDto,
   RegistrarInsumoTurnoDto,
 } from './dto/asistencia.dto';
 import { ObtenerOCrearTurnoUseCase } from './usecases/obtener-o-crear-turno.usecase';
@@ -35,6 +37,8 @@ import { ListarTurnosUseCase } from './usecases/listar-turnos.usecase';
 import { ActualizarTurnoUseCase } from './usecases/actualizar-turno.usecase';
 import { RegistrarAsistenciaUseCase } from './usecases/registrar-asistencia.usecase';
 import { EliminarAsistenciaUseCase } from './usecases/eliminar-asistencia.usecase';
+import { RegistrarPrimeraVezUseCase } from './usecases/registrar-primera-vez.usecase';
+import { EliminarPrimeraVezUseCase } from './usecases/eliminar-primera-vez.usecase';
 import { AsignarVoluntarioTurnoUseCase } from './usecases/asignar-voluntario-turno.usecase';
 import { QuitarVoluntarioTurnoUseCase } from './usecases/quitar-voluntario-turno.usecase';
 import { RegistrarInsumoTurnoUseCase } from './usecases/registrar-insumo-turno.usecase';
@@ -64,6 +68,10 @@ export class AsistenciaController {
     private readonly registrarAsistencia: RegistrarAsistenciaUseCase,
     @Inject(EliminarAsistenciaUseCase)
     private readonly eliminarAsistencia: EliminarAsistenciaUseCase,
+    @Inject(RegistrarPrimeraVezUseCase)
+    private readonly registrarPrimeraVez: RegistrarPrimeraVezUseCase,
+    @Inject(EliminarPrimeraVezUseCase)
+    private readonly eliminarPrimeraVez: EliminarPrimeraVezUseCase,
     @Inject(AsignarVoluntarioTurnoUseCase)
     private readonly asignarVoluntario: AsignarVoluntarioTurnoUseCase,
     @Inject(QuitarVoluntarioTurnoUseCase)
@@ -111,6 +119,26 @@ export class AsistenciaController {
   @Auth(...ROLES_DESHACER)
   removeAsistencia(@Param() { id }: IdParamDto) {
     return this.eliminarAsistencia.execute(Number(id));
+  }
+
+  @Post('turnos/:id/primera-vez')
+  @ApiOkSchemaResponse(PrimeraVezResponseDto)
+  crearPrimeraVez(
+    @Param() { id }: IdParamDto,
+    @Body() dto: RegistrarPrimeraVezDto,
+    @AuthUser('id') registradoPorId: number,
+  ) {
+    return this.registrarPrimeraVez.execute({
+      turnoId: Number(id),
+      nombre: dto.nombre,
+      registradoPorId,
+    });
+  }
+
+  @Delete('primera-vez/:id')
+  @Auth(...ROLES_DESHACER)
+  removePrimeraVez(@Param() { id }: IdParamDto) {
+    return this.eliminarPrimeraVez.execute(Number(id));
   }
 
   @Post('turnos/:id/voluntarios')

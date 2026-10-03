@@ -1,9 +1,16 @@
-import { Prisma } from '@prisma/client';
+import { Genero, Prisma } from '@prisma/client';
 import { calcularEdad } from './edad.util';
 import {
   ComensalDetalleResponseDto,
   ComensalResponseDto,
 } from '../dto/comensal.dto';
+
+// Etiquetas usadas por las exportaciones y el expediente.
+export const ETIQUETA_GENERO: Record<Genero, string> = {
+  HOMBRE: 'Hombre',
+  MUJER: 'Mujer',
+  SIN_ESPECIFICAR: 'Sin especificar',
+};
 
 const tutorResumenSelect = {
   id: true,
@@ -19,6 +26,7 @@ export const comensalListSelect = {
   apellidos: true,
   fechaNacimiento: true,
   curp: true,
+  genero: true,
   fotoPath: true,
   activo: true,
   createdAt: true,
@@ -55,6 +63,7 @@ export function mapComensalResponse(
     fechaNacimiento: comensal.fechaNacimiento,
     edad: calcularEdad(comensal.fechaNacimiento),
     curp: comensal.curp,
+    genero: comensal.genero,
     fotoPath: comensal.fotoPath,
     tutor: comensal.tutor,
     activo: comensal.activo,

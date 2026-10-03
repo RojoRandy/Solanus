@@ -1,9 +1,12 @@
-import { UtensilsCrossed } from 'lucide-react';
+import { UserPlus, UtensilsCrossed } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { useReporteAsistencia } from '../api';
+import { formatFechaCortaSoloDia } from '@/lib/fecha';
 import { etiquetaPeriodo, type Periodo } from '../periodo';
+
+const ETIQUETA_HORARIO = { DESAYUNO: 'Desayuno', COMIDA: 'Comida', CENA: 'Cena' } as const;
 
 export function ReporteAsistenciaView({ periodo }: { periodo: Periodo }) {
   const { data, isLoading } = useReporteAsistencia(periodo);
@@ -15,7 +18,7 @@ export function ReporteAsistenciaView({ periodo }: { periodo: Periodo }) {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-5">
         <Card>
           <CardContent className="flex flex-col gap-1">
             <span className="text-2xl font-semibold text-primary">{data.totalAsistencias}</span>
@@ -40,6 +43,12 @@ export function ReporteAsistenciaView({ periodo }: { periodo: Periodo }) {
             <span className="text-sm text-muted-foreground">Cena</span>
           </CardContent>
         </Card>
+        <Card>
+          <CardContent className="flex flex-col gap-1">
+            <span className="text-2xl font-semibold">{data.totalPrimeraVez}</span>
+            <span className="text-sm text-muted-foreground">Primera vez</span>
+          </CardContent>
+        </Card>
       </div>
 
       <Card>
@@ -47,7 +56,7 @@ export function ReporteAsistenciaView({ periodo }: { periodo: Periodo }) {
           <CardTitle>Asistencia por día — {etiquetaPeriodo(periodo)}</CardTitle>
         </CardHeader>
         <CardContent>
-          {data.comensales.length === 0 ? (
+          {data.comensales.length === 0 && data.totalPrimeraVez === 0 ? (
             <EmptyState icon={UtensilsCrossed} title="Sin asistencias en este mes" />
           ) : (
             <Table>
@@ -92,16 +101,57 @@ export function ReporteAsistenciaView({ periodo }: { periodo: Periodo }) {
               <TableFooter>
                 <TableRow>
                   <TableHead scope="row" className="sticky left-0 z-10 bg-muted/50 font-medium">
-                    Total
+                    Total comensales
                   </TableHead>
                   {data.totalesPorDia.map((total, i) => (
                     <TableCell key={i} className="text-center text-xs font-medium tabular-nums">
                       {total > 0 ? total : ''}
                     </TableCell>
                   ))}
-                  <TableCell />
+                  <TableCell className="text-right font-medium">{data.totalAsistencias}</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableHead scope="row" className="sticky left-0 z-10 bg-muted/50 font-medium">
+                    Primera vez
+                  </TableHead>
+                  {data.primeraVezPorDia.map((total, i) => (
+                    <TableCell key={i} className="text-center text-xs font-medium tabular-nums">
+                      {total > 0 ? total : ''}
+                    </TableCell>
+                  ))}
+                  <TableCell className="text-right font-medium">{data.totalPrimeraVez}</TableCell>
                 </TableRow>
               </TableFooter>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Primera vez — {etiquetaPeriodo(periodo)}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {data.primeraVez.length === 0 ? (
+            <EmptyState icon={UserPlus} title="Sin asistentes de primera vez en este mes" />
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Fecha</TableHead>
+                  <TableHead>Turno</TableHead>
+                  <TableHead>Nombre</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {data.primeraVez.map((fila, i) => (
+                  <TableRow key={i}>
+                    <TableCell className="tabular-nums">{formatFechaCortaSoloDia(fila.fecha)}</TableCell>
+                    <TableCell>{ETIQUETA_HORARIO[fila.horario]}</TableCell>
+                    <TableCell>{fila.nombre}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
             </Table>
           )}
         </CardContent>

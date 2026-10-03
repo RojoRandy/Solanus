@@ -41,7 +41,7 @@ export function DashboardPage() {
               icon={UtensilsCrossed}
               label="Asistencias hoy"
               value={resumen.asistencia.hoy}
-              hint={`Promedio últimos 7 días: ${resumen.asistencia.promedioUltimos7Dias}`}
+              hint={`${resumen.asistencia.primeraVezHoy > 0 ? `+${resumen.asistencia.primeraVezHoy} de primera vez · ` : ''}Promedio últimos 7 días: ${resumen.asistencia.promedioUltimos7Dias}`}
               tone="success"
             />
             <StatCard

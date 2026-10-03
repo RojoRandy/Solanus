@@ -5,6 +5,12 @@ export interface FilaAsistencia {
   total: number;
 }
 
+export interface FilaPrimeraVez {
+  fecha: string;
+  horario: 'DESAYUNO' | 'COMIDA' | 'CENA';
+  nombre: string;
+}
+
 export interface ReporteAsistencia {
   anio: number;
   mes: number;
@@ -15,6 +21,10 @@ export interface ReporteAsistencia {
   desayuno: number;
   comida: number;
   cena: number;
+  /** Asistentes de primera vez: no son comensales y no se suman a los totales de arriba. */
+  primeraVez: FilaPrimeraVez[];
+  primeraVezPorDia: number[];
+  totalPrimeraVez: number;
 }
 
 export interface MovimientoResumen {

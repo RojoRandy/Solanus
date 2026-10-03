@@ -32,6 +32,7 @@ export interface Comensal {
   fechaNacimiento: string;
   edad: number;
   curp: string | null;
+  genero: Genero;
   fotoPath: string | null;
   tutor: ComensalTutorResumen | null;
   activo: boolean;
@@ -51,17 +52,27 @@ export interface CrearComensalPayload {
   apellidos: string;
   fechaNacimiento: string;
   curp?: string;
+  genero?: Genero;
   tutorId?: number | null;
 }
 
 export type ActualizarComensalPayload = Partial<CrearComensalPayload>;
 
-export type GrupoEdad = 'ninos' | 'adultos_mayores';
+export type GrupoEdad = 'ninos' | 'adultos' | 'adultos_mayores';
+
+export type Genero = 'HOMBRE' | 'MUJER' | 'SIN_ESPECIFICAR';
+
+export const ETIQUETAS_GENERO: Record<Genero, string> = {
+  HOMBRE: 'Hombre',
+  MUJER: 'Mujer',
+  SIN_ESPECIFICAR: 'Sin especificar',
+};
 
 export interface ListarComensalesParams {
   busqueda?: string;
   activo?: 'true' | 'false';
   grupoEdad?: GrupoEdad;
+  genero?: Genero;
   page?: number;
   limit?: number;
   ordenarPor?: 'folio' | 'nombre';

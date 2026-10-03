@@ -49,6 +49,7 @@ import {
   useSubirIneReversoComensal,
 } from './api';
 import { formatearFecha, formatearFechaHora } from './utils/edad';
+import { ETIQUETAS_GENERO } from './types';
 
 const ETIQUETA_HORARIO: Record<string, string> = {
   DESAYUNO: 'Desayuno',
@@ -262,6 +263,7 @@ export function ComensalDetalleView() {
           <CardContent className="grid gap-4 sm:grid-cols-2">
             <Dato etiqueta="Fecha de nacimiento" valor={formatearFecha(comensal.fechaNacimiento)} />
             <Dato etiqueta="Edad" valor={`${comensal.edad} años`} />
+            <Dato etiqueta="Género" valor={ETIQUETAS_GENERO[comensal.genero]} />
             <Dato etiqueta="CURP" valor={comensal.curp ?? 'No registrado'} />
             <Dato
               etiqueta="Tutor"

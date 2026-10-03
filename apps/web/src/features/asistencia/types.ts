@@ -27,6 +27,13 @@ export interface Asistencia {
   createdAt: string;
 }
 
+/** Persona que asiste por primera vez sin estar registrada como comensal. */
+export interface AsistenciaPrimeraVez {
+  id: number;
+  nombre: string;
+  createdAt: string;
+}
+
 export interface TurnoVoluntario {
   id: number;
   voluntario: VoluntarioRef;
@@ -40,6 +47,8 @@ export interface Turno {
   notas: string | null;
   totalAsistencias: number;
   asistencias: Asistencia[];
+  totalPrimeraVez: number;
+  primeraVez: AsistenciaPrimeraVez[];
   voluntarios: TurnoVoluntario[];
 }
 
@@ -48,4 +57,5 @@ export interface TurnoResumen {
   fecha: string;
   horario: HorarioComida;
   totalAsistencias: number;
+  totalPrimeraVez: number;
 }

@@ -30,6 +30,7 @@ function construirQueryString(params: ListarComensalesParams): string {
   if (params.busqueda) query.set('busqueda', params.busqueda);
   if (params.activo) query.set('activo', params.activo);
   if (params.grupoEdad) query.set('grupoEdad', params.grupoEdad);
+  if (params.genero) query.set('genero', params.genero);
   if (params.page) query.set('page', String(params.page));
   if (params.limit) query.set('limit', String(params.limit));
   if (params.ordenarPor) query.set('ordenarPor', params.ordenarPor);

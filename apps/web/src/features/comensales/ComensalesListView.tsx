@@ -39,12 +39,18 @@ import {
 import { EmptyState } from '@/components/shared/EmptyState';
 import { usePaginacion } from '@/lib/pagination';
 import { descargarComensales, useComensales } from './api';
-import type { Comensal, GrupoEdad, ListarComensalesParams } from './types';
+import { ETIQUETAS_GENERO, type Comensal, type Genero, type GrupoEdad, type ListarComensalesParams } from './types';
 
 const OPCIONES_GRUPO_EDAD: Record<'todas' | GrupoEdad, string> = {
   todas: 'Todas las edades',
-  ninos: 'Niños (menores de 18)',
-  adultos_mayores: 'Adultos mayores (60+)',
+  ninos: 'Menores de 18',
+  adultos: 'Mayores de 18',
+  adultos_mayores: 'Mayores de 60',
+};
+
+const OPCIONES_GENERO: Record<'todos' | Genero, string> = {
+  todos: 'Todos los géneros',
+  ...ETIQUETAS_GENERO,
 };
 
 const DEBOUNCE_MS = 350;
@@ -62,6 +68,7 @@ export function ComensalesListView() {
   const [busqueda, setBusqueda] = React.useState('');
   const [activo, setActivo] = React.useState<'true' | 'false'>('true');
   const [grupoEdad, setGrupoEdad] = React.useState<GrupoEdad>();
+  const [genero, setGenero] = React.useState<Genero>();
   const [ordenarPor, setOrdenarPor] = React.useState<CampoOrden>('folio');
   const [orden, setOrden] = React.useState<DireccionOrden>('desc');
   const { page, limit, setPage, resetPagina } = usePaginacion();
@@ -74,7 +81,7 @@ export function ComensalesListView() {
   React.useEffect(() => {
     resetPagina();
     // eslint-disable-next-line react-hooks/exhaustive-deps -- resetear página solo cuando cambian los filtros, no en cada render
-  }, [busqueda, activo, grupoEdad, ordenarPor, orden]);
+  }, [busqueda, activo, grupoEdad, genero, ordenarPor, orden]);
 
   const ordenarPorCampo = React.useCallback(
     (campo: CampoOrden) => {
@@ -92,6 +99,7 @@ export function ComensalesListView() {
     busqueda: busqueda || undefined,
     activo,
     grupoEdad,
+    genero,
     page,
     limit,
     ordenarPor,
@@ -101,7 +109,7 @@ export function ComensalesListView() {
   async function exportar(formato: 'xlsx' | 'pdf') {
     setExportando(formato);
     try {
-      await descargarComensales(formato, { busqueda: busqueda || undefined, activo, grupoEdad, ordenarPor, orden });
+      await descargarComensales(formato, { busqueda: busqueda || undefined, activo, grupoEdad, genero, ordenarPor, orden });
     } catch (error) {
       toast.error(error instanceof ApiError ? error.message : 'No se pudo exportar el listado.');
     } finally {
@@ -172,6 +180,22 @@ export function ComensalesListView() {
             ))}
           </SelectContent>
         </Select>
+        <Select
+          items={OPCIONES_GENERO}
+          value={genero ?? 'todos'}
+          onValueChange={(value) => setGenero(value === 'todos' ? undefined : (value as Genero))}
+        >
+          <SelectTrigger className="w-48">
+            <SelectValue placeholder="Todos los géneros" />
+          </SelectTrigger>
+          <SelectContent>
+            {Object.entries(OPCIONES_GENERO).map(([value, label]) => (
+              <SelectItem key={value} value={value}>
+                {label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
         <div className="flex gap-1 rounded-lg bg-muted p-[3px] sm:ml-auto">
           <Button
             type="button"
@@ -210,16 +234,21 @@ export function ComensalesListView() {
       {!isLoading && !isError && data && data.items.length === 0 && (
         <EmptyState
           icon={Users}
-          title={busqueda || grupoEdad ? 'Sin resultados' : 'Todavía no hay comensales registrados'}
+          title={busqueda || grupoEdad || genero ? 'Sin resultados' : 'Todavía no hay comensales registrados'}
           description={
             busqueda
               ? `No encontramos comensales que coincidan con "${busqueda}".`
-              : grupoEdad
-                ? `Ningún comensal ${activo === 'true' ? 'activo' : 'inactivo'} cae en "${OPCIONES_GRUPO_EDAD[grupoEdad]}".`
+              : grupoEdad || genero
+                ? `Ningún comensal ${activo === 'true' ? 'activo' : 'inactivo'} coincide con ${[
+                    grupoEdad && `"${OPCIONES_GRUPO_EDAD[grupoEdad]}"`,
+                    genero && `"${ETIQUETAS_GENERO[genero]}"`,
+                  ]
+                    .filter(Boolean)
+                    .join(' y ')}.`
                 : 'Da de alta al primer comensal para comenzar a construir su expediente.'
           }
           action={
-            puedeGestionar && !busqueda && !grupoEdad ? (
+            puedeGestionar && !busqueda && !grupoEdad && !genero ? (
               <Button onClick={() => navigate('/comensales/nuevo')}>Nuevo comensal</Button>
             ) : undefined
           }
@@ -240,6 +269,7 @@ export function ComensalesListView() {
                     Nombre
                   </TableHeadOrdenable>
                   <TableHead>Edad</TableHead>
+                  <TableHead>Género</TableHead>
                   <TableHead>Tutor</TableHead>
                   <TableHead>Estado</TableHead>
                 </TableRow>
@@ -299,6 +329,7 @@ function FilaComensal({ comensal }: { comensal: Comensal }) {
         {comensal.nombres} {comensal.apellidos}
       </TableCell>
       <TableCell>{comensal.edad} años</TableCell>
+      <TableCell>{ETIQUETAS_GENERO[comensal.genero]}</TableCell>
       <TableCell>
         {comensal.tutor ? (
           <span className="text-muted-foreground">

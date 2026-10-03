@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { HorarioComida } from '@prisma/client';
 import { IsDateString, IsOptional } from 'class-validator';
 
 export class RangoFechaQueryDto {
@@ -29,6 +30,12 @@ class FilaAsistenciaDto {
   @ApiProperty({ description: 'Suma de dias[]' }) total: number;
 }
 
+class FilaPrimeraVezDto {
+  @ApiProperty() fecha: Date;
+  @ApiProperty({ enum: HorarioComida, enumName: 'HorarioComida' }) horario: HorarioComida;
+  @ApiProperty() nombre: string;
+}
+
 export class ReporteAsistenciaResponseDto {
   @ApiProperty() anio: number;
   @ApiProperty() mes: number;
@@ -41,6 +48,11 @@ export class ReporteAsistenciaResponseDto {
   @ApiProperty() desayuno: number;
   @ApiProperty() comida: number;
   @ApiProperty() cena: number;
+  @ApiProperty({ type: [FilaPrimeraVezDto], description: 'Asistentes de primera vez (no son comensales); no se suman a los totales de arriba' })
+  primeraVez: FilaPrimeraVezDto[];
+  @ApiProperty({ type: [Number], description: 'Asistentes de primera vez por día; longitud = diasDelMes' })
+  primeraVezPorDia: number[];
+  @ApiProperty() totalPrimeraVez: number;
 }
 
 // ── Reporte de Inventario ──
