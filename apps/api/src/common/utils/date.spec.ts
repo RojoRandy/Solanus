@@ -1,4 +1,4 @@
-import { now, parseFechaSoloDia, TZ } from './date';
+import { formatFechaSoloDia, now, parseFechaSoloDia, TZ } from './date';
 
 describe('now()', () => {
   afterEach(() => {
@@ -30,5 +30,11 @@ describe('parseFechaSoloDia()', () => {
     // 01:00 UTC del 10 de marzo = 19:00 del 9 de marzo en México (UTC-6).
     jest.useFakeTimers().setSystemTime(new Date('2026-03-10T01:00:00.000Z'));
     expect(parseFechaSoloDia().toISOString()).toBe('2026-03-09T00:00:00.000Z');
+  });
+});
+
+describe('formatFechaSoloDia()', () => {
+  it('no corre al día anterior una fecha @db.Date (medianoche UTC)', () => {
+    expect(formatFechaSoloDia(new Date('2000-01-01T00:00:00.000Z'))).toBe('01/01/2000');
   });
 });
