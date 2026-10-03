@@ -13,12 +13,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Calendar } from '@/components/ui/calendar';
 import { fechaAIso, isoAFecha } from '@/components/ui/date-picker';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { cn } from '@/lib/utils';
 import { useActualizarComensal, useComensal, useCrearComensal } from './api';
 import { TutorCombobox } from './components/TutorCombobox';
 import { calcularEdad, formatearFecha } from './utils/edad';
+import { ETIQUETAS_GENERO, type Genero } from './types';
 
 const comensalSchema = z
   .object({
@@ -29,6 +31,7 @@ const comensalSchema = z
       invalid_type_error: 'La fecha de nacimiento es obligatoria',
     }),
     curp: z.string().trim().optional(),
+    genero: z.enum(['HOMBRE', 'MUJER', 'SIN_ESPECIFICAR']),
     tutorId: z.number().nullable().optional(),
   })
   .superRefine((data, ctx) => {
@@ -72,6 +75,7 @@ export function ComensalFormView() {
       nombres: '',
       apellidos: '',
       curp: '',
+      genero: 'SIN_ESPECIFICAR',
       tutorId: null,
     },
   });
@@ -85,12 +89,14 @@ export function ComensalFormView() {
       apellidos: comensalExistente.apellidos,
       fechaNacimiento,
       curp: comensalExistente.curp ?? '',
+      genero: comensalExistente.genero,
       tutorId: comensalExistente.tutor?.id ?? null,
     });
   }, [comensalExistente, reset]);
 
   const fechaNacimiento = useWatch({ control, name: 'fechaNacimiento' });
   const tutorId = useWatch({ control, name: 'tutorId' });
+  const genero = useWatch({ control, name: 'genero' });
   const esMenor = fechaNacimiento ? calcularEdad(fechaNacimiento) < 18 : false;
 
   React.useEffect(() => {
@@ -103,6 +109,7 @@ export function ComensalFormView() {
       apellidos: values.apellidos.trim(),
       fechaNacimiento: fechaAIso(values.fechaNacimiento),
       curp: values.curp?.trim() || undefined,
+      genero: values.genero,
       tutorId: esMenor ? (values.tutorId ?? null) : null,
     };
 
@@ -225,9 +232,30 @@ export function ComensalFormView() {
               )}
             </div>
 
-            <div className="flex flex-col gap-1.5 sm:w-64">
-              <Label htmlFor="curp">CURP (opcional)</Label>
-              <Input id="curp" {...register('curp')} maxLength={18} />
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="genero">Género</Label>
+                <Select
+                  items={ETIQUETAS_GENERO}
+                  value={genero}
+                  onValueChange={(value) => setValue('genero', value as Genero)}
+                >
+                  <SelectTrigger id="genero" className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(ETIQUETAS_GENERO).map(([value, label]) => (
+                      <SelectItem key={value} value={value}>
+                        {label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="curp">CURP (opcional)</Label>
+                <Input id="curp" {...register('curp')} maxLength={18} />
+              </div>
             </div>
 
             {esMenor && (

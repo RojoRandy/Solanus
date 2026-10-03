@@ -1,13 +1,13 @@
 import { Injectable } from '@nestjs/common';
-import dayjs from 'dayjs';
+import { Genero } from '@prisma/client';
 import { UseCase } from '@/common/interfaces/use-case.interface';
 import { PrismaService } from '@/prisma/prisma.service';
 import { PdfService } from '@/common/pdf/pdf.service';
 import { escapar } from '@/common/pdf/html.util';
 import { ComensalErrors } from '@/common/errors/comensal.errors';
-import { now } from '@/common/utils/date';
+import { formatFechaSoloDia, now } from '@/common/utils/date';
 import { ListarComensalesQueryDto } from '../dto/comensal.dto';
-import { comensalListSelect, mapComensalResponse } from '../utils/comensal-select.util';
+import { comensalListSelect, ETIQUETA_GENERO, mapComensalResponse } from '../utils/comensal-select.util';
 import {
   construirOrderByComensales,
   construirWhereComensales,
@@ -23,6 +23,7 @@ interface FilaComensal {
   apellidos: string;
   fechaNacimiento: Date;
   edad: number;
+  genero: Genero;
   curp: string | null;
   tutor: { nombres: string; apellidos: string; folio: number } | null;
   activo: boolean;
@@ -65,8 +66,10 @@ export class ExportarComensalesPdfUseCase implements UseCase<
   ): string {
     const filtrosTexto = [
       query.activo === 'false' ? 'Inactivos' : 'Activos',
-      query.grupoEdad === 'ninos' ? 'Niños (menores de 18)' : null,
-      query.grupoEdad === 'adultos_mayores' ? 'Adultos mayores (60 o más)' : null,
+      query.grupoEdad === 'ninos' ? 'Menores de 18' : null,
+      query.grupoEdad === 'adultos' ? 'Mayores de 18 (18 a 59)' : null,
+      query.grupoEdad === 'adultos_mayores' ? 'Mayores de 60' : null,
+      query.genero ? `Género: ${ETIQUETA_GENERO[query.genero]}` : null,
       query.busqueda?.trim() ? `Búsqueda: «${escapar(query.busqueda.trim())}»` : null,
     ]
       .filter(Boolean)
@@ -81,7 +84,8 @@ export class ExportarComensalesPdfUseCase implements UseCase<
           <td>${c.folio}</td>
           <td>${escapar(`${c.nombres} ${c.apellidos}`)}</td>
           <td>${c.edad}</td>
-          <td>${dayjs(c.fechaNacimiento).format('DD/MM/YYYY')}</td>
+          <td>${ETIQUETA_GENERO[c.genero]}</td>
+          <td>${formatFechaSoloDia(c.fechaNacimiento)}</td>
           <td>${c.curp ? escapar(c.curp) : '—'}</td>
           <td>${tutor}</td>
           <td>${c.activo ? 'Activo' : 'Inactivo'}</td>
@@ -120,6 +124,7 @@ export class ExportarComensalesPdfUseCase implements UseCase<
         <th>Folio</th>
         <th>Nombre completo</th>
         <th>Edad</th>
+        <th>Género</th>
         <th>F. nacimiento</th>
         <th>CURP</th>
         <th>Tutor</th>

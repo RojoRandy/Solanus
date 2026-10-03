@@ -49,6 +49,7 @@ export class ActualizarComensalUseCase implements UseCase<
         apellidos: dto.apellidos,
         fechaNacimiento: dto.fechaNacimiento,
         curp: dto.curp,
+        genero: dto.genero,
         tutorId: dto.tutorId !== undefined ? dto.tutorId : undefined,
       },
       select: comensalListSelect,

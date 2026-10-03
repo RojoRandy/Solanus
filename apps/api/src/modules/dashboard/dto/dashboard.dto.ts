@@ -25,6 +25,10 @@ class AsistenciaResumenDto {
   @ApiProperty() desayunoHoy: number;
   @ApiProperty() comidaHoy: number;
   @ApiProperty() cenaHoy: number;
+  @ApiProperty({
+    description: 'Asistentes de primera vez hoy (no son comensales)',
+  })
+  primeraVezHoy: number;
 }
 
 class DonativosResumenDto {

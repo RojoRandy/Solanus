@@ -2,9 +2,12 @@ import { HorarioComida } from '@prisma/client';
 import { ReporteAsistenciaUseCase } from './reporte-asistencia.usecase';
 import { PrismaService } from '@/prisma/prisma.service';
 
-function buildPrisma(asistencias: unknown[]) {
+function buildPrisma(asistencias: unknown[], primeraVez: unknown[] = []) {
   const findMany = jest.fn().mockResolvedValue(asistencias);
-  const prisma = { asistencia: { findMany } } as unknown as PrismaService;
+  const prisma = {
+    asistencia: { findMany },
+    asistenciaPrimeraVez: { findMany: jest.fn().mockResolvedValue(primeraVez) },
+  } as unknown as PrismaService;
   return { prisma, findMany };
 }
 
@@ -86,5 +89,31 @@ describe('ReporteAsistenciaUseCase', () => {
         },
       }),
     );
+  });
+
+  it('cuenta los de primera vez aparte, sin tocar los totales de comensales', async () => {
+    const { prisma } = buildPrisma(
+      [
+        {
+          comensalId: 1,
+          comensal: { folio: 100, nombres: 'Juan', apellidos: 'Pérez' },
+          turno: { fecha: new Date('2026-09-05T00:00:00.000Z'), horario: HorarioComida.COMIDA },
+        },
+      ],
+      [
+        { nombre: 'Ana Ruiz', turno: { fecha: new Date('2026-09-05T00:00:00.000Z'), horario: HorarioComida.COMIDA } },
+        { nombre: 'Luis Gil', turno: { fecha: new Date('2026-09-07T00:00:00.000Z'), horario: HorarioComida.CENA } },
+      ],
+    );
+    const useCase = new ReporteAsistenciaUseCase(prisma);
+
+    const res = await useCase.execute({ anio: 2026, mes: 9 });
+
+    expect(res.totalAsistencias).toBe(1);
+    expect(res.totalesPorDia[4]).toBe(1);
+    expect(res.totalPrimeraVez).toBe(2);
+    expect(res.primeraVezPorDia[4]).toBe(1);
+    expect(res.primeraVezPorDia[6]).toBe(1);
+    expect(res.primeraVez.map((r) => r.nombre)).toEqual(['Ana Ruiz', 'Luis Gil']);
   });
 });

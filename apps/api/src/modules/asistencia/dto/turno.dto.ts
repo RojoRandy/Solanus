@@ -61,6 +61,13 @@ export class AsistenciaResponseDto {
   @ApiProperty() createdAt: Date;
 }
 
+/** Persona que asiste por primera vez sin estar registrada como comensal. */
+export class PrimeraVezResponseDto {
+  @ApiProperty() id: number;
+  @ApiProperty() nombre: string;
+  @ApiProperty() createdAt: Date;
+}
+
 export class TurnoVoluntarioResponseDto {
   @ApiProperty() id: number;
   @ApiProperty({ type: VoluntarioRefDto }) voluntario: VoluntarioRefDto;
@@ -73,9 +80,13 @@ export class TurnoResponseDto {
   horario: HorarioComida;
   @ApiProperty({ nullable: true }) menu: string | null;
   @ApiProperty({ nullable: true }) notas: string | null;
-  @ApiProperty() totalAsistencias: number;
+  @ApiProperty({ description: 'Solo comensales registrados' })
+  totalAsistencias: number;
   @ApiProperty({ type: [AsistenciaResponseDto] })
   asistencias: AsistenciaResponseDto[];
+  @ApiProperty() totalPrimeraVez: number;
+  @ApiProperty({ type: [PrimeraVezResponseDto] })
+  primeraVez: PrimeraVezResponseDto[];
   @ApiProperty({ type: [TurnoVoluntarioResponseDto] })
   voluntarios: TurnoVoluntarioResponseDto[];
 }
@@ -85,5 +96,7 @@ export class TurnoResumenResponseDto {
   @ApiProperty() fecha: Date;
   @ApiProperty({ enum: HorarioComida, enumName: 'HorarioComida' })
   horario: HorarioComida;
-  @ApiProperty() totalAsistencias: number;
+  @ApiProperty({ description: 'Solo comensales registrados' })
+  totalAsistencias: number;
+  @ApiProperty() totalPrimeraVez: number;
 }

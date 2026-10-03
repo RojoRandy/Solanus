@@ -7,6 +7,8 @@ import { ListarTurnosUseCase } from './usecases/listar-turnos.usecase';
 import { ActualizarTurnoUseCase } from './usecases/actualizar-turno.usecase';
 import { RegistrarAsistenciaUseCase } from './usecases/registrar-asistencia.usecase';
 import { EliminarAsistenciaUseCase } from './usecases/eliminar-asistencia.usecase';
+import { RegistrarPrimeraVezUseCase } from './usecases/registrar-primera-vez.usecase';
+import { EliminarPrimeraVezUseCase } from './usecases/eliminar-primera-vez.usecase';
 import { AsignarVoluntarioTurnoUseCase } from './usecases/asignar-voluntario-turno.usecase';
 import { QuitarVoluntarioTurnoUseCase } from './usecases/quitar-voluntario-turno.usecase';
 import { RegistrarInsumoTurnoUseCase } from './usecases/registrar-insumo-turno.usecase';
@@ -23,6 +25,8 @@ import { RegistrarInsumoTurnoUseCase } from './usecases/registrar-insumo-turno.u
     ActualizarTurnoUseCase,
     RegistrarAsistenciaUseCase,
     EliminarAsistenciaUseCase,
+    RegistrarPrimeraVezUseCase,
+    EliminarPrimeraVezUseCase,
     AsignarVoluntarioTurnoUseCase,
     QuitarVoluntarioTurnoUseCase,
     RegistrarInsumoTurnoUseCase,

@@ -1,5 +1,5 @@
 import { Injectable, OnModuleDestroy } from '@nestjs/common';
-import puppeteer, { Browser, Page } from 'puppeteer';
+import puppeteer, { Browser } from 'puppeteer';
 
 /**
  * Renderiza HTML a PDF reutilizando una sola instancia de Chromium para todo
@@ -11,37 +11,31 @@ import puppeteer, { Browser, Page } from 'puppeteer';
 export class PdfService implements OnModuleDestroy {
   private browserPromise: Promise<Browser> | null = null;
 
-  private async getBrowser(): Promise<Browser> {
+  /**
+   * Si Chromium muere (crash, OOM, suspensión del equipo) o falla al arrancar,
+   * se olvida la instancia para relanzarla en el siguiente PDF; si no, todos
+   * los PDF fallarían con 500 hasta reiniciar la API.
+   */
+  private getBrowser(): Promise<Browser> {
     if (this.browserPromise === null) {
-      const browserPromise = puppeteer
+      const lanzamiento = puppeteer
         .launch({
           headless: true,
           args: ['--no-sandbox', '--disable-dev-shm-usage'],
         })
         .then((browser) => {
           browser.on('disconnected', () => {
-            // Un navegador anterior no debe invalidar un relanzamiento concurrente.
-            if (this.browserPromise === browserPromise)
-              this.browserPromise = null;
+            if (this.browserPromise === lanzamiento) this.browserPromise = null;
           });
           return browser;
         })
-        .catch((error) => {
-          // Un lanzamiento fallido no debe bloquear los siguientes intentos.
-          if (this.browserPromise === browserPromise)
-            this.browserPromise = null;
+        .catch((error: unknown) => {
+          if (this.browserPromise === lanzamiento) this.browserPromise = null;
           throw error;
         });
-      this.browserPromise = browserPromise;
+      this.browserPromise = lanzamiento;
     }
-    const browserPromise = this.browserPromise;
-    const browser = await browserPromise;
-    // La conexión puede haberse perdido antes de registrar el evento.
-    if (!browser.connected) {
-      if (this.browserPromise === browserPromise) this.browserPromise = null;
-      return this.getBrowser();
-    }
-    return browser;
+    return this.browserPromise;
   }
 
   async render(
@@ -53,39 +47,14 @@ export class PdfService implements OnModuleDestroy {
     },
   ): Promise<Buffer> {
     const browser = await this.getBrowser();
-    let page: Page;
-    try {
-      page = await browser.newPage();
-    } catch (error) {
-      if (
-        !(error instanceof Error) ||
-        !/connection closed|disconnected/i.test(error.message)
-      ) {
-        throw error;
-      }
-      // Conserva un reemplazo concurrente y reintenta solo una vez al perder la conexión.
-      const browserPromise = this.browserPromise;
-      if (
-        browserPromise !== null &&
-        (await browserPromise) === browser &&
-        this.browserPromise === browserPromise
-      ) {
-        this.browserPromise = null;
-      }
-      page = await (await this.getBrowser()).newPage();
-    }
+    const page = await browser.newPage();
     try {
       await page.setContent(html, { waitUntil: 'load' });
       const pdf = await page.pdf({
         format: 'letter',
         printBackground: true,
         landscape: options?.landscape ?? false,
-        margin: options?.margin ?? {
-          top: '18mm',
-          bottom: '18mm',
-          left: '16mm',
-          right: '16mm',
-        },
+        margin: options?.margin ?? { top: '18mm', bottom: '18mm', left: '16mm', right: '16mm' },
       });
       return Buffer.from(pdf);
     } finally {

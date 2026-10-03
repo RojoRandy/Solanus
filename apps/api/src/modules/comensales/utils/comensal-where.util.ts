@@ -5,7 +5,7 @@ import { rangoFechaNacimiento } from './edad.util';
 /** Filtros compartidos por el listado paginado y las exportaciones (xlsx/pdf). */
 export type FiltrosComensales = Pick<
   ListarComensalesQueryDto,
-  'activo' | 'busqueda' | 'grupoEdad' | 'ordenarPor' | 'orden'
+  'activo' | 'busqueda' | 'genero' | 'grupoEdad' | 'ordenarPor' | 'orden'
 >;
 
 export function construirWhereComensales(
@@ -23,6 +23,10 @@ export function construirWhereComensales(
       { apellidos: { contains: busqueda, mode: 'insensitive' } },
       ...(Number.isInteger(folioBuscado) ? [{ folio: folioBuscado }] : []),
     ];
+  }
+
+  if (query.genero) {
+    where.genero = query.genero;
   }
 
   if (query.grupoEdad) {

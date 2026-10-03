@@ -49,7 +49,12 @@ export class ObtenerResumenDashboardUseCase implements UseCase<
       this.stockBajo.execute(),
       this.prisma.turnoComida.findMany({
         where: { fecha: hoy },
-        select: { horario: true, _count: { select: { asistencias: true } } },
+        select: {
+          horario: true,
+          _count: {
+            select: { asistencias: true, asistenciasPrimeraVez: true },
+          },
+        },
       }),
       this.prisma.turnoComida.findMany({
         where: { fecha: { gte: hace7Dias, lt: hoy } },
@@ -89,6 +94,10 @@ export class ObtenerResumenDashboardUseCase implements UseCase<
         desayunoHoy: porHorarioHoy(HorarioComida.DESAYUNO),
         comidaHoy: porHorarioHoy(HorarioComida.COMIDA),
         cenaHoy: porHorarioHoy(HorarioComida.CENA),
+        primeraVezHoy: turnosHoy.reduce(
+          (total, t) => total + t._count.asistenciasPrimeraVez,
+          0,
+        ),
       },
       donativosDelMes: {
         totalLotes: lotesDonadosDelMes.length,

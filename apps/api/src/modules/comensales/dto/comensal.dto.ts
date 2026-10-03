@@ -1,10 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { HorarioComida, MetodoCaptura } from '@prisma/client';
+import { Genero, HorarioComida, MetodoCaptura } from '@prisma/client';
 import {
   IsBoolean,
   IsBooleanString,
   IsDate,
+  IsEnum,
   IsIn,
   IsInt,
   IsNotEmpty,
@@ -38,6 +39,16 @@ export class CrearComensalDto {
 
   @ApiProperty({
     required: false,
+    enum: Genero,
+    enumName: 'Genero',
+    default: Genero.SIN_ESPECIFICAR,
+  })
+  @IsOptional()
+  @IsEnum(Genero)
+  genero?: Genero;
+
+  @ApiProperty({
+    required: false,
     description:
       'Id del comensal tutor. Obligatorio si el comensal es menor de edad.',
   })
@@ -68,6 +79,16 @@ export class ActualizarComensalDto {
   @IsOptional()
   @IsString()
   curp?: string;
+
+  @ApiProperty({
+    required: false,
+    enum: Genero,
+    enumName: 'Genero',
+    default: Genero.SIN_ESPECIFICAR,
+  })
+  @IsOptional()
+  @IsEnum(Genero)
+  genero?: Genero;
 
   @ApiProperty({
     required: false,
@@ -121,12 +142,17 @@ export class ListarComensalesQueryDto extends PaginationQueryDto {
 
   @ApiProperty({
     required: false,
-    enum: ['ninos', 'adultos_mayores'],
-    description: 'Grupo etario: niños (menores de 18) o adultos mayores (60 o más)',
+    enum: ['ninos', 'adultos', 'adultos_mayores'],
+    description: 'Grupo etario: menores de 18, de 18 a 59, o 60 y más',
   })
   @IsOptional()
-  @IsIn(['ninos', 'adultos_mayores'])
+  @IsIn(['ninos', 'adultos', 'adultos_mayores'])
   grupoEdad?: GrupoEdad;
+
+  @ApiProperty({ required: false, enum: Genero, enumName: 'Genero' })
+  @IsOptional()
+  @IsEnum(Genero)
+  genero?: Genero;
 }
 
 export class FirmarCartaUsoImagenDto {
@@ -183,6 +209,8 @@ export class ComensalResponseDto {
   edad: number;
   @ApiProperty({ nullable: true })
   curp: string | null;
+  @ApiProperty({ enum: Genero, enumName: 'Genero' })
+  genero: Genero;
   @ApiProperty({ nullable: true })
   fotoPath: string | null;
   @ApiProperty({ type: ComensalTutorResumenDto, nullable: true })
