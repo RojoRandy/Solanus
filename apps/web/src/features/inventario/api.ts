@@ -66,7 +66,7 @@ const QK = {
     },
   ) => ['inventario', 'movimientos', params] as const,
   categorias: ['inventario', 'categorias'] as const,
-  clavesSat: ['inventario', 'claves-sat'] as const,
+  clavesSat: (buscar: string) => ['inventario', 'claves-sat', buscar] as const,
   unidades: ['inventario', 'unidades'] as const,
   motivos: ['inventario', 'motivos'] as const,
   stockBajo: ['inventario', 'stock-bajo'] as const,
@@ -271,10 +271,11 @@ export function useActualizarCfdiEntrada() {
 
 // ── Catálogos ──
 
-export function useClavesSat() {
+export function useClavesSat(buscar: string) {
   return useQuery({
-    queryKey: QK.clavesSat,
-    queryFn: () => api.get<ClaveSat[]>('/inventario/claves-sat'),
+    queryKey: QK.clavesSat(buscar),
+    queryFn: () => api.get<ClaveSat[]>(`/inventario/claves-sat${buscar ? `?buscar=${encodeURIComponent(buscar)}` : ''}`),
+    placeholderData: keepPreviousData,
     staleTime: Infinity,
   });
 }

@@ -1,5 +1,6 @@
-import { useId, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 import { Plus } from 'lucide-react';
+import { Autocomplete, AutocompleteInput, AutocompleteContent, AutocompleteList, AutocompleteItem } from '@/components/ui/autocomplete';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
@@ -33,8 +34,13 @@ export function ProductoFormFields({ value, onChange, errors }: ProductoFormFiel
   const id = useId();
   const { data: categorias } = useCategorias();
   const { data: unidades } = useUnidades();
-  const { data: clavesSat } = useClavesSat();
   const claveSat = value.claveSat ?? '';
+  const [buscarClaveSat, setBuscarClaveSat] = useState(claveSat);
+  useEffect(() => {
+    const timeout = setTimeout(() => setBuscarClaveSat(claveSat), 200);
+    return () => clearTimeout(timeout);
+  }, [claveSat]);
+  const { data: clavesSat } = useClavesSat(buscarClaveSat);
   const descripcionClaveSat = clavesSat?.find(({ clave }) => clave === claveSat)?.descripcion;
   const ayudaClaveSat = descripcionClaveSat ?? (
     /^\d{8}$/.test(claveSat)
@@ -59,12 +65,32 @@ export function ProductoFormFields({ value, onChange, errors }: ProductoFormFiel
       </div>
       <div className="flex flex-col gap-1.5">
         <Label htmlFor={`${id}-clave-sat`}>Clave SAT</Label>
-        <Input id={`${id}-clave-sat`} list={`${id}-claves-sat-opciones`} aria-describedby={`${id}-clave-sat-ayuda`} value={value.claveSat ?? ''} onChange={(event) => onChange({ ...value, claveSat: event.target.value })} placeholder="Opcional — 8 dígitos" />
-        <datalist id={`${id}-claves-sat-opciones`}>
-          {clavesSat?.map(({ clave, descripcion }) => (
-            <option key={clave} value={clave}>{clave} — {descripcion}</option>
-          ))}
-        </datalist>
+        <Autocomplete
+          items={clavesSat ?? []}
+          value={claveSat}
+          onValueChange={(claveSat) => onChange({ ...value, claveSat })}
+          itemToStringValue={(item) => item.clave}
+          filter={null}
+          mode="list"
+          openOnInputClick
+        >
+          <AutocompleteInput
+            id={`${id}-clave-sat`}
+            inputMode="text"
+            aria-describedby={`${id}-clave-sat-ayuda`}
+            aria-invalid={Boolean(errors?.claveSat)}
+            placeholder="Opcional — clave o nombre del producto"
+          />
+          <AutocompleteContent>
+            <AutocompleteList>
+              {(item: { clave: string; descripcion: string }) => (
+                <AutocompleteItem key={item.clave} value={item}>
+                  {item.clave} — {item.descripcion}
+                </AutocompleteItem>
+              )}
+            </AutocompleteList>
+          </AutocompleteContent>
+        </Autocomplete>
         <p id={`${id}-clave-sat-ayuda`} className="text-xs text-muted-foreground">{ayudaClaveSat}</p>
         {error('claveSat')}
       </div>
