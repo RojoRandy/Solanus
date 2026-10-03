@@ -29,6 +29,7 @@ export class CrearComensalUseCase implements UseCase<
         apellidos: dto.apellidos,
         fechaNacimiento: dto.fechaNacimiento,
         curp: dto.curp,
+        genero: dto.genero,
         tutorId: dto.tutorId ?? null,
       },
       select: comensalListSelect,

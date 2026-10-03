@@ -63,6 +63,23 @@ export function useEliminarAsistencia() {
   });
 }
 
+export function useRegistrarPrimeraVez() {
+  const invalidate = useInvalidateTurno();
+  return useMutation({
+    mutationFn: ({ turnoId, nombre }: { turnoId: number; nombre: string }) =>
+      api.post(`/asistencia/turnos/${turnoId}/primera-vez`, { nombre }),
+    onSuccess: invalidate,
+  });
+}
+
+export function useEliminarPrimeraVez() {
+  const invalidate = useInvalidateTurno();
+  return useMutation({
+    mutationFn: (id: number) => api.delete(`/asistencia/primera-vez/${id}`),
+    onSuccess: invalidate,
+  });
+}
+
 export function useAsignarVoluntario() {
   const invalidate = useInvalidateTurno();
   return useMutation({

@@ -12,6 +12,8 @@ const Exceptions = {
     new BadRequestException(Responses.ASISTENCIA_YA_REGISTRADA(data)),
   ASISTENCIA_NOT_FOUND: (data?: any) =>
     new NotFoundException(Responses.ASISTENCIA_NOT_FOUND(data)),
+  PRIMERA_VEZ_NOT_FOUND: (data?: any) =>
+    new NotFoundException(Responses.PRIMERA_VEZ_NOT_FOUND(data)),
   COMENSAL_INACTIVO: (data?: any) =>
     new BadRequestException(Responses.COMENSAL_INACTIVO(data)),
   VOLUNTARIO_INACTIVO: (data?: any) =>
@@ -41,6 +43,12 @@ const Responses = {
     new ErrorResponseDto(
       'ASISTENCIA_NOT_FOUND',
       'No se encontró el registro de asistencia',
+      data,
+    ),
+  PRIMERA_VEZ_NOT_FOUND: (data?: any) =>
+    new ErrorResponseDto(
+      'PRIMERA_VEZ_NOT_FOUND',
+      'No se encontró el registro de primera vez',
       data,
     ),
   COMENSAL_INACTIVO: (data?: any) =>

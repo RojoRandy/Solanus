@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { toast } from 'sonner';
-import { Search, UserRound } from 'lucide-react';
+import { Search, UserPlus, UserRound } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -8,7 +9,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { useComensales } from '@/features/comensales/api';
 import type { Comensal } from '@/features/comensales/types';
 import { ApiError } from '@/lib/api-client';
-import { useRegistrarAsistencia } from '../api';
+import { useRegistrarAsistencia, useRegistrarPrimeraVez } from '../api';
 import { resolverFoto, useDebouncedValue } from '../utils';
 import type { Turno } from '../types';
 
@@ -31,6 +32,7 @@ export function CapturaFolio({ turno }: { turno: Turno }) {
 
   const { data } = useComensales({ busqueda, activo: 'true', limit: 8 });
   const registrar = useRegistrarAsistencia();
+  const registrarPrimeraVez = useRegistrarPrimeraVez();
 
   const yaRegistradosIds = React.useMemo(
     () => new Set(turno.asistencias.map((a) => a.comensal.id)),
@@ -49,6 +51,22 @@ export function CapturaFolio({ turno }: { turno: Turno }) {
         },
         onError: (error) => {
           toast.error(error instanceof ApiError ? error.message : 'No se pudo registrar la asistencia.');
+        },
+      },
+    );
+  }
+
+  function confirmarPrimeraVez(nombre: string) {
+    registrarPrimeraVez.mutate(
+      { turnoId: turno.id, nombre },
+      {
+        onSuccess: () => {
+          toast.success(`${nombre} registrado como primera vez.`);
+          setTexto('');
+          inputRef.current?.focus();
+        },
+        onError: (error) => {
+          toast.error(error instanceof ApiError ? error.message : 'No se pudo registrar.');
         },
       },
     );
@@ -128,7 +146,21 @@ export function CapturaFolio({ turno }: { turno: Turno }) {
         )}
 
         {texto.trim() && sugerencias.length === 0 && (
-          <p className="px-1 text-sm text-muted-foreground">Sin coincidencias.</p>
+          <div className="flex flex-wrap items-center justify-between gap-2 px-1">
+            <p className="text-sm text-muted-foreground">Sin coincidencias.</p>
+            {!/^\d+$/.test(texto.trim()) && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={registrarPrimeraVez.isPending}
+                onClick={() => confirmarPrimeraVez(texto.trim())}
+              >
+                <UserPlus data-icon="inline-start" />
+                Registrar «{texto.trim()}» como primera vez
+              </Button>
+            )}
+          </div>
         )}
 
         {ultimoRegistrado && (

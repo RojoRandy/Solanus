@@ -81,9 +81,10 @@ export function AsistenciaPage() {
                 return (
                   <TabsTrigger key={h.value} value={h.value} className="gap-2">
                     {h.label}
-                    {resumen && resumen.totalAsistencias > 0 && (
+                    {resumen && resumen.totalAsistencias + resumen.totalPrimeraVez > 0 && (
                       <Badge variant="secondary" className="ml-1">
                         {resumen.totalAsistencias}
+                        {resumen.totalPrimeraVez > 0 && ` +${resumen.totalPrimeraVez} 1ª vez`}
                       </Badge>
                     )}
                   </TabsTrigger>

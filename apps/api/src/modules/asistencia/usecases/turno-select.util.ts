@@ -24,6 +24,10 @@ export const turnoDetalleSelect = {
     },
     orderBy: { createdAt: 'desc' as const },
   },
+  asistenciasPrimeraVez: {
+    select: { id: true, nombre: true, createdAt: true },
+    orderBy: { createdAt: 'desc' as const },
+  },
   voluntarios: {
     select: {
       id: true,
@@ -52,6 +56,8 @@ export function mapTurnoDetalle(turno: TurnoConDetalle): TurnoResponseDto {
       createdAt: a.createdAt,
       comensal: a.comensal,
     })),
+    totalPrimeraVez: turno.asistenciasPrimeraVez.length,
+    primeraVez: turno.asistenciasPrimeraVez,
     voluntarios: turno.voluntarios.map((v) => ({
       id: v.id,
       voluntario: v.voluntario,
@@ -63,7 +69,7 @@ export const turnoResumenSelect = {
   id: true,
   fecha: true,
   horario: true,
-  _count: { select: { asistencias: true } },
+  _count: { select: { asistencias: true, asistenciasPrimeraVez: true } },
 } satisfies Prisma.TurnoComidaSelect;
 
 export type TurnoConResumen = Prisma.TurnoComidaGetPayload<{
@@ -78,5 +84,6 @@ export function mapTurnoResumen(
     fecha: turno.fecha,
     horario: turno.horario,
     totalAsistencias: turno._count.asistencias,
+    totalPrimeraVez: turno._count.asistenciasPrimeraVez,
   };
 }

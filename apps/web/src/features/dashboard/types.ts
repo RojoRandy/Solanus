@@ -12,6 +12,7 @@ export interface ResumenDashboard {
     desayunoHoy: number;
     comidaHoy: number;
     cenaHoy: number;
+    primeraVezHoy: number;
   };
   donativosDelMes: {
     totalLotes: number;

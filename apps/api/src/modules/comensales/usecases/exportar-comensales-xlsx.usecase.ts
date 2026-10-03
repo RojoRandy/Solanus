@@ -5,7 +5,7 @@ import { PrismaService } from '@/prisma/prisma.service';
 import { ComensalErrors } from '@/common/errors/comensal.errors';
 import { now } from '@/common/utils/date';
 import { ListarComensalesQueryDto } from '../dto/comensal.dto';
-import { comensalListSelect, mapComensalResponse } from '../utils/comensal-select.util';
+import { comensalListSelect, ETIQUETA_GENERO, mapComensalResponse } from '../utils/comensal-select.util';
 import {
   construirOrderByComensales,
   construirWhereComensales,
@@ -51,6 +51,7 @@ export class ExportarComensalesXlsxUseCase implements UseCase<
       { header: 'Apellidos', key: 'apellidos', width: 26 },
       { header: 'Fecha de nacimiento', key: 'fechaNacimiento', width: 20, style: { numFmt: 'dd/mm/yyyy' } },
       { header: 'Edad', key: 'edad', width: 8 },
+      { header: 'Género', key: 'genero', width: 16 },
       { header: 'CURP', key: 'curp', width: 22 },
       { header: 'Tutor', key: 'tutor', width: 30 },
       { header: 'Estado', key: 'estado', width: 12 },
@@ -62,7 +63,7 @@ export class ExportarComensalesXlsxUseCase implements UseCase<
     encabezado.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLOR_VINO_ARGB } };
     encabezado.alignment = { vertical: 'middle' };
     hoja.views = [{ state: 'frozen', ySplit: 1 }];
-    hoja.autoFilter = { from: 'A1', to: 'I1' };
+    hoja.autoFilter = { from: 'A1', to: 'J1' };
 
     for (const c of comensales) {
       hoja.addRow({
@@ -71,6 +72,7 @@ export class ExportarComensalesXlsxUseCase implements UseCase<
         apellidos: c.apellidos,
         fechaNacimiento: c.fechaNacimiento,
         edad: c.edad,
+        genero: ETIQUETA_GENERO[c.genero],
         curp: c.curp ?? '',
         tutor: c.tutor ? `${c.tutor.nombres} ${c.tutor.apellidos} (folio ${c.tutor.folio})` : '',
         estado: c.activo ? 'Activo' : 'Inactivo',

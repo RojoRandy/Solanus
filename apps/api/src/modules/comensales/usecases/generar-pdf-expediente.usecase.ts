@@ -8,13 +8,13 @@ import { UseCase } from '@/common/interfaces/use-case.interface';
 import { PrismaService } from '@/prisma/prisma.service';
 import { PdfService } from '@/common/pdf/pdf.service';
 import { ComensalErrors } from '@/common/errors/comensal.errors';
-import { now } from '@/common/utils/date';
+import { formatFechaSoloDia, now } from '@/common/utils/date';
 import {
   IStorageService,
   STORAGE_SERVICE,
 } from '@/common/storage/storage.service.interface';
 import { calcularEdad, esMayorDeEdad } from '../utils/edad.util';
-import { comensalDetalleSelect } from '../utils/comensal-select.util';
+import { comensalDetalleSelect, ETIQUETA_GENERO } from '../utils/comensal-select.util';
 
 export interface ExpedienteComensalPdf {
   buffer: Buffer;
@@ -150,7 +150,7 @@ export class GenerarPdfExpedienteUseCase implements UseCase<
     const nombreCompleto = `${comensal.nombres} ${comensal.apellidos}`;
     const edad = calcularEdad(comensal.fechaNacimiento);
     const esMenor = !esMayorDeEdad(comensal.fechaNacimiento);
-    const fechaNacimientoTexto = dayjs(comensal.fechaNacimiento).format('DD/MM/YYYY');
+    const fechaNacimientoTexto = formatFechaSoloDia(comensal.fechaNacimiento);
     const fechaGeneracionTexto = now().format('DD/MM/YYYY HH:mm');
 
     const autoriza = comensal.cartaUsoImagen?.autoriza ?? false;
@@ -250,6 +250,7 @@ export class GenerarPdfExpedienteUseCase implements UseCase<
     <div class="dato"><div class="etiqueta">Nombre completo</div><div class="valor">${nombreCompleto}</div></div>
     <div class="dato"><div class="etiqueta">Fecha de nacimiento</div><div class="valor">${fechaNacimientoTexto}</div></div>
     <div class="dato"><div class="etiqueta">Edad</div><div class="valor">${edad} años</div></div>
+    <div class="dato"><div class="etiqueta">Género</div><div class="valor">${ETIQUETA_GENERO[comensal.genero]}</div></div>
     ${comensal.curp ? `<div class="dato"><div class="etiqueta">CURP</div><div class="valor">${comensal.curp}</div></div>` : ''}
   </div>
 

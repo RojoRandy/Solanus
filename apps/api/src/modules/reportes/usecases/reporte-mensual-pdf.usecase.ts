@@ -1,13 +1,13 @@
 import { existsSync, promises as fs } from 'fs';
 import * as path from 'path';
 import { Inject, Injectable } from '@nestjs/common';
-import { MetodoPagoDonativo, TipoMovimiento } from '@prisma/client';
+import { HorarioComida, MetodoPagoDonativo, TipoMovimiento } from '@prisma/client';
 import dayjs from 'dayjs';
 import { UseCase } from '@/common/interfaces/use-case.interface';
 import { PrismaService } from '@/prisma/prisma.service';
 import { PdfService } from '@/common/pdf/pdf.service';
 import { escapar } from '@/common/pdf/html.util';
-import { now } from '@/common/utils/date';
+import { formatFechaSoloDia, now } from '@/common/utils/date';
 import { resolverPeriodoMensual } from '@/common/utils/periodo.util';
 import { ReportesErrors } from '@/common/errors/reportes.errors';
 import {
@@ -44,6 +44,12 @@ const ETIQUETA_TIPO_MOVIMIENTO: Record<TipoMovimiento, string> = {
   ENTRADA: 'Entrada',
   SALIDA: 'Salida',
   AJUSTE: 'Ajuste',
+};
+
+const ETIQUETA_HORARIO: Record<HorarioComida, string> = {
+  DESAYUNO: 'Desayuno',
+  COMIDA: 'Comida',
+  CENA: 'Cena',
 };
 
 const ETIQUETA_METODO_PAGO: Record<MetodoPagoDonativo, string> = {
@@ -255,6 +261,7 @@ export class ReporteMensualPdfUseCase implements UseCase<
   .pagina-fotos:last-child { break-after: auto; }
   .pagina-fotos figure { margin: 0; break-inside: avoid; height: 82mm; }
   .pagina-fotos img { width: 100%; height: 100%; object-fit: contain; border-radius: 4px; }
+  .subtitulo { color: ${COLOR_VINO}; font-size: 12px; margin: 16px 0 6px; }
   .vacio { color: #999; font-size: 11px; padding: 12px 0; }
 </style>
 </head>
@@ -266,8 +273,10 @@ export class ReporteMensualPdfUseCase implements UseCase<
       <div class="kpi"><div class="valor">${asistencia.desayuno}</div><div class="etiqueta">Desayuno</div></div>
       <div class="kpi"><div class="valor">${asistencia.comida}</div><div class="etiqueta">Comida</div></div>
       <div class="kpi"><div class="valor">${asistencia.cena}</div><div class="etiqueta">Cena</div></div>
+      <div class="kpi"><div class="valor">${asistencia.totalPrimeraVez}</div><div class="etiqueta">Primera vez</div></div>
     </div>
     ${this.tablaAsistencia(asistencia)}
+    ${this.tablaPrimeraVez(asistencia)}
   </section>
 
   <section>
@@ -289,7 +298,8 @@ export class ReporteMensualPdfUseCase implements UseCase<
   }
 
   private tablaAsistencia(asistencia: Awaited<ReturnType<ReporteAsistenciaUseCase['execute']>>): string {
-    if (asistencia.comensales.length === 0) return '<p class="vacio">Sin asistencias registradas este mes.</p>';
+    if (asistencia.comensales.length === 0 && asistencia.totalPrimeraVez === 0)
+      return '<p class="vacio">Sin asistencias registradas este mes.</p>';
 
     const dias = Array.from({ length: asistencia.diasDelMes }, (_, i) => i + 1);
     const encabezadoDias = dias.map((d) => `<th>${d}</th>`).join('');
@@ -302,10 +312,35 @@ export class ReporteMensualPdfUseCase implements UseCase<
       })
       .join('');
     const totales = asistencia.totalesPorDia.map((t) => `<td>${t > 0 ? t : ''}</td>`).join('');
+    const primeraVez = asistencia.primeraVezPorDia.map((t) => `<td>${t > 0 ? t : ''}</td>`).join('');
 
     return `<table class="matriz">
       <thead><tr><th>Comensal</th>${encabezadoDias}<th>Total</th></tr></thead>
-      <tbody>${filas}<tr><td><strong>Total</strong></td>${totales}<td></td></tr></tbody>
+      <tbody>
+        ${filas}
+        <tr><td><strong>Total comensales</strong></td>${totales}<td>${asistencia.totalAsistencias}</td></tr>
+        <tr><td><strong>Primera vez</strong></td>${primeraVez}<td>${asistencia.totalPrimeraVez}</td></tr>
+      </tbody>
+    </table>`;
+  }
+
+  private tablaPrimeraVez(asistencia: Awaited<ReturnType<ReporteAsistenciaUseCase['execute']>>): string {
+    if (asistencia.primeraVez.length === 0) return '<p class="vacio">Sin asistentes de primera vez este mes.</p>';
+
+    const filas = asistencia.primeraVez
+      .map(
+        (r) => `<tr>
+          <td>${formatFechaSoloDia(r.fecha)}</td>
+          <td>${ETIQUETA_HORARIO[r.horario]}</td>
+          <td>${escapar(r.nombre)}</td>
+        </tr>`,
+      )
+      .join('');
+
+    return `<h2 class="subtitulo">Primera vez</h2>
+    <table>
+      <thead><tr><th>Fecha</th><th>Turno</th><th>Nombre</th></tr></thead>
+      <tbody>${filas}</tbody>
     </table>`;
   }
 

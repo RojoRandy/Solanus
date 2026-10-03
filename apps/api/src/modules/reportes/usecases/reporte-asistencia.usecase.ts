@@ -26,19 +26,28 @@ export class ReporteAsistenciaUseCase implements UseCase<
   async execute({ anio, mes }: ReporteAsistenciaArgs): Promise<ReporteAsistenciaResponseDto> {
     const periodo = resolverPeriodoMensual(anio, mes);
 
-    const asistencias = await this.prisma.asistencia.findMany({
-      where: { turno: { fecha: { gte: periodo.desde, lt: periodo.hasta } } },
-      orderBy: [
-        { comensal: { apellidos: 'asc' } },
-        { comensal: { nombres: 'asc' } },
-        { comensalId: 'asc' },
-      ],
-      select: {
-        comensalId: true,
-        comensal: { select: { folio: true, nombres: true, apellidos: true } },
-        turno: { select: { fecha: true, horario: true } },
-      },
-    });
+    const enPeriodo = { turno: { fecha: { gte: periodo.desde, lt: periodo.hasta } } };
+
+    const [asistencias, registrosPrimeraVez] = await Promise.all([
+      this.prisma.asistencia.findMany({
+        where: enPeriodo,
+        orderBy: [
+          { comensal: { apellidos: 'asc' } },
+          { comensal: { nombres: 'asc' } },
+          { comensalId: 'asc' },
+        ],
+        select: {
+          comensalId: true,
+          comensal: { select: { folio: true, nombres: true, apellidos: true } },
+          turno: { select: { fecha: true, horario: true } },
+        },
+      }),
+      this.prisma.asistenciaPrimeraVez.findMany({
+        where: enPeriodo,
+        orderBy: [{ turno: { fecha: 'asc' } }, { turno: { horario: 'asc' } }, { createdAt: 'asc' }],
+        select: { nombre: true, turno: { select: { fecha: true, horario: true } } },
+      }),
+    ]);
 
     const filasPorComensal = new Map<number, FilaAcumulada>();
     const totalesPorDia = new Array<number>(periodo.diasDelMes).fill(0);
@@ -71,6 +80,12 @@ export class ReporteAsistenciaUseCase implements UseCase<
       else cena += 1;
     }
 
+    // Los de primera vez no son comensales: se cuentan aparte y no tocan los totales de arriba.
+    const primeraVezPorDia = new Array<number>(periodo.diasDelMes).fill(0);
+    for (const registro of registrosPrimeraVez) {
+      primeraVezPorDia[registro.turno.fecha.getUTCDate() - 1] += 1;
+    }
+
     // El `orderBy` por relación ya dejó el Map ordenado por inserción — sin sort adicional.
     const comensales = Array.from(filasPorComensal.values()).map((fila) => ({
       folio: fila.folio,
@@ -89,6 +104,13 @@ export class ReporteAsistenciaUseCase implements UseCase<
       desayuno,
       comida,
       cena,
+      primeraVez: registrosPrimeraVez.map((r) => ({
+        fecha: r.turno.fecha,
+        horario: r.turno.horario,
+        nombre: r.nombre,
+      })),
+      primeraVezPorDia,
+      totalPrimeraVez: registrosPrimeraVez.length,
     };
   }
 }

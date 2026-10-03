@@ -1,5 +1,12 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEnum, IsInt, IsOptional } from 'class-validator';
+import {
+  IsEnum,
+  IsInt,
+  IsOptional,
+  IsString,
+  Matches,
+  MaxLength,
+} from 'class-validator';
 import { MetodoCaptura } from '@prisma/client';
 
 export class RegistrarAsistenciaDto {
@@ -15,6 +22,14 @@ export class RegistrarAsistenciaDto {
   @IsOptional()
   @IsEnum(MetodoCaptura)
   metodoCaptura?: MetodoCaptura;
+}
+
+export class RegistrarPrimeraVezDto {
+  @ApiProperty({ example: 'Juan Pérez', maxLength: 120 })
+  @IsString()
+  @Matches(/\S/, { message: 'El nombre es obligatorio' })
+  @MaxLength(120)
+  nombre: string;
 }
 
 export class AsignarVoluntarioDto {

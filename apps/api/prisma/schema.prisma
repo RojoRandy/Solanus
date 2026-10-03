@@ -32,12 +32,19 @@ model Usuario {
 
   turnosRegistrados          TurnoComida[]          @relation("TurnoRegistradoPor")
   asistenciasRegistradas     Asistencia[]           @relation("AsistenciaRegistradaPor")
+  primeraVezRegistradas      AsistenciaPrimeraVez[] @relation("PrimeraVezRegistradaPor")
   movimientosRegistrados     MovimientoInventario[] @relation("MovimientoRegistradoPor")
   movimientosEditados        MovimientoInventario[] @relation("MovimientoEditadoPor")
   donativosDineroRegistrados DonativoDinero[]       @relation("DonativoDineroRegistradoPor")
   evidenciasSubidas          EvidenciaMensual[]     @relation("EvidenciaSubidaPor")
 
   @@map("usuarios")
+}
+
+enum Genero {
+  HOMBRE
+  MUJER
+  SIN_ESPECIFICAR
 }
 
 model Comensal {
@@ -47,6 +54,7 @@ model Comensal {
   apellidos       String
   fechaNacimiento DateTime   @db.Date
   curp            String?
+  genero          Genero     @default(SIN_ESPECIFICAR)
   ineFrontPath    String?
   ineBackPath     String?
   fotoPath        String?
@@ -190,10 +198,11 @@ model TurnoComida {
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
 
-  asistencias     Asistencia[]
-  voluntarios     TurnoVoluntario[]
-  movimientos     MovimientoInventario[]
-  donativosDinero DonativoDinero[]
+  asistencias           Asistencia[]
+  asistenciasPrimeraVez AsistenciaPrimeraVez[]
+  voluntarios           TurnoVoluntario[]
+  movimientos           MovimientoInventario[]
+  donativosDinero       DonativoDinero[]
 
   @@unique([fecha, horario])
   @@map("turnos_comida")
@@ -231,6 +240,19 @@ model Asistencia {
 
   @@unique([comensalId, turnoId])
   @@map("asistencias")
+}
+
+model AsistenciaPrimeraVez {
+  id              Int         @id @default(autoincrement())
+  nombre          String
+  turnoId         Int
+  turno           TurnoComida @relation(fields: [turnoId], references: [id])
+  registradoPorId Int
+  registradoPor   Usuario     @relation("PrimeraVezRegistradaPor", fields: [registradoPorId], references: [id])
+  createdAt       DateTime    @default(now())
+
+  @@index([turnoId])
+  @@map("asistencias_primera_vez")
 }
 
 // ─────────────────────────────────────────────────────────────

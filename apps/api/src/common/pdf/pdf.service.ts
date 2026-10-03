@@ -11,12 +11,29 @@ import puppeteer, { Browser } from 'puppeteer';
 export class PdfService implements OnModuleDestroy {
   private browserPromise: Promise<Browser> | null = null;
 
+  /**
+   * Si Chromium muere (crash, OOM, suspensión del equipo) o falla al arrancar,
+   * se olvida la instancia para relanzarla en el siguiente PDF; si no, todos
+   * los PDF fallarían con 500 hasta reiniciar la API.
+   */
   private getBrowser(): Promise<Browser> {
     if (this.browserPromise === null) {
-      this.browserPromise = puppeteer.launch({
-        headless: true,
-        args: ['--no-sandbox', '--disable-dev-shm-usage'],
-      });
+      const lanzamiento = puppeteer
+        .launch({
+          headless: true,
+          args: ['--no-sandbox', '--disable-dev-shm-usage'],
+        })
+        .then((browser) => {
+          browser.on('disconnected', () => {
+            if (this.browserPromise === lanzamiento) this.browserPromise = null;
+          });
+          return browser;
+        })
+        .catch((error: unknown) => {
+          if (this.browserPromise === lanzamiento) this.browserPromise = null;
+          throw error;
+        });
+      this.browserPromise = lanzamiento;
     }
     return this.browserPromise;
   }
