@@ -5,13 +5,14 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useCategorias, useUnidades } from '../api';
+import { useCategorias, useClavesSat, useUnidades } from '../api';
 import { ETIQUETA_ESTADO, type EstadoProducto } from '../types';
 import { NuevaCategoriaDialog } from './NuevaCategoriaDialog';
 import { NuevaUnidadDialog } from './NuevaUnidadDialog';
 
 export interface ProductoFormFieldsValue {
   nombre: string;
+  claveSat?: string;
   categoriaId?: number;
   unidadId?: number;
   estado: EstadoProducto;
@@ -32,6 +33,14 @@ export function ProductoFormFields({ value, onChange, errors }: ProductoFormFiel
   const id = useId();
   const { data: categorias } = useCategorias();
   const { data: unidades } = useUnidades();
+  const { data: clavesSat } = useClavesSat();
+  const claveSat = value.claveSat ?? '';
+  const descripcionClaveSat = clavesSat?.find(({ clave }) => clave === claveSat)?.descripcion;
+  const ayudaClaveSat = descripcionClaveSat ?? (
+    /^\d{8}$/.test(claveSat)
+      ? 'Clave fuera de la lista sugerida (se guardará tal cual)'
+      : 'Escribe la clave o el nombre del producto para ver sugerencias'
+  );
   const [nuevaCategoriaAbierta, setNuevaCategoriaAbierta] = useState(false);
   const [nuevaUnidadAbierta, setNuevaUnidadAbierta] = useState(false);
   const indicarContenido = unidades?.find((unidad) => unidad.id === value.unidadId)?.indicarContenido;
@@ -47,6 +56,17 @@ export function ProductoFormFields({ value, onChange, errors }: ProductoFormFiel
         <Label htmlFor={`${id}-nombre`}>Nombre</Label>
         <Input id={`${id}-nombre`} value={value.nombre} onChange={(event) => onChange({ ...value, nombre: event.target.value })} placeholder="Frijol" />
         {error('nombre')}
+      </div>
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor={`${id}-clave-sat`}>Clave SAT</Label>
+        <Input id={`${id}-clave-sat`} list={`${id}-claves-sat-opciones`} aria-describedby={`${id}-clave-sat-ayuda`} value={value.claveSat ?? ''} onChange={(event) => onChange({ ...value, claveSat: event.target.value })} placeholder="Opcional — 8 dígitos" />
+        <datalist id={`${id}-claves-sat-opciones`}>
+          {clavesSat?.map(({ clave, descripcion }) => (
+            <option key={clave} value={clave}>{clave} — {descripcion}</option>
+          ))}
+        </datalist>
+        <p id={`${id}-clave-sat-ayuda`} className="text-xs text-muted-foreground">{ayudaClaveSat}</p>
+        {error('claveSat')}
       </div>
       <div className="flex flex-col gap-1.5">
         <Label htmlFor={`${id}-categoria`}>Categoría</Label>

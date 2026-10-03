@@ -1,7 +1,13 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsDateString, IsEnum, IsInt, IsOptional, IsString } from 'class-validator';
+import {
+  IsDateString,
+  IsEnum,
+  IsInt,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 import { Type } from 'class-transformer';
-import { EstadoProducto, TipoMovimiento } from '@prisma/client';
+import { EstadoProducto, OrigenLote, TipoMovimiento } from '@prisma/client';
 import { PaginationQueryDto } from '@/common/dto/pagination.dto';
 
 export class ListarMovimientosQueryDto extends PaginationQueryDto {
@@ -22,6 +28,12 @@ export class ListarMovimientosQueryDto extends PaginationQueryDto {
   @Type(() => Number)
   @IsInt()
   categoriaId?: number;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  bienhechorId?: number;
 
   @ApiProperty({
     required: false,
@@ -109,6 +121,28 @@ class MovimientoUsuarioRefDto {
   nombre: string;
 }
 
+class MovimientoBienhechorRefDto {
+  @ApiProperty()
+  id: number;
+  @ApiProperty()
+  nombre: string;
+}
+
+export class MovimientoLoteRefDto {
+  @ApiProperty()
+  numero: number;
+  @ApiProperty({ type: Number, nullable: true })
+  costoUnitario: number | null;
+  @ApiProperty({ type: Number, nullable: true })
+  costoTotal: number | null;
+  @ApiProperty({ enum: OrigenLote, enumName: 'OrigenLote' })
+  origen: OrigenLote;
+  @ApiProperty({ type: MovimientoBienhechorRefDto, nullable: true })
+  bienhechor: MovimientoBienhechorRefDto | null;
+  @ApiProperty({ type: String, nullable: true })
+  cfdi: string | null;
+}
+
 export class MovimientoResponseDto {
   @ApiProperty()
   id: number;
@@ -118,6 +152,9 @@ export class MovimientoResponseDto {
   variante: MovimientoVarianteRefDto;
   @ApiProperty({ required: false, nullable: true })
   loteId: number | null;
+  @ApiProperty({ type: MovimientoLoteRefDto, nullable: true })
+  // El listado siempre lo incluye; la actualización comparte este DTO y lo omite.
+  lote?: MovimientoLoteRefDto | null;
   @ApiProperty({ enum: TipoMovimiento, enumName: 'TipoMovimiento' })
   tipo: TipoMovimiento;
   @ApiProperty({ type: MovimientoMotivoRefDto })

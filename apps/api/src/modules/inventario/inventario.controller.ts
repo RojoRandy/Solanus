@@ -1,3 +1,4 @@
+import { ListarClavesSatUseCase } from './usecases/listar-claves-sat.usecase';
 import {
   Body,
   Controller,
@@ -19,6 +20,8 @@ import {
   ApiOkSchemaResponse,
 } from '@/common/dto/response.dto';
 import {
+  ClaveSatResponseDto,
+  ListarClavesSatQueryDto,
   ActualizarProductoDto,
   CrearProductoDto,
   ListarProductosQueryDto,
@@ -29,11 +32,10 @@ import {
   ListarVariantesQueryDto,
   VarianteResponseDto,
 } from './dto/variante.dto';
-import { RegistrarEntradaDto, LoteResponseDto } from './dto/entrada.dto';
+import { ActualizarCfdiEntradaDto, EntradaCfdiResponseDto, RegistrarEntradaDto, RegistrarEntradaResponseDto } from './dto/entrada.dto';
 import { LoteVivoResponseDto } from './dto/lote.dto';
 import { RegistrarSalidaDto } from './dto/salida.dto';
 import { RegistrarAjusteDto } from './dto/ajuste.dto';
-import { RegistrarDonativoDto, RegistrarDonativoResponseDto } from './dto/donativo.dto';
 import {
   ActualizarMovimientoDto,
   ListarMovimientosQueryDto,
@@ -62,8 +64,8 @@ import { EliminarProductoUseCase } from './usecases/eliminar-producto.usecase';
 import { ListarVariantesUseCase } from './usecases/listar-variantes.usecase';
 import { ObtenerVarianteUseCase } from './usecases/obtener-variante.usecase';
 import { ActualizarVarianteUseCase } from './usecases/actualizar-variante.usecase';
+import { ActualizarCfdiEntradaUseCase } from './usecases/actualizar-cfdi-entrada.usecase';
 import { RegistrarEntradaUseCase } from './usecases/registrar-entrada.usecase';
-import { RegistrarDonativoUseCase } from './usecases/registrar-donativo.usecase';
 import { RegistrarSalidaInventarioUseCase } from './usecases/registrar-salida.usecase';
 import { RegistrarAjusteUseCase } from './usecases/registrar-ajuste.usecase';
 import { ListarMovimientosUseCase } from './usecases/listar-movimientos.usecase';
@@ -91,6 +93,7 @@ import {
 @Auth(UserRoles.ADMINISTRADOR, UserRoles.USUARIO)
 export class InventarioController {
   constructor(
+    @Inject(ListarClavesSatUseCase) private readonly listarClavesSat: ListarClavesSatUseCase,
     @Inject(CrearProductoUseCase) private readonly crearProducto: CrearProductoUseCase,
     @Inject(ListarProductosUseCase) private readonly listarProductos: ListarProductosUseCase,
     @Inject(ObtenerProductoUseCase) private readonly obtenerProducto: ObtenerProductoUseCase,
@@ -99,8 +102,8 @@ export class InventarioController {
     @Inject(ListarVariantesUseCase) private readonly listarVariantes: ListarVariantesUseCase,
     @Inject(ObtenerVarianteUseCase) private readonly obtenerVariante: ObtenerVarianteUseCase,
     @Inject(ActualizarVarianteUseCase) private readonly actualizarVariante: ActualizarVarianteUseCase,
+    @Inject(ActualizarCfdiEntradaUseCase) private readonly actualizarCfdiEntrada: ActualizarCfdiEntradaUseCase,
     @Inject(RegistrarEntradaUseCase) private readonly registrarEntrada: RegistrarEntradaUseCase,
-    @Inject(RegistrarDonativoUseCase) private readonly registrarDonativo: RegistrarDonativoUseCase,
     @Inject(RegistrarSalidaInventarioUseCase) private readonly registrarSalida: RegistrarSalidaInventarioUseCase,
     @Inject(RegistrarAjusteUseCase) private readonly registrarAjuste: RegistrarAjusteUseCase,
     @Inject(ListarMovimientosUseCase) private readonly listarMovimientos: ListarMovimientosUseCase,
@@ -121,6 +124,12 @@ export class InventarioController {
   ) {}
 
   // ── Catálogos (Configuración) ──
+
+  @Get('claves-sat')
+  @ApiOkSchemaArrayResponse(ClaveSatResponseDto)
+  findClavesSat(@Query() query: ListarClavesSatQueryDto) {
+    return this.listarClavesSat.execute(query);
+  }
 
   @Get('categorias')
   @ApiOkSchemaArrayResponse(CategoriaInventarioResponseDto)
@@ -226,10 +235,10 @@ export class InventarioController {
     return this.registrarAjuste.execute({ dto, registradoPorId });
   }
 
-  // ── Lotes (entradas y donativos) ──
+  // ── Entradas multiproducto ──
 
   @Post('entradas')
-  @ApiOkSchemaResponse(LoteResponseDto)
+  @ApiOkSchemaResponse(RegistrarEntradaResponseDto)
   crearEntrada(
     @Body() dto: RegistrarEntradaDto,
     @AuthUser('id') registradoPorId: number,
@@ -237,13 +246,13 @@ export class InventarioController {
     return this.registrarEntrada.execute({ dto, registradoPorId });
   }
 
-  @Post('donativos')
-  @ApiOkSchemaResponse(RegistrarDonativoResponseDto)
-  crearDonativo(
-    @Body() dto: RegistrarDonativoDto,
-    @AuthUser('id') registradoPorId: number,
+  @Patch('entradas/:id/cfdi')
+  @ApiOkSchemaResponse(EntradaCfdiResponseDto)
+  actualizarCfdiEntradaInventario(
+    @Param() { id }: IdParamDto,
+    @Body() dto: ActualizarCfdiEntradaDto,
   ) {
-    return this.registrarDonativo.execute({ dto, registradoPorId });
+    return this.actualizarCfdiEntrada.execute({ id: Number(id), dto });
   }
 
   // ── Variantes (existencias por producto × unidad × estado) ──

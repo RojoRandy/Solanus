@@ -2,7 +2,11 @@ import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { UseCase } from '@/common/interfaces/use-case.interface';
 import { PrismaService } from '@/prisma/prisma.service';
-import { PaginatedDto, paginado, toSkipTake } from '@/common/dto/pagination.dto';
+import {
+  PaginatedDto,
+  paginado,
+  toSkipTake,
+} from '@/common/dto/pagination.dto';
 import {
   ListarMovimientosQueryDto,
   MovimientoResponseDto,
@@ -29,9 +33,14 @@ export class ListarMovimientosUseCase implements UseCase<
       varianteId: query.varianteId,
       turnoId: query.turnoId,
       tipo: query.tipo,
+      ...(query.bienhechorId !== undefined
+        ? { lote: { bienhechorId: query.bienhechorId } }
+        : {}),
       variante: {
         productoId: query.productoId,
-        ...(query.categoriaId ? { producto: { categoriaId: query.categoriaId } } : {}),
+        ...(query.categoriaId
+          ? { producto: { categoriaId: query.categoriaId } }
+          : {}),
       },
       fecha: {
         gte: query.desde ? new Date(`${query.desde}T00:00:00.000Z`) : undefined,
@@ -52,6 +61,15 @@ export class ListarMovimientosUseCase implements UseCase<
         select: {
           id: true,
           loteId: true,
+          lote: {
+            select: {
+              entradaId: true,
+              costoUnitario: true,
+              origen: true,
+              bienhechor: { select: { id: true, nombre: true } },
+              entrada: { select: { cfdi: true } },
+            },
+          },
           tipo: true,
           cantidad: true,
           turnoId: true,
@@ -82,6 +100,25 @@ export class ListarMovimientosUseCase implements UseCase<
         unidad: movimiento.variante.unidad,
       },
       loteId: movimiento.loteId,
+      lote: movimiento.lote
+        ? {
+            numero: movimiento.lote.entradaId,
+            costoUnitario:
+              movimiento.lote.costoUnitario !== null
+                ? Number(movimiento.lote.costoUnitario)
+                : null,
+            costoTotal:
+              movimiento.lote.costoUnitario !== null
+                ? new Prisma.Decimal(movimiento.lote.costoUnitario)
+                    .mul(Math.abs(Number(movimiento.cantidad)))
+                    .toDecimalPlaces(2)
+                    .toNumber()
+                : null,
+            origen: movimiento.lote.origen,
+            bienhechor: movimiento.lote.bienhechor,
+            cfdi: movimiento.lote.entrada.cfdi,
+          }
+        : null,
       tipo: movimiento.tipo,
       motivo: movimiento.motivo,
       cantidad: Number(movimiento.cantidad),

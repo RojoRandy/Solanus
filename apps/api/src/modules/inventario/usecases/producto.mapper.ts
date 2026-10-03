@@ -4,6 +4,7 @@ import { ProductoResponseDto } from '../dto/producto.dto';
 /** Select reutilizado por los casos de uso de Producto (sin stock: eso vive en la variante). */
 export const PRODUCTO_SELECT = {
   id: true,
+  claveSat: true,
   nombre: true,
   activo: true,
   createdAt: true,
@@ -25,6 +26,7 @@ export function mapProducto(
 ): ProductoResponseDto {
   return {
     id: producto.id,
+    claveSat: producto.claveSat,
     nombre: producto.nombre,
     categoria: producto.categoria,
     unidad: producto.unidad,

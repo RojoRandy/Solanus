@@ -21,3 +21,8 @@ export function parseFechaSoloDia(fecha?: string): Date {
   const isoDia = fecha ?? now().format('YYYY-MM-DD');
   return new Date(`${isoDia}T00:00:00.000Z`);
 }
+
+export function formatoFechaDia(fecha: Date): string {
+  // UTC evita que la zona del servidor reste un día a las fechas solo-día.
+  return dayjs.utc(fecha).format('DD/MM/YYYY');
+}

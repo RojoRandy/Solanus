@@ -31,6 +31,7 @@ export class ReporteDonativosUseCase implements UseCase<
         fechaIngreso: { gte: rango.desde, lte: rango.hasta },
       },
       select: {
+        entradaId: true,
         costoTotal: true,
         bienhechor: { select: { id: true, nombre: true } },
       },
@@ -45,6 +46,9 @@ export class ReporteDonativosUseCase implements UseCase<
         valorEstimado: number;
       }
     >();
+    // Un lote es una entrada, que puede tener varios productos.
+    const entradasPorBienhechor = new Map<string, Set<number>>();
+    const entradasGlobales = new Set<number>();
 
     for (const lote of lotes) {
       const clave = lote.bienhechor
@@ -56,7 +60,11 @@ export class ReporteDonativosUseCase implements UseCase<
         cantidadLotes: 0,
         valorEstimado: 0,
       };
-      entrada.cantidadLotes += 1;
+      const entradas = entradasPorBienhechor.get(clave) ?? new Set<number>();
+      entradas.add(lote.entradaId);
+      entradasPorBienhechor.set(clave, entradas);
+      entradasGlobales.add(lote.entradaId);
+      entrada.cantidadLotes = entradas.size;
       entrada.valorEstimado += lote.costoTotal ? Number(lote.costoTotal) : 0;
       porBienhechorMap.set(clave, entrada);
     }
@@ -66,7 +74,7 @@ export class ReporteDonativosUseCase implements UseCase<
     );
 
     return {
-      totalLotes: lotes.length,
+      totalLotes: entradasGlobales.size,
       valorEstimado: porBienhechor.reduce(
         (total, b) => total + b.valorEstimado,
         0,

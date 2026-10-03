@@ -1,6 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
+  ArrayMinSize,
+  IsArray,
   IsBoolean,
   IsDateString,
   IsEnum,
@@ -9,17 +11,13 @@ import {
   IsOptional,
   IsPositive,
   IsString,
+  MaxLength,
   ValidateNested,
 } from 'class-validator';
 import { EstadoProducto, OrigenLote } from '@prisma/client';
 import { CrearProductoDto } from './producto.dto';
 
-/**
- * El orden de los campos aquí refleja el orden de captura en la pantalla
- * "Registrar entrada": cantidad → costo unitario → costo total →
- * cfdi → caducidad → ingreso → origen → bienhechor.
- */
-export class RegistrarEntradaDto {
+export class LineaEntradaDto {
   @ApiProperty({
     required: false,
     description: 'Id de un producto ya existente en el catálogo',
@@ -42,25 +40,13 @@ export class RegistrarEntradaDto {
   @ApiProperty({ example: 20 })
   @IsNumber()
   @IsPositive()
-  cantidadInicial: number;
+  cantidad: number;
 
-  @ApiProperty()
+  @ApiProperty({ required: false })
+  @IsOptional()
   @IsNumber()
   @IsPositive()
-  costoUnitario: number;
-
-  @ApiProperty({
-    required: false,
-    description: 'Cantidad × costo unitario; si no se envía, se calcula',
-  })
-  @IsOptional()
-  @IsNumber()
-  costoTotal?: number;
-
-  @ApiProperty({ required: false, description: 'CFDI / número de factura' })
-  @IsOptional()
-  @IsString()
-  cfdi?: string;
+  costoUnitario?: number;
 
   @ApiProperty({ required: false, description: 'Fecha de caducidad (ISO)' })
   @IsOptional()
@@ -71,7 +57,9 @@ export class RegistrarEntradaDto {
   @IsOptional()
   @IsBoolean()
   noCaduca?: boolean;
+}
 
+export class RegistrarEntradaDto {
   @ApiProperty({
     required: false,
     description: 'Fecha de ingreso (ISO), por defecto hoy',
@@ -95,12 +83,19 @@ export class RegistrarEntradaDto {
   @ApiProperty({ required: false })
   @IsOptional()
   @IsString()
-  presentacion?: string;
+  cfdi?: string;
 
   @ApiProperty({ required: false })
   @IsOptional()
   @IsString()
   ubicacion?: string;
+
+  @ApiProperty({ type: [LineaEntradaDto] })
+  @IsArray()
+  @ArrayMinSize(1)
+  @ValidateNested({ each: true })
+  @Type(() => LineaEntradaDto)
+  lineas: LineaEntradaDto[];
 }
 
 class LoteVarianteRefDto {
@@ -122,6 +117,8 @@ class LoteBienhechorRefDto {
 }
 
 export class LoteResponseDto {
+  @ApiProperty()
+  entradaId: number;
   @ApiProperty()
   id: number;
   @ApiProperty({ type: LoteVarianteRefDto })
@@ -151,5 +148,29 @@ export class LoteResponseDto {
   @ApiProperty({ type: LoteBienhechorRefDto, nullable: true })
   bienhechor: LoteBienhechorRefDto | null;
   @ApiProperty({ nullable: true })
+  cfdi: string | null;
+}
+
+export class RegistrarEntradaResponseDto {
+  @ApiProperty()
+  entradaId: number;
+
+  @ApiProperty({ type: [LoteResponseDto] })
+  lotes: LoteResponseDto[];
+}
+
+export class ActualizarCfdiEntradaDto {
+  @ApiProperty({ type: String, required: false, nullable: true, maxLength: 100 })
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  cfdi: string | null;
+}
+
+export class EntradaCfdiResponseDto {
+  @ApiProperty()
+  id: number;
+
+  @ApiProperty({ type: String, nullable: true })
   cfdi: string | null;
 }

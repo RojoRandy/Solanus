@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { z } from 'zod';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -6,6 +7,8 @@ import { ApiError } from '@/lib/api-client';
 import { useUnidades, useCrearProducto } from '../api';
 import { ProductoFormFields, type ProductoFormFieldsValue } from './ProductoFormFields';
 import type { Producto } from '../types';
+
+const claveSatSchema = z.string().trim().regex(/^\d{8}$/, 'La clave SAT debe tener 8 dígitos').optional().or(z.literal(''));
 
 interface NuevoProductoDialogProps {
   open: boolean;
@@ -18,12 +21,14 @@ interface NuevoProductoDialogProps {
  * — usado desde insumos del turno, donativo en especie y el registro de entrada.
  */
 export function NuevoProductoDialog({ open, onOpenChange, onCreado }: NuevoProductoDialogProps) {
-  const [valor, setValor] = React.useState<ProductoFormFieldsValue>({ nombre: '', granel: false, estado: 'NO_APLICA' });
+  const [valor, setValor] = React.useState<ProductoFormFieldsValue>({ nombre: '', claveSat: '', granel: false, estado: 'NO_APLICA' });
+  const [errorClaveSat, setErrorClaveSat] = React.useState<string>();
   const { data: unidades } = useUnidades();
   const crear = useCrearProducto();
 
   function limpiar() {
-    setValor({ nombre: '', granel: false, estado: 'NO_APLICA' });
+    setValor({ nombre: '', claveSat: '', granel: false, estado: 'NO_APLICA' });
+    setErrorClaveSat(undefined);
   }
 
   function registrar() {
@@ -41,8 +46,14 @@ export function NuevoProductoDialog({ open, onOpenChange, onCreado }: NuevoProdu
       toast.error('Indica una cantidad de contenido mayor a cero y su unidad.');
       return;
     }
+    const claveSat = claveSatSchema.safeParse(valor.claveSat);
+    if (!claveSat.success) {
+      setErrorClaveSat(claveSat.error.issues[0].message);
+      return;
+    }
+    setErrorClaveSat(undefined);
     crear.mutate(
-      { nombre: nombre.trim(), categoriaId, unidadId, estado, marca, granel, contenidoCantidad, contenidoUnidadId },
+      { nombre: nombre.trim(), claveSat: claveSat.data || undefined, categoriaId, unidadId, estado, marca, granel, contenidoCantidad, contenidoUnidadId },
       {
         onSuccess: (producto) => {
           toast.success(`Producto "${producto.nombre}" creado.`);
@@ -63,7 +74,10 @@ export function NuevoProductoDialog({ open, onOpenChange, onCreado }: NuevoProdu
             <DialogTitle>Nuevo producto</DialogTitle>
           </DialogHeader>
           <div className="flex flex-col gap-4">
-            <ProductoFormFields value={valor} onChange={setValor} />
+            <ProductoFormFields value={valor} onChange={(nuevoValor) => {
+              setValor(nuevoValor);
+              if (nuevoValor.claveSat !== valor.claveSat) setErrorClaveSat(undefined);
+            }} errors={{ claveSat: errorClaveSat }} />
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => onOpenChange(false)}>

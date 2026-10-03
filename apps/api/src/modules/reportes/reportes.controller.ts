@@ -1,10 +1,13 @@
-import { Controller, Get, Header, Inject, Query, StreamableFile } from '@nestjs/common';
+import { Body, Controller, Get, Header, Inject, Post, Query, StreamableFile } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { Auth } from '../auth/decorators/auth.decorator';
+import { AuthUser } from '../auth/decorators/auth-user.decorator';
 import { UserRoles } from '@/common/interfaces/enums';
-import { ApiOkSchemaResponse } from '@/common/dto/response.dto';
+import { ApiCreatedSchemaResponse, ApiOkSchemaResponse } from '@/common/dto/response.dto';
 import { PeriodoMensualQueryDto } from '@/common/dto/periodo.dto';
 import {
+  CerrarMesDto,
+  CierreInventarioResponseDto,
   RangoFechaQueryDto,
   ReporteAsistenciaResponseDto,
   ReporteDonativosResponseDto,
@@ -14,6 +17,7 @@ import { ReporteAsistenciaUseCase } from './usecases/reporte-asistencia.usecase'
 import { ReporteInventarioUseCase } from './usecases/reporte-inventario.usecase';
 import { ReporteDonativosUseCase } from './usecases/reporte-donativos.usecase';
 import { ReporteMensualPdfUseCase } from './usecases/reporte-mensual-pdf.usecase';
+import { CerrarMesUseCase } from './usecases/cerrar-mes.usecase';
 
 @ApiTags('Reportes')
 @Controller('reportes')
@@ -28,7 +32,19 @@ export class ReportesController {
     private readonly reporteDonativos: ReporteDonativosUseCase,
     @Inject(ReporteMensualPdfUseCase)
     private readonly reporteMensualPdf: ReporteMensualPdfUseCase,
+    @Inject(CerrarMesUseCase)
+    private readonly cerrarMes: CerrarMesUseCase,
   ) {}
+
+  @Post('cierres')
+  @Auth(UserRoles.ADMINISTRADOR)
+  @ApiCreatedSchemaResponse(CierreInventarioResponseDto)
+  cerrarPeriodo(
+    @Body() dto: CerrarMesDto,
+    @AuthUser('id') cerradoPorId: number,
+  ) {
+    return this.cerrarMes.execute({ dto, cerradoPorId });
+  }
 
   @Get('asistencia')
   @ApiOkSchemaResponse(ReporteAsistenciaResponseDto)

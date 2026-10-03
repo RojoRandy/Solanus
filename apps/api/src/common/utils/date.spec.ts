@@ -1,4 +1,10 @@
-import { now, parseFechaSoloDia, TZ } from './date';
+import { formatoFechaDia, now, parseFechaSoloDia, TZ } from './date';
+
+describe('formatoFechaDia()', () => {
+  it('conserva el día guardado a medianoche UTC', () => {
+    expect(formatoFechaDia(new Date('2026-10-02T00:00:00.000Z'))).toBe('02/10/2026');
+  });
+});
 
 describe('now()', () => {
   afterEach(() => {

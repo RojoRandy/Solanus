@@ -1,10 +1,8 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
+import { Field } from '@base-ui/react/field';
 import { toast } from 'sonner';
-import { ArrowLeft, Info, Plus } from 'lucide-react';
+import { ArrowLeft, Info, Plus, Trash2 } from 'lucide-react';
 import { ApiError } from '@/lib/api-client';
 import { hoyISO } from '@/lib/fecha';
 import { Button } from '@/components/ui/button';
@@ -16,116 +14,141 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { DatePicker } from '@/components/ui/date-picker';
 import { useBienhechores } from '@/features/bienhechores/api';
+import type { Bienhechor } from '@/features/bienhechores/types';
 import { NuevoBienhechorDialog } from '@/features/bienhechores/components/NuevoBienhechorDialog';
 import { ComboboxField } from './ComboboxField';
 import { NuevoProductoDialog } from './components/NuevoProductoDialog';
 import { useProducto, useProductos, useRegistrarEntrada } from './api';
 import { etiquetaMarcaLote, etiquetaProducto } from './format';
-import { ETIQUETA_ESTADO, type OrigenLote, type Producto } from './types';
+import { ETIQUETA_ESTADO, type LineaEntradaInput, type OrigenLote, type Producto } from './types';
 
-const schema = z
-  .object({
-    productoId: z.number().optional(),
-    cantidadInicial: z.coerce.number({ message: 'Indica la cantidad' }).positive('Debe ser mayor a cero'),
-    costoUnitario: z.coerce.number({ message: 'Indica el costo unitario' }).positive('Debe ser mayor a cero'),
-    cfdi: z.string().trim().optional(),
-    noCaduca: z.boolean(),
-    fechaCaducidad: z.string().optional(),
-    fechaIngreso: z.string().optional(),
-    origen: z.enum(['COMPRADO', 'DONADO']),
-    bienhechorId: z.number().optional(),
-    presentacion: z.string().trim().optional(),
-    ubicacion: z.string().trim().optional(),
-  })
-  .superRefine((data, ctx) => {
-    if (!data.productoId) {
-      ctx.addIssue({ code: 'custom', path: ['productoId'], message: 'Selecciona un producto' });
-    }
-    if (!data.noCaduca && !data.fechaCaducidad) {
-      ctx.addIssue({ code: 'custom', path: ['fechaCaducidad'], message: 'Indica la fecha o marca "No caduca"' });
-    }
-    if (data.origen === 'DONADO' && !data.bienhechorId) {
-      ctx.addIssue({ code: 'custom', path: ['bienhechorId'], message: 'Selecciona el bienhechor' });
-    }
-  });
+interface LineaForm {
+  key: number;
+  productoId?: number;
+  cantidad: string;
+  costoUnitario: string;
+  fechaCaducidad?: string;
+  noCaduca: boolean;
+}
 
-type FormValues = z.infer<typeof schema>;
+let contadorLinea = 0;
+function nuevaLinea(): LineaForm {
+  contadorLinea += 1;
+  return { key: contadorLinea, cantidad: '', costoUnitario: '', noCaduca: false };
+}
+
+function InformacionProducto({ productoId }: { productoId: number }) {
+  const { data: producto } = useProducto(productoId);
+  if (!producto) return null;
+
+  return (
+    <p className="text-xs text-muted-foreground">
+      {producto.unidad.nombre} ({producto.unidad.abrevia}) · {ETIQUETA_ESTADO[producto.estado]} · {etiquetaMarcaLote(producto)}
+    </p>
+  );
+}
+
+function cantidadInvalida(linea: LineaForm) {
+  return !Number.isFinite(Number(linea.cantidad)) || Number(linea.cantidad) <= 0;
+}
+
+function costoInvalido(linea: LineaForm, origen: OrigenLote) {
+  const costo = Number(linea.costoUnitario);
+  return !Number.isFinite(costo) || (origen === 'COMPRADO' ? costo <= 0 : costo < 0);
+}
+
+function costoTotal(linea: LineaForm) {
+  const total = Number(linea.cantidad) * Number(linea.costoUnitario);
+  return Number.isFinite(total) ? total : 0;
+}
 
 export function RegistrarEntradaPage() {
   const navigate = useNavigate();
-
   // ponytail: limit fijo, pasar a búsqueda remota si el catálogo crece más de 500
   const { data: productosPag } = useProductos({ limit: 500 });
   const { data: bienhechores } = useBienhechores();
   const registrarEntrada = useRegistrarEntrada();
 
-  const [nuevoProductoAbierto, setNuevoProductoAbierto] = useState(false);
-  const [productoCreado, setProductoCreado] = useState<Producto>();
+  const [fechaIngreso, setFechaIngreso] = useState<string | undefined>(hoyISO);
+  const [origen, setOrigen] = useState<OrigenLote>('COMPRADO');
+  const [bienhechorId, setBienhechorId] = useState<number>();
+  const [cfdi, setCfdi] = useState('');
+  const [ubicacion, setUbicacion] = useState('');
+  const [lineas, setLineas] = useState<LineaForm[]>(() => [nuevaLinea()]);
+  const [validacionIntentada, setValidacionIntentada] = useState(false);
+  const [nuevoProductoLinea, setNuevoProductoLinea] = useState<number | null>(null);
+  const [productosCreados, setProductosCreados] = useState<Producto[]>([]);
   const [nuevoBienhechorAbierto, setNuevoBienhechorAbierto] = useState(false);
-
-  const {
-    register,
-    handleSubmit,
-    watch,
-    setValue,
-    formState: { errors, isSubmitting },
-  } = useForm<FormValues>({
-    resolver: zodResolver(schema),
-    defaultValues: {
-      noCaduca: false,
-      fechaIngreso: hoyISO(),
-      origen: 'COMPRADO',
-    },
-  });
-
-  const productoId = watch('productoId');
-  const { data: producto } = useProducto(productoId);
-  const cantidadInicial = watch('cantidadInicial');
-  const costoUnitario = watch('costoUnitario');
-  const noCaduca = watch('noCaduca');
-  const fechaCaducidad = watch('fechaCaducidad');
-  const fechaIngreso = watch('fechaIngreso');
-  const origen = watch('origen');
-  const bienhechorId = watch('bienhechorId');
-
-  const costoTotal = useMemo(() => {
-    const cantidad = Number(cantidadInicial);
-    const costo = Number(costoUnitario);
-    if (!cantidad || !costo) return undefined;
-    return Math.round(cantidad * costo * 100) / 100;
-  }, [cantidadInicial, costoUnitario]);
+  const [bienhechorCreado, setBienhechorCreado] = useState<Bienhechor>();
 
   const opcionesProductos = useMemo(() => {
-    const productos = productosPag?.items ?? [];
-    const opciones = productos.map((producto) => ({ value: producto.id, label: etiquetaProducto(producto) }));
-    if (productoCreado && !productos.some((producto) => producto.id === productoCreado.id)) {
-      opciones.push({ value: productoCreado.id, label: etiquetaProducto(productoCreado) });
+    const productos = new Map((productosPag?.items ?? []).map((producto) => [producto.id, producto]));
+    productosCreados.forEach((producto) => productos.set(producto.id, producto));
+    return Array.from(productos.values(), (producto) => ({ value: producto.id, label: etiquetaProducto(producto) }));
+  }, [productosPag, productosCreados]);
+  const opcionesBienhechores = useMemo(() => {
+    const opciones = (bienhechores ?? []).map((b) => ({ value: b.id, label: b.nombre }));
+    if (bienhechorCreado && !opciones.some((b) => b.value === bienhechorCreado.id)) {
+      opciones.push({ value: bienhechorCreado.id, label: bienhechorCreado.nombre });
     }
     return opciones;
-  }, [productosPag, productoCreado]);
-  const opcionesBienhechores = useMemo(
-    () => (bienhechores ?? []).map((b) => ({ value: b.id, label: b.nombre })),
-    [bienhechores],
-  );
+  }, [bienhechores, bienhechorCreado]);
 
-  async function onSubmit(values: FormValues) {
-    try {
-      await registrarEntrada.mutateAsync({
-        productoId: values.productoId,
-        cantidadInicial: values.cantidadInicial,
-        costoUnitario: values.costoUnitario,
-        costoTotal,
-        cfdi: values.cfdi || undefined,
-        fechaCaducidad: values.noCaduca ? undefined : values.fechaCaducidad,
-        noCaduca: values.noCaduca,
-        fechaIngreso: values.fechaIngreso || undefined,
-        origen: values.origen as OrigenLote,
-        bienhechorId: values.origen === 'DONADO' ? values.bienhechorId : undefined,
-        presentacion: values.presentacion || undefined,
-        ubicacion: values.ubicacion || undefined,
+  function actualizarLinea(key: number, cambios: Partial<LineaForm>) {
+    setLineas((prev) => prev.map((linea) => linea.key === key ? { ...linea, ...cambios } : linea));
+  }
+
+  function quitarLinea(key: number) {
+    setLineas((prev) => prev.length > 1 ? prev.filter((linea) => linea.key !== key) : prev);
+  }
+
+  async function onSubmit() {
+    if (registrarEntrada.isPending) return;
+    setValidacionIntentada(true);
+    if (origen === 'DONADO' && !bienhechorId) {
+      toast.error('Selecciona el bienhechor que hizo la donación.');
+      return;
+    }
+    const lineasValidas: LineaEntradaInput[] = [];
+    for (const [index, linea] of lineas.entries()) {
+      if (!linea.productoId) {
+        toast.error(`Selecciona el producto de la línea ${index + 1}.`);
+        return;
+      }
+      if (cantidadInvalida(linea)) {
+        toast.error(`Indica una cantidad mayor a cero en el producto ${index + 1}.`);
+        return;
+      }
+      if (costoInvalido(linea, origen)) {
+        toast.error(origen === 'COMPRADO'
+          ? `Indica un costo unitario mayor a cero en el producto ${index + 1}.`
+          : `Indica un costo unitario válido, igual o mayor a cero, en el producto ${index + 1}.`);
+        return;
+      }
+      if (!linea.noCaduca && !linea.fechaCaducidad) {
+        toast.error(`Indica la fecha de caducidad o marca "No caduca" en el producto ${index + 1}.`);
+        return;
+      }
+      lineasValidas.push({
+        productoId: linea.productoId,
+        cantidad: Number(linea.cantidad),
+        costoUnitario: linea.costoUnitario ? Number(linea.costoUnitario) : undefined,
+        fechaCaducidad: linea.noCaduca ? undefined : linea.fechaCaducidad,
+        noCaduca: linea.noCaduca,
       });
-      toast.success('Entrada registrada correctamente');
-      navigate('/inventario');
+    }
+
+    try {
+      const { entradaId, lotes } = await registrarEntrada.mutateAsync({
+        fechaIngreso,
+        origen,
+        bienhechorId: origen === 'DONADO' ? bienhechorId : undefined,
+        cfdi: cfdi || undefined,
+        ubicacion: ubicacion || undefined,
+        lineas: lineasValidas,
+      });
+      toast.success(`Lote #${entradaId} registrado con ${lotes.length} producto(s)`);
+      void navigate('/inventario');
     } catch (error) {
       toast.error(error instanceof ApiError ? error.message : 'No se pudo registrar la entrada');
     }
@@ -134,192 +157,138 @@ export function RegistrarEntradaPage() {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center gap-3">
-        <Button variant="ghost" size="icon" onClick={() => void navigate(-1)}>
+        <Button variant="ghost" size="icon" aria-label="Volver" onClick={() => void navigate(-1)}>
           <ArrowLeft />
         </Button>
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Registrar entrada</h1>
-          <p className="text-sm text-muted-foreground">Da de alta un nuevo lote de inventario (compra o donación)</p>
+          <p className="text-sm text-muted-foreground">Registra varios productos de una misma compra o donación</p>
         </div>
       </div>
 
-      <form onSubmit={(event) => void handleSubmit(onSubmit)(event)} className="flex max-w-2xl flex-col gap-4">
+      <form noValidate onSubmit={(event) => { event.preventDefault(); void onSubmit(); }} className="flex w-full max-w-7xl flex-col gap-4">
         <Card className="animate-in fade-in slide-in-from-bottom-1">
-          <CardHeader>
-            <CardTitle>Producto</CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-4">
+          <CardHeader><CardTitle>Datos de la entrada</CardTitle></CardHeader>
+          <CardContent className="grid gap-4 sm:grid-cols-2">
             <div className="flex flex-col gap-1.5">
-              <Label>Producto</Label>
-              <div className="flex gap-2">
-                <ComboboxField
-                  options={opcionesProductos}
-                  value={productoId}
-                  onValueChange={(value) => setValue('productoId', value, { shouldValidate: true })}
-                  placeholder="Buscar producto por nombre…"
-                  emptyText="No hay productos que coincidan"
-                />
-                <Button type="button" variant="outline" size="icon" onClick={() => setNuevoProductoAbierto(true)} title="Nuevo producto">
-                  <Plus />
-                </Button>
-              </div>
-              {errors.productoId && <p className="text-xs text-destructive">{errors.productoId.message}</p>}
+              <Label htmlFor="fechaIngreso">Fecha de ingreso</Label>
+              <DatePicker id="fechaIngreso" value={fechaIngreso} onChange={setFechaIngreso} />
             </div>
-
-            {productoId && producto && (
-              <dl className="grid gap-3 border-t pt-4 text-sm sm:grid-cols-2">
-                <div>
-                  <dt className="text-muted-foreground">Unidad</dt>
-                  <dd>{producto.unidad.nombre} ({producto.unidad.abrevia})</dd>
-                </div>
-                <div>
-                  <dt className="text-muted-foreground">Crudo/cocido</dt>
-                  <dd>{ETIQUETA_ESTADO[producto.estado]}</dd>
-                </div>
-                <div>
-                  <dt className="text-muted-foreground">Marca</dt>
-                  <dd>{etiquetaMarcaLote(producto)}</dd>
-                </div>
-                {producto.contenido && (
-                  <div>
-                    <dt className="text-muted-foreground">Contenido</dt>
-                    <dd>{producto.contenido.cantidad} {producto.contenido.unidad.abrevia}</dd>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="origen">Origen</Label>
+              <Select items={{ COMPRADO: 'Comprado', DONADO: 'Donado' }} value={origen}
+                onValueChange={(value) => { if (value === 'COMPRADO' || value === 'DONADO') setOrigen(value); }}>
+                <SelectTrigger id="origen" className="w-full"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="COMPRADO">Comprado</SelectItem>
+                  <SelectItem value="DONADO">Donado</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {origen === 'DONADO' && (
+              <Field.Root className="flex min-w-0 flex-col gap-1.5" invalid={validacionIntentada && !bienhechorId}>
+                <Field.Label className="text-sm font-medium">Bienhechor</Field.Label>
+                <div className="flex gap-2">
+                  <div className="min-w-0 flex-1">
+                    <ComboboxField options={opcionesBienhechores} value={bienhechorId} onValueChange={setBienhechorId}
+                      placeholder="Buscar bienhechor por nombre…" emptyText="No hay bienhechores que coincidan" />
                   </div>
-                )}
-              </dl>
+                  <Button type="button" variant="outline" size="icon" onClick={() => setNuevoBienhechorAbierto(true)} aria-label="Nuevo bienhechor"><Plus /></Button>
+                </div>
+              </Field.Root>
             )}
-          </CardContent>
-        </Card>
-
-        <Card className="animate-in fade-in slide-in-from-bottom-1">
-          <CardHeader>
-            <CardTitle>Datos del lote</CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-4">
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="flex flex-col gap-1.5">
-                <Label htmlFor="cantidadInicial">Cantidad</Label>
-                <Input id="cantidadInicial" type="number" step="any" min={0} {...register('cantidadInicial')} placeholder="0" />
-                {errors.cantidadInicial && <p className="text-xs text-destructive">{errors.cantidadInicial.message}</p>}
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <Label htmlFor="costoUnitario">Costo unitario</Label>
-                <Input id="costoUnitario" type="number" step="any" min={0} {...register('costoUnitario')} placeholder="0.00" />
-                {errors.costoUnitario && <p className="text-xs text-destructive">{errors.costoUnitario.message}</p>}
-              </div>
-            </div>
-
-            <div className="flex flex-col gap-1.5 sm:max-w-52">
-              <Label className="gap-1">
-                Costo total
-                <Tooltip>
-                  <TooltipTrigger render={<Info className="size-3.5 text-muted-foreground" />} />
-                  <TooltipContent>Se calcula como cantidad × costo unitario.</TooltipContent>
-                </Tooltip>
-              </Label>
-              <Input readOnly disabled value={costoTotal !== undefined ? costoTotal.toFixed(2) : ''} placeholder="—" />
-            </div>
-
-            <div className="flex flex-col gap-1.5 sm:max-w-72">
+            <div className="flex flex-col gap-1.5">
               <Label htmlFor="cfdi" className="gap-1">
                 CFDI (número de factura)
                 <Tooltip>
                   <TooltipTrigger render={<Info className="size-3.5 text-muted-foreground" />} />
-                  <TooltipContent>Folio fiscal de la factura, si aplica.</TooltipContent>
+                  <TooltipContent>Puedes asignarlo después desde Movimientos</TooltipContent>
                 </Tooltip>
               </Label>
-              <Input id="cfdi" {...register('cfdi')} placeholder="Opcional" />
+              <Input id="cfdi" value={cfdi} onChange={(event) => setCfdi(event.target.value)} placeholder="Opcional" aria-describedby="cfdi-ayuda" />
+              <p id="cfdi-ayuda" className="text-xs text-muted-foreground">Puedes asignarlo después desde Movimientos</p>
             </div>
-
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="flex flex-col gap-1.5">
-                <Label>Fecha de caducidad</Label>
-                <DatePicker value={fechaCaducidad} onChange={(value) => setValue('fechaCaducidad', value, { shouldValidate: true })} disabled={noCaduca} />
-                <label className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
-                  <Checkbox checked={noCaduca} onCheckedChange={(checked) => setValue('noCaduca', Boolean(checked), { shouldValidate: true })} />
-                  No caduca
-                </label>
-                {errors.fechaCaducidad && <p className="text-xs text-destructive">{errors.fechaCaducidad.message}</p>}
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <Label>Fecha de ingreso</Label>
-                <DatePicker value={fechaIngreso} onChange={(value) => setValue('fechaIngreso', value)} />
-              </div>
-            </div>
-
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="flex flex-col gap-1.5">
-                <Label>Origen</Label>
-                <Select
-                  items={{ COMPRADO: 'Comprado', DONADO: 'Donado' }}
-                  value={origen}
-                  onValueChange={(value) => setValue('origen', value as 'COMPRADO' | 'DONADO')}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="COMPRADO">Comprado</SelectItem>
-                    <SelectItem value="DONADO">Donado</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              {origen === 'DONADO' && (
-                <div className="flex flex-col gap-1.5">
-                  <Label>Bienhechor</Label>
-                  <div className="flex gap-2">
-                    <ComboboxField
-                      options={opcionesBienhechores}
-                      value={bienhechorId}
-                      onValueChange={(value) => setValue('bienhechorId', value, { shouldValidate: true })}
-                      placeholder="Buscar bienhechor por nombre…"
-                      emptyText="No hay bienhechores que coincidan"
-                    />
-                    <Button type="button" variant="outline" size="icon" onClick={() => setNuevoBienhechorAbierto(true)} title="Nuevo bienhechor">
-                      <Plus />
-                    </Button>
-                  </div>
-                  {errors.bienhechorId && <p className="text-xs text-destructive">{errors.bienhechorId.message}</p>}
-                </div>
-              )}
-            </div>
-
-            <div className="grid gap-4 border-t pt-4 sm:grid-cols-2">
-              <div className="flex flex-col gap-1.5">
-                <Label htmlFor="presentacion">Presentación</Label>
-                <Input id="presentacion" {...register('presentacion')} placeholder="Opcional — bolsa de 1kg" />
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <Label htmlFor="ubicacion">Ubicación</Label>
-                <Input id="ubicacion" {...register('ubicacion')} placeholder="Opcional — Almacén, Cocina…" />
-              </div>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="ubicacion">Ubicación</Label>
+              <Input id="ubicacion" value={ubicacion} onChange={(event) => setUbicacion(event.target.value)} placeholder="Opcional — Almacén, Cocina…" />
             </div>
           </CardContent>
         </Card>
 
+        <Card className="animate-in fade-in slide-in-from-bottom-1">
+          <CardHeader><CardTitle>Productos</CardTitle></CardHeader>
+          <CardContent className="flex flex-col gap-4">
+            {lineas.map((linea, index) => (
+              <div key={linea.key} className="grid items-start gap-3 rounded-lg border p-3 lg:grid-cols-[minmax(0,2fr)_repeat(3,minmax(0,1fr))_minmax(0,1.8fr)_auto]">
+                <Field.Root className="flex min-w-0 flex-col gap-1.5" invalid={validacionIntentada && !linea.productoId}>
+                  <Field.Label className="flex h-5 items-center text-sm leading-none font-medium">Producto {index + 1}</Field.Label>
+                  <div className="flex gap-2">
+                    <div className="min-w-0 flex-1">
+                      <ComboboxField options={opcionesProductos} value={linea.productoId}
+                        onValueChange={(value) => actualizarLinea(linea.key, { productoId: value })}
+                        placeholder="Buscar producto…" emptyText="No hay productos que coincidan" />
+                    </div>
+                    <Button type="button" variant="outline" size="icon" onClick={() => setNuevoProductoLinea(linea.key)} aria-label={`Nuevo producto para la línea ${index + 1}`}><Plus /></Button>
+                  </div>
+                  {linea.productoId !== undefined && <InformacionProducto productoId={linea.productoId} />}
+                </Field.Root>
+                <div className="flex min-w-0 flex-col gap-1.5">
+                  <Label htmlFor={`cantidad-${linea.key}`} className="h-5">Cantidad<span className="sr-only"> del producto {index + 1}</span></Label>
+                  <Input id={`cantidad-${linea.key}`} type="number" step="any" min={0} placeholder="0" value={linea.cantidad}
+                    aria-invalid={validacionIntentada && cantidadInvalida(linea)}
+                    onChange={(event) => actualizarLinea(linea.key, { cantidad: event.target.value })} />
+                </div>
+                <div className="flex min-w-0 flex-col gap-1.5">
+                  <Label htmlFor={`costo-${linea.key}`} className="h-5">Costo unitario<span className="sr-only"> del producto {index + 1}</span></Label>
+                  <Input id={`costo-${linea.key}`} type="number" step="any" min={0} placeholder={origen === 'DONADO' ? 'Opcional' : '0.00'} value={linea.costoUnitario}
+                    aria-invalid={validacionIntentada && costoInvalido(linea, origen)}
+                    onChange={(event) => actualizarLinea(linea.key, { costoUnitario: event.target.value })} />
+                </div>
+                <div className="flex min-w-0 flex-col gap-1.5">
+                  <Label htmlFor={`total-${linea.key}`} className="h-5">Costo total<span className="sr-only"> del producto {index + 1}</span></Label>
+                  <Input id={`total-${linea.key}`} readOnly value={costoTotal(linea).toFixed(2)} />
+                </div>
+                <div className="flex min-w-0 flex-col gap-1.5">
+                  <div className="flex h-5 items-center justify-between gap-2">
+                    <Label htmlFor={`caducidad-${linea.key}`}>Caducidad<span className="sr-only"> del producto {index + 1}</span></Label>
+                    <Label htmlFor={`no-caduca-${linea.key}`} className="shrink-0 text-xs text-muted-foreground">
+                      <Checkbox id={`no-caduca-${linea.key}`} checked={linea.noCaduca}
+                        onCheckedChange={(checked) => actualizarLinea(linea.key, { noCaduca: Boolean(checked) })} />
+                      No caduca<span className="sr-only"> el producto {index + 1}</span>
+                    </Label>
+                  </div>
+                  <DatePicker id={`caducidad-${linea.key}`} value={linea.fechaCaducidad} disabled={linea.noCaduca}
+                    onChange={(value) => actualizarLinea(linea.key, { fechaCaducidad: value })} />
+                </div>
+                {lineas.length > 1 && (
+                  <div className="flex flex-col gap-1.5">
+                    <div aria-hidden="true" className="h-5" />
+                    <Button type="button" variant="ghost" size="icon" onClick={() => quitarLinea(linea.key)} aria-label={`Quitar producto ${index + 1}`}><Trash2 /></Button>
+                  </div>
+                )}
+              </div>
+            ))}
+            <Button type="button" variant="outline" className="self-start" onClick={() => setLineas((prev) => [...prev, nuevaLinea()])}>
+              <Plus />Agregar producto
+            </Button>
+            <p className="text-right font-semibold">
+              Total de la entrada: {lineas.reduce((total, linea) => total + costoTotal(linea), 0).toLocaleString('es-MX', { style: 'currency', currency: 'MXN' })}
+            </p>
+          </CardContent>
+        </Card>
         <div className="flex justify-end gap-2">
-          <Button type="button" variant="outline" onClick={() => void navigate(-1)}>
-            Cancelar
-          </Button>
-          <Button type="submit" disabled={isSubmitting}>
-            Registrar entrada
-          </Button>
+          <Button type="button" variant="outline" onClick={() => void navigate(-1)}>Cancelar</Button>
+          <Button type="submit" disabled={registrarEntrada.isPending}>{registrarEntrada.isPending ? 'Guardando…' : 'Registrar entrada'}</Button>
         </div>
       </form>
 
-      <NuevoProductoDialog
-        open={nuevoProductoAbierto}
-        onOpenChange={setNuevoProductoAbierto}
+      <NuevoProductoDialog open={nuevoProductoLinea !== null} onOpenChange={(open) => { if (!open) setNuevoProductoLinea(null); }}
         onCreado={(producto) => {
-          setProductoCreado(producto);
-          setValue('productoId', producto.id, { shouldValidate: true, shouldDirty: true });
-        }}
-      />
-      <NuevoBienhechorDialog
-        open={nuevoBienhechorAbierto}
-        onOpenChange={setNuevoBienhechorAbierto}
-        onCreado={(bienhechor) => setValue('bienhechorId', bienhechor.id, { shouldValidate: true })}
-      />
+          setProductosCreados((prev) => [...prev, producto]);
+          if (nuevoProductoLinea !== null) actualizarLinea(nuevoProductoLinea, { productoId: producto.id });
+        }} />
+      <NuevoBienhechorDialog open={nuevoBienhechorAbierto} onOpenChange={setNuevoBienhechorAbierto}
+        onCreado={(bienhechor) => { setBienhechorCreado(bienhechor); setBienhechorId(bienhechor.id); }} />
     </div>
   );
 }

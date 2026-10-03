@@ -3,6 +3,7 @@ import { UseCase } from '@/common/interfaces/use-case.interface';
 import { PrismaService } from '@/prisma/prisma.service';
 import { InventarioErrors } from '@/common/errors/inventario.errors';
 import { parseFechaSoloDia } from '@/common/utils/date';
+import { validarPeriodoAbierto } from './periodo-cerrado.util';
 import { ActualizarMovimientoDto, MovimientoResponseDto } from '../dto/movimiento.dto';
 
 export interface ActualizarMovimientoArgs {
@@ -32,10 +33,14 @@ export class ActualizarMovimientoUseCase implements UseCase<
       if (!motivo) throw InventarioErrors.Exceptions.MOTIVO_NOT_FOUND({ motivoId: dto.motivoId });
     }
 
+    const fechaNueva = dto.fecha ? parseFechaSoloDia(dto.fecha) : undefined;
+    await validarPeriodoAbierto(this.prisma, existente.fecha);
+    if (fechaNueva) await validarPeriodoAbierto(this.prisma, fechaNueva);
+
     const movimiento = await this.prisma.movimientoInventario.update({
       where: { id },
       data: {
-        fecha: dto.fecha ? parseFechaSoloDia(dto.fecha) : undefined,
+        fecha: fechaNueva,
         motivoId: dto.motivoId,
         notas: dto.notas,
         editadoPorId,

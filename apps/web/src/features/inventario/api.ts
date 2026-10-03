@@ -3,14 +3,17 @@ import { api } from '@/lib/api-client';
 import type { Paginated } from '@/lib/pagination';
 import type {
   ActualizarCategoriaInput,
+  ActualizarCfdiEntradaInput,
   ActualizarMovimientoInput,
   ActualizarProductoInput,
   ActualizarUnidadInput,
   ActualizarVarianteInput,
   CategoriaRef,
+  ClaveSat,
   CrearCategoriaInput,
   CrearProductoInput,
   CrearUnidadInput,
+  EntradaCfdiResponse,
   EstadoProducto,
   Lote,
   LoteVivo,
@@ -21,6 +24,7 @@ import type {
   RegistrarAjusteInput,
   RegistrarDonativoInput,
   RegistrarEntradaInput,
+  RegistrarEntradaResponse,
   RegistrarSalidaInput,
   StockBajoItem,
   TipoMovimiento,
@@ -55,12 +59,14 @@ const QK = {
       productoId?: number;
       categoriaId?: number;
       turnoId?: number;
+      bienhechorId?: number;
       tipo?: TipoMovimiento;
       desde?: string;
       hasta?: string;
     },
   ) => ['inventario', 'movimientos', params] as const,
   categorias: ['inventario', 'categorias'] as const,
+  clavesSat: ['inventario', 'claves-sat'] as const,
   unidades: ['inventario', 'unidades'] as const,
   motivos: ['inventario', 'motivos'] as const,
   stockBajo: ['inventario', 'stock-bajo'] as const,
@@ -177,7 +183,7 @@ export function useActualizarVariante() {
 export function useRegistrarEntrada() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (dto: RegistrarEntradaInput) => api.post<Lote>('/inventario/entradas', dto),
+    mutationFn: (dto: RegistrarEntradaInput) => api.post<RegistrarEntradaResponse>('/inventario/entradas', dto),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['inventario'] });
     },
@@ -187,7 +193,11 @@ export function useRegistrarEntrada() {
 export function useRegistrarDonativo() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (dto: RegistrarDonativoInput) => api.post<{ lotes: Lote[] }>('/inventario/donativos', dto),
+    mutationFn: (dto: RegistrarDonativoInput) => api.post<{ lotes: Lote[] }>('/inventario/entradas', {
+      ...dto,
+      origen: 'DONADO',
+      lineas: dto.lineas.map((l) => ({ ...l, noCaduca: !l.fechaCaducidad })),
+    }),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['inventario'] });
     },
@@ -224,6 +234,7 @@ export function useMovimientos(
     productoId?: number;
     categoriaId?: number;
     turnoId?: number;
+    bienhechorId?: number;
     tipo?: TipoMovimiento;
     desde?: string;
     hasta?: string;
@@ -247,7 +258,26 @@ export function useActualizarMovimiento() {
   });
 }
 
+export function useActualizarCfdiEntrada() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, dto }: { id: number; dto: ActualizarCfdiEntradaInput }) =>
+      api.patch<EntradaCfdiResponse>(`/inventario/entradas/${id}/cfdi`, dto),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['inventario', 'movimientos'] });
+    },
+  });
+}
+
 // ── Catálogos ──
+
+export function useClavesSat() {
+  return useQuery({
+    queryKey: QK.clavesSat,
+    queryFn: () => api.get<ClaveSat[]>('/inventario/claves-sat'),
+    staleTime: Infinity,
+  });
+}
 
 export function useCategorias() {
   return useQuery({

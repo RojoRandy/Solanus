@@ -23,6 +23,7 @@ export function ProductoFormPage() {
 
   const schema = z.object({
     nombre: z.string().trim().min(1, 'Indica el nombre del producto'),
+    claveSat: z.string().trim().regex(/^\d{8}$/, 'La clave SAT debe tener 8 dígitos').optional().or(z.literal('')),
     categoriaId: z.number({ message: 'Selecciona una categoría' }).int().positive(),
     unidadId: z.number({ message: 'Selecciona una unidad' }).int().positive(),
     estado: z.enum(['CRUDO', 'COCIDO', 'NO_APLICA']).default('NO_APLICA'),
@@ -52,9 +53,10 @@ export function ProductoFormPage() {
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: { nombre: '', estado: 'NO_APLICA', granel: false },
+    defaultValues: { nombre: '', claveSat: '', estado: 'NO_APLICA', granel: false },
     values: producto ? {
       nombre: producto.nombre,
+      claveSat: producto.claveSat ?? '',
       categoriaId: producto.categoria.id,
       unidadId: producto.unidad.id,
       estado: producto.estado,
@@ -77,10 +79,10 @@ export function ProductoFormPage() {
   async function onSubmit(values: FormValues) {
     try {
       if (esEdicion && productoId) {
-        await actualizar.mutateAsync({ id: productoId, dto: values });
+        await actualizar.mutateAsync({ id: productoId, dto: { ...values, claveSat: values.claveSat || null } });
         toast.success('Producto actualizado');
       } else {
-        await crear.mutateAsync(values);
+        await crear.mutateAsync({ ...values, claveSat: values.claveSat || undefined });
         toast.success('Producto creado');
       }
       navigate('/inventario/productos');

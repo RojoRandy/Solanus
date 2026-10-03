@@ -67,3 +67,21 @@ export function useEliminarEvidencia(periodo: Periodo) {
     },
   });
 }
+
+export interface CierreInventario {
+  id: number;
+  desde: string;
+  hasta: string;
+  lotesAjustados: number;
+}
+
+export function useCerrarMes() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (dto: { desde: string; hasta: string }) => api.post<CierreInventario>('/reportes/cierres', dto),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['inventario'] });
+      void queryClient.invalidateQueries({ queryKey: ['reportes'] });
+    },
+  });
+}

@@ -68,6 +68,7 @@ export class ActualizarProductoUseCase implements UseCase<
     const producto = await this.prisma.producto.update({
       where: { id },
       data: {
+        claveSat: dto.claveSat === '' ? null : dto.claveSat,
         unidadId: dto.unidadId,
         estado: dto.estado,
         marca: dto.marca,

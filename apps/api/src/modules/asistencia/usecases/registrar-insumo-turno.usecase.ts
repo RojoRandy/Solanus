@@ -1,4 +1,6 @@
 import { Injectable } from '@nestjs/common';
+import { parseFechaSoloDia } from '@/common/utils/date';
+import { validarPeriodoAbierto } from '../../inventario/usecases/periodo-cerrado.util';
 import { UseCase } from '@/common/interfaces/use-case.interface';
 import { PrismaService } from '@/prisma/prisma.service';
 import { AsistenciaErrors } from '@/common/errors/asistencia.errors';
@@ -59,6 +61,8 @@ export class RegistrarInsumoTurnoUseCase implements UseCase<
         });
       motivoResuelto = motivo.id;
     }
+
+    await validarPeriodoAbierto(this.prisma, parseFechaSoloDia());
 
     return this.registrarSalida.execute({
       varianteId,

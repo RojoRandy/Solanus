@@ -36,6 +36,7 @@ model Usuario {
   movimientosEditados        MovimientoInventario[] @relation("MovimientoEditadoPor")
   donativosDineroRegistrados DonativoDinero[]       @relation("DonativoDineroRegistradoPor")
   evidenciasSubidas          EvidenciaMensual[]     @relation("EvidenciaSubidaPor")
+  cierresInventario          CierreInventario[]     @relation("CierreCerradoPor")
 
   @@map("usuarios")
 }
@@ -104,6 +105,7 @@ model Bienhechor {
   updatedAt DateTime @updatedAt
 
   lotes           LoteInventario[]
+  entradas        EntradaInventario[]
   donativosDinero DonativoDinero[]
 
   @@map("bienhechores")
@@ -263,8 +265,8 @@ model UnidadMedida {
 
 // El producto es la presentación única que se compra o dona: nombre + marca +
 // contenido (ej. "Leche Lala 1 L"). Dos marcas del mismo artículo son dos
-// productos distintos. Ubicación y CFDI siguen viviendo en el lote (ver
-// LoteInventario), porque cambian en cada entrada aunque el producto no cambie.
+// productos distintos. La ubicación vive en LoteInventario y el CFDI en
+// EntradaInventario, porque cambian en cada entrada aunque el producto no cambie.
 model Producto {
   id                Int                 @id @default(autoincrement())
   nombre            String
@@ -274,6 +276,7 @@ model Producto {
   unidad            UnidadMedida        @relation("ProductoUnidad", fields: [unidadId], references: [id])
   estado            EstadoProducto      @default(NO_APLICA)
   marca             String?
+  claveSat          String?
   granel            Boolean             @default(false)
   contenidoCantidad Decimal?            @db.Decimal(12, 3)
   contenidoUnidadId Int?
@@ -322,8 +325,39 @@ enum OrigenLote {
   DONADO
 }
 
+// Es el "lote" que ve el usuario (número de lote = id): agrupa productos
+// registrados juntos con la misma fecha, origen, bienhechor y CFDI.
+// El CFDI se asigna aquí y aplica a todos sus productos.
+model EntradaInventario {
+  id           Int              @id @default(autoincrement())
+  fechaIngreso DateTime         @db.Date
+  origen       OrigenLote
+  bienhechorId Int?
+  bienhechor   Bienhechor?      @relation(fields: [bienhechorId], references: [id])
+  cfdi         String?
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+  lotes        LoteInventario[]
+
+  @@index([bienhechorId])
+  @@map("entradas_inventario")
+}
+
+model CierreInventario {
+  id           Int      @id @default(autoincrement())
+  desde        DateTime @db.Date
+  hasta        DateTime @db.Date
+  cerradoPorId Int
+  cerradoPor   Usuario  @relation("CierreCerradoPor", fields: [cerradoPorId], references: [id])
+  createdAt    DateTime @default(now())
+
+  @@map("cierres_inventario")
+}
+
 model LoteInventario {
   id                 Int                @id @default(autoincrement())
+  entradaId          Int
+  entrada            EntradaInventario  @relation(fields: [entradaId], references: [id])
   varianteId         Int
   variante           VarianteInventario @relation(fields: [varianteId], references: [id])
   marca              String?
@@ -339,7 +373,6 @@ model LoteInventario {
   origen             OrigenLote
   bienhechorId       Int?
   bienhechor         Bienhechor?        @relation(fields: [bienhechorId], references: [id])
-  cfdi               String?
   createdAt          DateTime           @default(now())
   updatedAt          DateTime           @updatedAt
 
@@ -348,6 +381,7 @@ model LoteInventario {
   // FEFO: primero lo que caduca antes, dentro de la misma variante.
   @@index([varianteId, fechaCaducidad])
   @@index([origen, fechaIngreso])
+  @@index([entradaId])
   @@map("lotes_inventario")
 }
 
