@@ -1,8 +1,7 @@
 import { existsSync, promises as fs } from 'fs';
 import * as path from 'path';
 import { Inject, Injectable } from '@nestjs/common';
-import { HorarioComida, MetodoPagoDonativo, TipoMovimiento } from '@prisma/client';
-import dayjs from 'dayjs';
+import { HorarioComida, MetodoPagoDonativo, OrigenLote, TipoMovimiento } from '@prisma/client';
 import { UseCase } from '@/common/interfaces/use-case.interface';
 import { PrismaService } from '@/prisma/prisma.service';
 import { PdfService } from '@/common/pdf/pdf.service';
@@ -26,6 +25,8 @@ export interface ReporteMensualPdf {
   buffer: Buffer;
   filename: string;
 }
+
+const ENCABEZADO_MOVIMIENTOS = `<thead><tr><th>Fecha</th><th>Lote</th><th>Producto</th><th>Unidad</th><th>Tipo</th><th>Motivo</th><th>Cantidad</th><th>Costo unit.</th><th>Costo total</th><th>Bienhechor</th><th>CFDI</th></tr></thead>`;
 
 const COLOR_VINO = '#6B3140';
 const COLOR_AMBAR = '#FFBF00';
@@ -89,15 +90,25 @@ interface FilaMovimiento {
   tipo: TipoMovimiento;
   motivo: string;
   cantidad: number;
-  registradoPor: string;
+  entradaId: number | null;
+  costoUnitario: number | null;
+  bienhechor: string;
+  bienhechorId: number | null;
+  cfdi: string | null;
+  origen: OrigenLote | null;
 }
 
 interface FilaDonativo {
+  bienhechorId: number;
   fecha: string;
   bienhechor: string;
   monto: number;
   metodoPago: MetodoPagoDonativo;
   folioRecibo: string | null;
+}
+
+function formatoMoneda(monto: number): string {
+  return escapar(monto.toLocaleString('es-MX', { style: 'currency', currency: 'MXN' }));
 }
 
 @Injectable()
@@ -137,7 +148,15 @@ export class ReporteMensualPdfUseCase implements UseCase<
           cantidad: true,
           variante: { select: { producto: { select: { nombre: true } }, unidad: { select: { abrevia: true } } } },
           motivo: { select: { nombre: true } },
-          registradoPor: { select: { nombre: true } },
+          lote: {
+            select: {
+              entradaId: true,
+              costoUnitario: true,
+              entrada: { select: { cfdi: true } },
+              origen: true,
+              bienhechor: { select: { id: true, nombre: true } },
+            },
+          },
         },
       }),
       // Replica el orden de GET /donativos (fecha desc, id desc).
@@ -162,11 +181,17 @@ export class ReporteMensualPdfUseCase implements UseCase<
       tipo: m.tipo,
       motivo: m.motivo.nombre,
       cantidad: Number(m.cantidad),
-      registradoPor: m.registradoPor.nombre,
+      entradaId: m.lote?.entradaId ?? null,
+      costoUnitario: m.lote?.costoUnitario != null ? Number(m.lote.costoUnitario) : null,
+      bienhechor: m.lote?.bienhechor?.nombre ?? '—',
+      bienhechorId: m.lote?.bienhechor?.id ?? null,
+      cfdi: m.lote?.entrada?.cfdi ?? null,
+      origen: m.lote?.origen ?? null,
     }));
 
     const donativos: FilaDonativo[] = donativosRaw.map(mapDonativoDinero).map((d) => ({
       fecha: d.fecha,
+      bienhechorId: d.bienhechor.id,
       bienhechor: d.bienhechor.nombre,
       monto: d.monto,
       metodoPago: d.metodoPago,
@@ -261,7 +286,9 @@ export class ReporteMensualPdfUseCase implements UseCase<
   .pagina-fotos:last-child { break-after: auto; }
   .pagina-fotos figure { margin: 0; break-inside: avoid; height: 82mm; }
   .pagina-fotos img { width: 100%; height: 100%; object-fit: contain; border-radius: 4px; }
-  .subtitulo { color: ${COLOR_VINO}; font-size: 12px; margin: 16px 0 6px; }
+  .subtitulo { color: ${COLOR_VINO}; font-size: 12px; margin: 16px 0 6px; break-after: avoid; }
+  .subtotal { font-weight: 700; }
+  .totales-especie { break-inside: avoid; page-break-inside: avoid; }
   .vacio { color: #999; font-size: 11px; padding: 12px 0; }
 </style>
 </head>
@@ -282,11 +309,14 @@ export class ReporteMensualPdfUseCase implements UseCase<
   <section>
     ${encabezado('Inventario')}
     ${this.tablaMovimientos(movimientos)}
+    <h3 class="subtitulo">Donaciones en especie por bienhechor</h3>
+    ${this.tablaDonacionesEspecie(movimientos)}
   </section>
 
   <section>
     ${encabezado('Donativos')}
     ${this.tablaDonativos(donativos)}
+    ${this.tablaTotalesDonativos(donativos)}
   </section>
 
   <section>
@@ -347,24 +377,28 @@ export class ReporteMensualPdfUseCase implements UseCase<
   private tablaMovimientos(movimientos: FilaMovimiento[]): string {
     if (movimientos.length === 0) return '<p class="vacio">Sin movimientos registrados este mes.</p>';
 
-    const filas = movimientos
-      .map(
-        (m) => `<tr>
-          <td>${dayjs(m.fecha).format('DD/MM/YYYY')}</td>
-          <td>${escapar(m.productoNombre)}</td>
-          <td>${escapar(m.unidad)}</td>
-          <td>${ETIQUETA_TIPO_MOVIMIENTO[m.tipo]}</td>
-          <td>${escapar(m.motivo)}</td>
-          <td>${m.cantidad}</td>
-          <td>${escapar(m.registradoPor)}</td>
-        </tr>`,
-      )
-      .join('');
+    const filas = movimientos.map((m) => this.filaMovimiento(m)).join('');
 
     return `<table>
-      <thead><tr><th>Fecha</th><th>Producto</th><th>Unidad</th><th>Tipo</th><th>Motivo</th><th>Cantidad</th><th>Registró</th></tr></thead>
+      ${ENCABEZADO_MOVIMIENTOS}
       <tbody>${filas}</tbody>
     </table>`;
+  }
+
+  private filaMovimiento(m: FilaMovimiento): string {
+    return `<tr>
+          <td>${escapar(formatFechaSoloDia(m.fecha))}</td>
+          <td>${escapar(m.entradaId !== null ? `#${m.entradaId}` : '—')}</td>
+          <td>${escapar(m.productoNombre)}</td>
+          <td>${escapar(m.unidad)}</td>
+          <td>${escapar(ETIQUETA_TIPO_MOVIMIENTO[m.tipo])}</td>
+          <td>${escapar(m.motivo)}</td>
+          <td>${escapar(String(m.cantidad))}</td>
+          <td>${m.costoUnitario !== null ? formatoMoneda(m.costoUnitario) : '—'}</td>
+          <td>${m.costoUnitario !== null ? formatoMoneda(Number((Math.abs(m.cantidad) * m.costoUnitario).toFixed(2))) : '—'}</td>
+          <td>${escapar(m.bienhechor)}</td>
+          <td>${m.cfdi ? escapar(m.cfdi) : '—'}</td>
+        </tr>`;
   }
 
   private tablaDonativos(donativos: FilaDonativo[]): string {
@@ -373,9 +407,9 @@ export class ReporteMensualPdfUseCase implements UseCase<
     const filas = donativos
       .map(
         (d) => `<tr>
-          <td>${dayjs(d.fecha).format('DD/MM/YYYY')}</td>
+          <td>${formatFechaSoloDia(new Date(d.fecha))}</td>
           <td>${escapar(d.bienhechor)}</td>
-          <td>${d.monto.toLocaleString('es-MX', { style: 'currency', currency: 'MXN' })}</td>
+          <td>${formatoMoneda(d.monto)}</td>
           <td>${ETIQUETA_METODO_PAGO[d.metodoPago]}</td>
           <td>${d.folioRecibo ? escapar(d.folioRecibo) : '—'}</td>
         </tr>`,
@@ -385,6 +419,70 @@ export class ReporteMensualPdfUseCase implements UseCase<
     return `<table>
       <thead><tr><th>Fecha</th><th>Bienhechor</th><th>Monto</th><th>Método</th><th>Folio</th></tr></thead>
       <tbody>${filas}</tbody>
+    </table>`;
+  }
+
+  private tablaDonacionesEspecie(movimientos: FilaMovimiento[]): string {
+    const donaciones = movimientos.filter(
+      (m) => m.tipo === TipoMovimiento.ENTRADA && m.origen === OrigenLote.DONADO,
+    );
+    if (donaciones.length === 0) return '<p class="vacio">Sin donaciones en especie este mes.</p>';
+
+    const porBienhechor = new Map<number | null, { nombre: string; movimientos: FilaMovimiento[] }>();
+    for (const m of donaciones) {
+      const grupo = porBienhechor.get(m.bienhechorId) ?? {
+        nombre: m.bienhechorId === null ? 'Sin bienhechor' : m.bienhechor,
+        movimientos: [],
+      };
+      grupo.movimientos.push(m);
+      porBienhechor.set(m.bienhechorId, grupo);
+    }
+
+    const contarLotes = (filas: FilaMovimiento[]) =>
+      new Set(filas.flatMap((m) => m.entradaId === null ? [] : [m.entradaId])).size;
+    const sumarCosto = (filas: FilaMovimiento[]) => filas.reduce(
+      (total, m) => total + (m.costoUnitario !== null ? Math.abs(m.cantidad) * m.costoUnitario : 0),
+      0,
+    );
+    const grupos = [...porBienhechor.values()].sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
+    const tablas = grupos.map((grupo, indice) => `
+      <h3 class="subtitulo">${escapar(grupo.nombre)}</h3>
+      <table>
+        ${ENCABEZADO_MOVIMIENTOS}
+        <tbody>
+          ${grupo.movimientos.map((m) => this.filaMovimiento(m)).join('')}
+          ${indice === grupos.length - 1 ? '</tbody><tbody class="totales-especie">' : ''}
+          <tr class="subtotal">
+            <td>Subtotal</td><td>${contarLotes(grupo.movimientos)} lote(s)</td>
+            <td colspan="6"></td><td>${formatoMoneda(sumarCosto(grupo.movimientos))}</td><td colspan="2"></td>
+          </tr>
+          ${indice === grupos.length - 1 ? `<tr><td colspan="11">Total donaciones en especie: ${contarLotes(donaciones)} lote(s) · ${formatoMoneda(sumarCosto(donaciones))}</td></tr>` : ''}
+        </tbody>
+      </table>`).join('');
+
+    return tablas;
+  }
+
+  private tablaTotalesDonativos(donativos: FilaDonativo[]): string {
+    if (donativos.length === 0) return '';
+
+    const porBienhechor = new Map<number, { nombre: string; cantidad: number; monto: number }>();
+    for (const d of donativos) {
+      const total = porBienhechor.get(d.bienhechorId) ?? { nombre: d.bienhechor, cantidad: 0, monto: 0 };
+      total.cantidad += 1;
+      total.monto += d.monto;
+      porBienhechor.set(d.bienhechorId, total);
+    }
+    const totales = [...porBienhechor.values()].sort((a, b) => b.monto - a.monto);
+    const filas = totales.map((b) => `<tr>
+      <td>${escapar(b.nombre)}</td><td>${escapar(String(b.cantidad))}</td><td>${formatoMoneda(b.monto)}</td>
+    </tr>`).join('');
+    const montoTotal = totales.reduce((total, b) => total + b.monto, 0);
+
+    return `<h3 class="subtitulo">Totales por bienhechor</h3>
+    <table>
+      <thead><tr><th>Bienhechor</th><th>Donativos</th><th>Monto total</th></tr></thead>
+      <tbody>${filas}<tr><td><strong>Total</strong></td><td>${escapar(String(donativos.length))}</td><td>${formatoMoneda(montoTotal)}</td></tr></tbody>
     </table>`;
   }
 

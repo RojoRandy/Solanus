@@ -4,6 +4,7 @@ import { UseCase } from '@/common/interfaces/use-case.interface';
 import { PrismaService } from '@/prisma/prisma.service';
 import { InventarioErrors } from '@/common/errors/inventario.errors';
 import { parseFechaSoloDia } from '@/common/utils/date';
+import { validarPeriodoAbierto } from './periodo-cerrado.util';
 import { RegistrarAjusteDto } from '../dto/ajuste.dto';
 
 export interface RegistrarAjusteArgs {
@@ -43,12 +44,16 @@ export class RegistrarAjusteUseCase implements UseCase<
       const motivo = await tx.motivoMovimiento.findUnique({ where: { id: dto.motivoId } });
       if (!motivo) throw InventarioErrors.Exceptions.MOTIVO_NOT_FOUND({ motivoId: dto.motivoId });
 
+      const fechaMovimiento = parseFechaSoloDia();
+
       if (dto.cantidad > 0) {
         if (!dto.loteId) throw InventarioErrors.Exceptions.AJUSTE_REQUIERE_LOTE();
 
         const lote = await tx.loteInventario.findUnique({ where: { id: dto.loteId } });
         if (!lote || lote.varianteId !== dto.varianteId)
           throw InventarioErrors.Exceptions.LOTE_NOT_FOUND({ loteId: dto.loteId });
+
+        await validarPeriodoAbierto(tx, fechaMovimiento);
 
         await tx.loteInventario.update({
           where: { id: lote.id },
@@ -65,7 +70,7 @@ export class RegistrarAjusteUseCase implements UseCase<
             notas: dto.notas,
             registradoPorId,
             // Ver el comentario en registrar-entrada.usecase.ts.
-            fecha: parseFechaSoloDia(),
+            fecha: fechaMovimiento,
           },
         });
 
@@ -96,6 +101,8 @@ export class RegistrarAjusteUseCase implements UseCase<
           disponible: disponibleTotal,
         });
 
+      await validarPeriodoAbierto(tx, fechaMovimiento);
+
       let restante = aDescontar;
       const lotesAfectados: { loteId: number; cantidad: number }[] = [];
 
@@ -120,7 +127,7 @@ export class RegistrarAjusteUseCase implements UseCase<
             notas: dto.notas,
             registradoPorId,
             // Ver el comentario en registrar-entrada.usecase.ts.
-            fecha: parseFechaSoloDia(),
+            fecha: fechaMovimiento,
           },
         });
 

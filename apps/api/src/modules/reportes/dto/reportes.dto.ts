@@ -2,6 +2,23 @@ import { ApiProperty } from '@nestjs/swagger';
 import { HorarioComida } from '@prisma/client';
 import { IsDateString, IsOptional } from 'class-validator';
 
+export class CerrarMesDto {
+  @ApiProperty({ description: 'Fecha inicial del cierre (YYYY-MM-DD)', example: '2026-10-01' })
+  @IsDateString()
+  desde: string;
+
+  @ApiProperty({ description: 'Fecha final del cierre (YYYY-MM-DD)', example: '2026-10-31' })
+  @IsDateString()
+  hasta: string;
+}
+
+export class CierreInventarioResponseDto {
+  @ApiProperty() id: number;
+  @ApiProperty() desde: Date;
+  @ApiProperty() hasta: Date;
+  @ApiProperty() lotesAjustados: number;
+}
+
 export class RangoFechaQueryDto {
   @ApiProperty({
     required: false,

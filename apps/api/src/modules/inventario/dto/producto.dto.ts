@@ -7,12 +7,19 @@ import {
   IsOptional,
   IsPositive,
   IsString,
+  Matches,
+  ValidateIf,
 } from 'class-validator';
 import { EstadoProducto } from '@prisma/client';
 import { PaginationQueryDto } from '@/common/dto/pagination.dto';
 
 /** El producto identifica una presentación única del catálogo. */
 export class CrearProductoDto {
+  @ApiProperty({ required: false, nullable: true, example: '50221200' })
+  @IsOptional()
+  @Matches(/^\d{8}$/, { message: 'La clave SAT debe tener 8 dígitos' })
+  claveSat?: string | null;
+
   @ApiProperty({ example: 'Frijol bayo' })
   @IsString()
   nombre: string;
@@ -52,6 +59,12 @@ export class CrearProductoDto {
 }
 
 export class ActualizarProductoDto {
+  @ApiProperty({ required: false, nullable: true, example: '50221200' })
+  @IsOptional()
+  @ValidateIf((_, v) => v !== null && v !== '')
+  @Matches(/^\d{8}$/, { message: 'La clave SAT debe tener 8 dígitos' })
+  claveSat?: string | null;
+
   @ApiProperty({ required: false })
   @IsOptional()
   @IsString()
@@ -140,6 +153,9 @@ export class ContenidoProductoDto {
 }
 
 export class ProductoResponseDto {
+  @ApiProperty({ type: String, nullable: true, example: '50221200' })
+  claveSat: string | null;
+
   @ApiProperty()
   id: number;
   @ApiProperty()
@@ -160,4 +176,19 @@ export class ProductoResponseDto {
   activo: boolean;
   @ApiProperty()
   createdAt: Date;
+}
+
+export class ListarClavesSatQueryDto {
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  buscar?: string;
+}
+
+export class ClaveSatResponseDto {
+  @ApiProperty()
+  clave: string;
+
+  @ApiProperty()
+  descripcion: string;
 }

@@ -4,7 +4,13 @@ import { UseCase } from '@/common/interfaces/use-case.interface';
 import { PrismaService } from '@/prisma/prisma.service';
 import { InventarioErrors } from '@/common/errors/inventario.errors';
 import { parseFechaSoloDia } from '@/common/utils/date';
-import { RegistrarEntradaDto, LoteResponseDto } from '../dto/entrada.dto';
+import { validarPeriodoAbierto } from './periodo-cerrado.util';
+import {
+  RegistrarEntradaDto,
+  RegistrarEntradaResponseDto,
+  LineaEntradaDto,
+  LoteResponseDto,
+} from '../dto/entrada.dto';
 import { validarCategoria } from './crear-producto.usecase';
 import { upsertVariante } from './upsert-variante.util';
 
@@ -31,7 +37,7 @@ export const LOTE_SELECT = {
   costoUnitario: true,
   costoTotal: true,
   origen: true,
-  cfdi: true,
+  entrada: { select: { id: true, cfdi: true } },
   variante: {
     select: {
       id: true,
@@ -64,136 +70,188 @@ export function mapLote(lote: LoteConRelaciones): LoteResponseDto {
     cantidadDisponible: Number(lote.cantidadDisponible),
     fechaCaducidad: lote.fechaCaducidad,
     fechaIngreso: lote.fechaIngreso,
-    costoUnitario: lote.costoUnitario === null ? null : Number(lote.costoUnitario),
+    costoUnitario:
+      lote.costoUnitario === null ? null : Number(lote.costoUnitario),
     costoTotal: lote.costoTotal === null ? null : Number(lote.costoTotal),
     origen: lote.origen,
     bienhechor: lote.bienhechor,
-    cfdi: lote.cfdi,
+    entradaId: lote.entrada.id,
+    cfdi: lote.entrada.cfdi,
   };
 }
 
-/**
- * Registra la entrada de un lote de inventario (compra o donación), creando
- * el Producto y/o la VarianteInventario al vuelo si no existen todavía. Crea
- * también el MovimientoInventario de auditoría. Todo en una transacción.
- */
+/** Obtiene el producto existente o lo crea con los datos de la línea. */
+async function obtenerOCrearProducto(
+  tx: Prisma.TransactionClient,
+  linea: LineaEntradaDto,
+): Promise<Producto> {
+  let producto: Producto;
+
+  if (linea.productoId) {
+    const existente = await tx.producto.findUnique({
+      where: { id: linea.productoId },
+    });
+    if (!existente)
+      throw InventarioErrors.Exceptions.PRODUCTO_NOT_FOUND({
+        id: linea.productoId,
+      });
+    producto = existente;
+  } else {
+    // La validación inicial garantiza que se recibieron los datos del producto nuevo.
+    const productoNuevo = linea.productoNuevo!;
+    await validarCategoria(tx, productoNuevo.categoriaId);
+    const unidad = await tx.unidadMedida.findUnique({
+      where: { id: productoNuevo.unidadId },
+    });
+    if (!unidad)
+      throw InventarioErrors.Exceptions.UNIDAD_NOT_FOUND({
+        unidadId: productoNuevo.unidadId,
+      });
+
+    if (unidad.indicarContenido) {
+      if (
+        productoNuevo.contenidoCantidad == null ||
+        productoNuevo.contenidoUnidadId == null
+      )
+        throw InventarioErrors.Exceptions.CONTENIDO_REQUERIDO();
+    } else if (
+      productoNuevo.contenidoCantidad != null ||
+      productoNuevo.contenidoUnidadId != null
+    ) {
+      throw InventarioErrors.Exceptions.CONTENIDO_NO_APLICA();
+    }
+
+    producto = await tx.producto.create({
+      data: {
+        nombre: productoNuevo.nombre,
+        claveSat: productoNuevo.claveSat ?? null,
+        categoriaId: productoNuevo.categoriaId,
+        unidadId: productoNuevo.unidadId,
+        estado: productoNuevo.estado,
+        marca: productoNuevo.marca ?? null,
+        granel: productoNuevo.granel ?? false,
+        contenidoCantidad: productoNuevo.contenidoCantidad ?? null,
+        contenidoUnidadId: productoNuevo.contenidoUnidadId ?? null,
+      },
+    });
+  }
+  return producto;
+}
+
+/** Registra una entrada multiproducto y sus movimientos en una sola transacción. */
 @Injectable()
 export class RegistrarEntradaUseCase implements UseCase<
   RegistrarEntradaArgs,
-  LoteResponseDto
+  RegistrarEntradaResponseDto
 > {
   constructor(private readonly prisma: PrismaService) {}
 
-  async execute({ dto, registradoPorId }: RegistrarEntradaArgs): Promise<LoteResponseDto> {
-    if (dto.cantidadInicial <= 0)
-      throw InventarioErrors.Exceptions.CANTIDAD_INVALIDA({ cantidadInicial: dto.cantidadInicial });
-
-    if (!dto.productoId && !dto.productoNuevo)
+  async execute({
+    dto,
+    registradoPorId,
+  }: RegistrarEntradaArgs): Promise<RegistrarEntradaResponseDto> {
+    if (dto.lineas.some((linea) => !linea.productoId && !linea.productoNuevo))
       throw InventarioErrors.Exceptions.PRODUCTO_O_PRODUCTO_NUEVO_REQUERIDO();
 
     if (dto.origen === OrigenLote.DONADO && !dto.bienhechorId)
       throw InventarioErrors.Exceptions.BIENHECHOR_REQUERIDO();
 
-    if (!dto.noCaduca && !dto.fechaCaducidad)
-      throw InventarioErrors.Exceptions.CADUCIDAD_REQUERIDA();
+    if (
+      dto.origen === OrigenLote.COMPRADO &&
+      dto.lineas.some((linea) => linea.costoUnitario == null)
+    )
+      throw InventarioErrors.Exceptions.COSTO_UNITARIO_REQUERIDO();
 
-    const costoTotal = dto.costoTotal ?? dto.cantidadInicial * dto.costoUnitario;
+    for (const linea of dto.lineas) {
+      if (linea.cantidad <= 0)
+        throw InventarioErrors.Exceptions.CANTIDAD_INVALIDA({
+          cantidad: linea.cantidad,
+        });
+      if (!linea.noCaduca && !linea.fechaCaducidad)
+        throw InventarioErrors.Exceptions.CADUCIDAD_REQUERIDA();
+    }
+
     const claveMotivo = CLAVE_MOTIVO_POR_ORIGEN[dto.origen];
-
-    const lote = await this.prisma.$transaction(async (tx) => {
-      let producto: Producto;
-
-      if (dto.productoId) {
-        const existente = await tx.producto.findUnique({ where: { id: dto.productoId } });
-        if (!existente)
-          throw InventarioErrors.Exceptions.PRODUCTO_NOT_FOUND({ id: dto.productoId });
-        producto = existente;
-      } else {
-        // La validación inicial garantiza que se recibieron los datos del producto nuevo.
-        const productoNuevo = dto.productoNuevo!;
-        await validarCategoria(tx, productoNuevo.categoriaId);
-        const unidad = await tx.unidadMedida.findUnique({
-          where: { id: productoNuevo.unidadId },
-        });
-        if (!unidad)
-          throw InventarioErrors.Exceptions.UNIDAD_NOT_FOUND({
-            unidadId: productoNuevo.unidadId,
-          });
-
-        if (unidad.indicarContenido) {
-          if (productoNuevo.contenidoCantidad == null || productoNuevo.contenidoUnidadId == null)
-            throw InventarioErrors.Exceptions.CONTENIDO_REQUERIDO();
-        } else if (productoNuevo.contenidoCantidad != null || productoNuevo.contenidoUnidadId != null) {
-          throw InventarioErrors.Exceptions.CONTENIDO_NO_APLICA();
-        }
-
-        producto = await tx.producto.create({
-          data: {
-            nombre: productoNuevo.nombre,
-            categoriaId: productoNuevo.categoriaId,
-            unidadId: productoNuevo.unidadId,
-            estado: productoNuevo.estado,
-            marca: productoNuevo.marca ?? null,
-            granel: productoNuevo.granel ?? false,
-            contenidoCantidad: productoNuevo.contenidoCantidad ?? null,
-            contenidoUnidadId: productoNuevo.contenidoUnidadId ?? null,
-          },
-        });
-      }
-
+    return this.prisma.$transaction(async (tx) => {
       if (dto.bienhechorId) {
-        const bienhechor = await tx.bienhechor.findUnique({ where: { id: dto.bienhechorId } });
+        const bienhechor = await tx.bienhechor.findUnique({
+          where: { id: dto.bienhechorId },
+        });
         if (!bienhechor)
-          throw InventarioErrors.Exceptions.BIENHECHOR_NOT_FOUND({ bienhechorId: dto.bienhechorId });
+          throw InventarioErrors.Exceptions.BIENHECHOR_NOT_FOUND({
+            bienhechorId: dto.bienhechorId,
+          });
       }
 
-      const motivo = await tx.motivoMovimiento.findUnique({ where: { clave: claveMotivo } });
-      if (!motivo) throw InventarioErrors.Exceptions.MOTIVO_NOT_FOUND({ clave: claveMotivo });
-
-      const variante = await upsertVariante(tx, {
-        productoId: producto.id,
-        unidadId: producto.unidadId,
-        estado: producto.estado,
+      const motivo = await tx.motivoMovimiento.findUnique({
+        where: { clave: claveMotivo },
       });
+      if (!motivo)
+        throw InventarioErrors.Exceptions.MOTIVO_NOT_FOUND({
+          clave: claveMotivo,
+        });
 
-      const loteCreado = await tx.loteInventario.create({
+      const fechaIngreso = parseFechaSoloDia(dto.fechaIngreso);
+      await validarPeriodoAbierto(tx, fechaIngreso);
+
+      const entrada = await tx.entradaInventario.create({
         data: {
-          varianteId: variante.id,
-          marca: producto.granel ? null : producto.marca,
-          granel: producto.granel,
-          presentacion: dto.presentacion,
-          ubicacion: dto.ubicacion,
-          cantidadInicial: dto.cantidadInicial,
-          cantidadDisponible: dto.cantidadInicial,
-          fechaCaducidad: dto.noCaduca ? null : parseFechaSoloDia(dto.fechaCaducidad),
-          fechaIngreso: parseFechaSoloDia(dto.fechaIngreso),
-          costoUnitario: dto.costoUnitario,
-          costoTotal,
+          fechaIngreso,
           origen: dto.origen,
           bienhechorId: dto.bienhechorId,
           cfdi: dto.cfdi,
         },
-        select: LOTE_SELECT,
       });
+      const lotes: LoteResponseDto[] = [];
 
-      await tx.movimientoInventario.create({
-        data: {
-          varianteId: variante.id,
-          loteId: loteCreado.id,
-          tipo: 'ENTRADA',
-          motivoId: motivo.id,
-          cantidad: dto.cantidadInicial,
-          registradoPorId,
-          // El día del movimiento se captura sin hora (se edita con un DatePicker,
-          // ver actualizar-movimiento.usecase.ts) — usar now() aquí correría la
-          // fecha un día después de las 18:00 hora de México al mostrarla en UTC.
-          fecha: parseFechaSoloDia(),
-        },
-      });
+      for (const linea of dto.lineas) {
+        const producto = await obtenerOCrearProducto(tx, linea);
+        const variante = await upsertVariante(tx, {
+          productoId: producto.id,
+          unidadId: producto.unidadId,
+          estado: producto.estado,
+        });
 
-      return loteCreado;
+        const loteCreado = await tx.loteInventario.create({
+          data: {
+            varianteId: variante.id,
+            marca: producto.granel ? null : producto.marca,
+            granel: producto.granel,
+            entradaId: entrada.id,
+            ubicacion: dto.ubicacion,
+            cantidadInicial: linea.cantidad,
+            cantidadDisponible: linea.cantidad,
+            fechaCaducidad: linea.noCaduca
+              ? null
+              : parseFechaSoloDia(linea.fechaCaducidad),
+            fechaIngreso: entrada.fechaIngreso,
+            costoUnitario: linea.costoUnitario,
+            costoTotal: linea.costoUnitario
+              ? linea.cantidad * linea.costoUnitario
+              : null,
+            origen: entrada.origen,
+            bienhechorId: entrada.bienhechorId,
+          },
+          select: LOTE_SELECT,
+        });
+
+        await tx.movimientoInventario.create({
+          data: {
+            varianteId: variante.id,
+            loteId: loteCreado.id,
+            tipo: 'ENTRADA',
+            motivoId: motivo.id,
+            cantidad: linea.cantidad,
+            registradoPorId,
+            // El movimiento de entrada lleva la fecha de ingreso para que
+            // reportes y cierres lo ubiquen en el periodo correcto.
+            fecha: fechaIngreso,
+          },
+        });
+
+        lotes.push(mapLote(loteCreado));
+      }
+      return { entradaId: entrada.id, lotes };
     });
-
-    return mapLote(lote);
   }
 }

@@ -1,3 +1,4 @@
+import { ListarClavesSatUseCase } from './usecases/listar-claves-sat.usecase';
 import { Module } from '@nestjs/common';
 import { AuthModule } from '../auth/auth.module';
 import { InventarioController } from './inventario.controller';
@@ -9,8 +10,8 @@ import { EliminarProductoUseCase } from './usecases/eliminar-producto.usecase';
 import { ListarVariantesUseCase } from './usecases/listar-variantes.usecase';
 import { ObtenerVarianteUseCase } from './usecases/obtener-variante.usecase';
 import { ActualizarVarianteUseCase } from './usecases/actualizar-variante.usecase';
+import { ActualizarCfdiEntradaUseCase } from './usecases/actualizar-cfdi-entrada.usecase';
 import { RegistrarEntradaUseCase } from './usecases/registrar-entrada.usecase';
-import { RegistrarDonativoUseCase } from './usecases/registrar-donativo.usecase';
 import { RegistrarSalidaInventarioUseCase } from './usecases/registrar-salida.usecase';
 import { RegistrarAjusteUseCase } from './usecases/registrar-ajuste.usecase';
 import { ListarMovimientosUseCase } from './usecases/listar-movimientos.usecase';
@@ -37,6 +38,7 @@ import {
   imports: [AuthModule],
   controllers: [InventarioController],
   providers: [
+    ListarClavesSatUseCase,
     CrearProductoUseCase,
     ListarProductosUseCase,
     ObtenerProductoUseCase,
@@ -46,7 +48,7 @@ import {
     ObtenerVarianteUseCase,
     ActualizarVarianteUseCase,
     RegistrarEntradaUseCase,
-    RegistrarDonativoUseCase,
+    ActualizarCfdiEntradaUseCase,
     RegistrarSalidaInventarioUseCase,
     RegistrarAjusteUseCase,
     ListarMovimientosUseCase,

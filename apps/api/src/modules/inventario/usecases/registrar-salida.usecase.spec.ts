@@ -25,6 +25,7 @@ function buildPrismaMock(overrides: {
   const motivo = 'motivo' in overrides ? overrides.motivo : { id: 1 };
 
   const tx = {
+    cierreInventario: { findFirst: jest.fn().mockResolvedValue(null) },
     varianteInventario: {
       findUnique: jest.fn().mockResolvedValue(item),
     },
@@ -54,6 +55,25 @@ describe('RegistrarSalidaInventarioUseCase', () => {
     motivoId: 1,
     registradoPorId: 99,
   };
+
+  it('rechaza un periodo cerrado sin descontar stock ni crear movimientos', async () => {
+    const { prisma, tx, loteUpdate, movimientoCreate } = buildPrismaMock({
+      lotes: [{ id: 100, cantidadDisponible: 15, fechaCaducidad: null }],
+    });
+    tx.cierreInventario.findFirst.mockResolvedValue({
+      desde: new Date('2026-10-01T00:00:00.000Z'),
+      hasta: new Date('2026-10-31T00:00:00.000Z'),
+    });
+
+    await expect(
+      new RegistrarSalidaInventarioUseCase(prisma).execute(args),
+    ).rejects.toMatchObject({
+      status: 409,
+      response: { code: 'PERIODO_CERRADO' },
+    });
+    expect(loteUpdate).not.toHaveBeenCalled();
+    expect(movimientoCreate).not.toHaveBeenCalled();
+  });
 
   it('descuenta de un solo lote cuando alcanza para cubrir la cantidad', async () => {
     const { prisma, loteUpdate, movimientoCreate } = buildPrismaMock({

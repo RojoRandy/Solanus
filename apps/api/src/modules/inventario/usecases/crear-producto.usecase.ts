@@ -72,6 +72,7 @@ export class CrearProductoUseCase implements UseCase<
 
     const producto = await this.prisma.producto.create({
       data: {
+        claveSat: dto.claveSat ?? null,
         unidadId: dto.unidadId,
         estado: dto.estado,
         marca: dto.marca ?? null,

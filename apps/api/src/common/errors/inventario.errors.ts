@@ -7,6 +7,10 @@ import {
 import { ErrorResponseDto } from '../dto/response.dto';
 
 const Exceptions = {
+  PERIODO_CERRADO: (data: { desde: Date; hasta: Date }) =>
+    new ConflictException(Responses.PERIODO_CERRADO(data)),
+  ENTRADA_NOT_FOUND: (data?: any) =>
+    new NotFoundException(Responses.ENTRADA_NOT_FOUND(data)),
   PRODUCTO_NOT_FOUND: (data?: any) =>
     new NotFoundException(Responses.PRODUCTO_NOT_FOUND(data)),
   PRODUCTO_DUPLICADO: (data?: any) =>
@@ -63,11 +67,25 @@ const Exceptions = {
     new BadRequestException(Responses.AJUSTE_REQUIERE_LOTE(data)),
   AJUSTE_CANTIDAD_CERO: (data?: any) =>
     new BadRequestException(Responses.AJUSTE_CANTIDAD_CERO(data)),
+  COSTO_UNITARIO_REQUERIDO: (data?: any) =>
+    new BadRequestException(Responses.COSTO_UNITARIO_REQUERIDO(data)),
   CADUCIDAD_REQUERIDA: (data?: any) =>
     new BadRequestException(Responses.CADUCIDAD_REQUERIDA(data)),
 };
 
 const Responses = {
+  PERIODO_CERRADO: (data: { desde: Date; hasta: Date }) =>
+    new ErrorResponseDto(
+      'PERIODO_CERRADO',
+      `El periodo del ${data.desde.toISOString().slice(0, 10).split('-').reverse().join('/')} al ${data.hasta.toISOString().slice(0, 10).split('-').reverse().join('/')} está cerrado; no se pueden registrar ni editar movimientos en él`,
+      data,
+    ),
+  ENTRADA_NOT_FOUND: (data?: any) =>
+    new ErrorResponseDto(
+      'ENTRADA_NOT_FOUND',
+      'No se encontró la entrada de inventario',
+      data,
+    ),
   PRODUCTO_NOT_FOUND: (data?: any) =>
     new ErrorResponseDto(
       'PRODUCTO_NOT_FOUND',
@@ -222,6 +240,12 @@ const Responses = {
     new ErrorResponseDto(
       'AJUSTE_CANTIDAD_CERO',
       'La cantidad del ajuste no puede ser cero',
+      data,
+    ),
+  COSTO_UNITARIO_REQUERIDO: (data?: any) =>
+    new ErrorResponseDto(
+      'COSTO_UNITARIO_REQUERIDO',
+      'Debe indicar el costo unitario de cada línea cuando el origen es una compra',
       data,
     ),
   CADUCIDAD_REQUERIDA: (data?: any) =>

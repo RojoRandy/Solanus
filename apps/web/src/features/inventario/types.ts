@@ -1,3 +1,8 @@
+export interface ClaveSat {
+  clave: string;
+  descripcion: string;
+}
+
 export interface CategoriaRef {
   id: number;
   nombre: string;
@@ -28,6 +33,7 @@ export const ETIQUETA_ESTADO: Record<EstadoProducto, string> = {
 };
 
 export interface Producto {
+  claveSat: string | null;
   id: number;
   nombre: string;
   categoria: CategoriaRef;
@@ -41,6 +47,7 @@ export interface Producto {
 }
 
 export interface CrearProductoInput {
+  claveSat?: string | null;
   nombre: string;
   categoriaId: number;
   unidadId: number;
@@ -72,25 +79,36 @@ export interface ActualizarVarianteInput {
 
 export type OrigenLote = 'COMPRADO' | 'DONADO';
 
-/**
- * Orden de captura de la pantalla "Registrar entrada": cantidad →
- * costo unitario → costo total → cfdi → caducidad →
- * ingreso → origen → bienhechor → presentación/ubicación (opcionales).
- */
-export interface RegistrarEntradaInput {
+export interface LineaEntradaInput {
   productoId?: number;
   productoNuevo?: CrearProductoInput;
-  cantidadInicial: number;
-  costoUnitario: number;
-  costoTotal?: number;
-  cfdi?: string;
+  cantidad: number;
+  costoUnitario?: number;
   fechaCaducidad?: string;
   noCaduca?: boolean;
+}
+
+export interface RegistrarEntradaInput {
   fechaIngreso?: string;
   origen: OrigenLote;
   bienhechorId?: number;
-  presentacion?: string;
+  cfdi?: string;
   ubicacion?: string;
+  lineas: LineaEntradaInput[];
+}
+
+export interface RegistrarEntradaResponse {
+  entradaId: number;
+  lotes: Lote[];
+}
+
+export interface ActualizarCfdiEntradaInput {
+  cfdi: string | null;
+}
+
+export interface EntradaCfdiResponse {
+  id: number;
+  cfdi: string | null;
 }
 
 export interface LoteVarianteRef {
@@ -101,6 +119,7 @@ export interface LoteVarianteRef {
 }
 
 export interface Lote {
+  entradaId: number;
   id: number;
   variante: LoteVarianteRef;
   marca: string | null;
@@ -163,11 +182,21 @@ export interface RegistrarAjusteInput {
   notas: string;
 }
 
+export interface MovimientoLote {
+  numero: number;
+  costoUnitario: number | null;
+  costoTotal: number | null;
+  origen: OrigenLote;
+  bienhechor: { id: number; nombre: string } | null;
+  cfdi: string | null;
+}
+
 export interface Movimiento {
   id: number;
   producto: { id: number; nombre: string };
   variante: { id: number; estado: EstadoProducto; unidad: { id: number; abrevia: string } };
   loteId: number | null;
+  lote: MovimientoLote | null;
   tipo: TipoMovimiento;
   motivo: MotivoRef;
   cantidad: number;

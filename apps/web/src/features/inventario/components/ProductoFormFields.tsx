@@ -1,17 +1,19 @@
-import { useId, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 import { Plus } from 'lucide-react';
+import { Autocomplete, AutocompleteInput, AutocompleteContent, AutocompleteList, AutocompleteItem } from '@/components/ui/autocomplete';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useCategorias, useUnidades } from '../api';
+import { useCategorias, useClavesSat, useUnidades } from '../api';
 import { ETIQUETA_ESTADO, type EstadoProducto } from '../types';
 import { NuevaCategoriaDialog } from './NuevaCategoriaDialog';
 import { NuevaUnidadDialog } from './NuevaUnidadDialog';
 
 export interface ProductoFormFieldsValue {
   nombre: string;
+  claveSat?: string;
   categoriaId?: number;
   unidadId?: number;
   estado: EstadoProducto;
@@ -32,6 +34,19 @@ export function ProductoFormFields({ value, onChange, errors }: ProductoFormFiel
   const id = useId();
   const { data: categorias } = useCategorias();
   const { data: unidades } = useUnidades();
+  const claveSat = value.claveSat ?? '';
+  const [buscarClaveSat, setBuscarClaveSat] = useState(claveSat);
+  useEffect(() => {
+    const timeout = setTimeout(() => setBuscarClaveSat(claveSat), 200);
+    return () => clearTimeout(timeout);
+  }, [claveSat]);
+  const { data: clavesSat } = useClavesSat(buscarClaveSat);
+  const descripcionClaveSat = clavesSat?.find(({ clave }) => clave === claveSat)?.descripcion;
+  const ayudaClaveSat = descripcionClaveSat ?? (
+    /^\d{8}$/.test(claveSat)
+      ? 'Clave fuera de la lista sugerida (se guardará tal cual)'
+      : 'Escribe la clave o el nombre del producto para ver sugerencias'
+  );
   const [nuevaCategoriaAbierta, setNuevaCategoriaAbierta] = useState(false);
   const [nuevaUnidadAbierta, setNuevaUnidadAbierta] = useState(false);
   const indicarContenido = unidades?.find((unidad) => unidad.id === value.unidadId)?.indicarContenido;
@@ -47,6 +62,37 @@ export function ProductoFormFields({ value, onChange, errors }: ProductoFormFiel
         <Label htmlFor={`${id}-nombre`}>Nombre</Label>
         <Input id={`${id}-nombre`} value={value.nombre} onChange={(event) => onChange({ ...value, nombre: event.target.value })} placeholder="Frijol" />
         {error('nombre')}
+      </div>
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor={`${id}-clave-sat`}>Clave SAT</Label>
+        <Autocomplete
+          items={clavesSat ?? []}
+          value={claveSat}
+          onValueChange={(claveSat) => onChange({ ...value, claveSat })}
+          itemToStringValue={(item) => item.clave}
+          filter={null}
+          mode="list"
+          openOnInputClick
+        >
+          <AutocompleteInput
+            id={`${id}-clave-sat`}
+            inputMode="text"
+            aria-describedby={`${id}-clave-sat-ayuda`}
+            aria-invalid={Boolean(errors?.claveSat)}
+            placeholder="Opcional — clave o nombre del producto"
+          />
+          <AutocompleteContent>
+            <AutocompleteList>
+              {(item: { clave: string; descripcion: string }) => (
+                <AutocompleteItem key={item.clave} value={item}>
+                  {item.clave} — {item.descripcion}
+                </AutocompleteItem>
+              )}
+            </AutocompleteList>
+          </AutocompleteContent>
+        </Autocomplete>
+        <p id={`${id}-clave-sat-ayuda`} className="text-xs text-muted-foreground">{ayudaClaveSat}</p>
+        {error('claveSat')}
       </div>
       <div className="flex flex-col gap-1.5">
         <Label htmlFor={`${id}-categoria`}>Categoría</Label>

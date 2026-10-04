@@ -5,11 +5,13 @@ import { ReporteAsistenciaUseCase } from './usecases/reporte-asistencia.usecase'
 import { ReporteInventarioUseCase } from './usecases/reporte-inventario.usecase';
 import { ReporteDonativosUseCase } from './usecases/reporte-donativos.usecase';
 import { ReporteMensualPdfUseCase } from './usecases/reporte-mensual-pdf.usecase';
+import { CerrarMesUseCase } from './usecases/cerrar-mes.usecase';
 
 @Module({
   imports: [AuthModule],
   controllers: [ReportesController],
   providers: [
+    CerrarMesUseCase,
     ReporteAsistenciaUseCase,
     ReporteInventarioUseCase,
     ReporteDonativosUseCase,

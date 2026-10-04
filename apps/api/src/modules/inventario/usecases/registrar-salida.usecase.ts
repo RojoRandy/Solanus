@@ -4,6 +4,7 @@ import { UseCase } from '@/common/interfaces/use-case.interface';
 import { PrismaService } from '@/prisma/prisma.service';
 import { InventarioErrors } from '@/common/errors/inventario.errors';
 import { parseFechaSoloDia } from '@/common/utils/date';
+import { validarPeriodoAbierto } from './periodo-cerrado.util';
 
 export interface RegistrarSalidaArgs {
   varianteId: number;
@@ -65,6 +66,9 @@ export class RegistrarSalidaInventarioUseCase implements UseCase<
           disponible: disponibleTotal,
         });
 
+      const fechaMovimiento = parseFechaSoloDia();
+      await validarPeriodoAbierto(tx, fechaMovimiento);
+
       let restante = cantidad;
       const lotesAfectados: { loteId: number; cantidad: number }[] = [];
 
@@ -92,7 +96,7 @@ export class RegistrarSalidaInventarioUseCase implements UseCase<
             // Ver el comentario en registrar-entrada.usecase.ts: el día del
             // movimiento se captura sin hora, now() lo correría un día tras
             // las 18:00 hora de México al mostrarlo en UTC.
-            fecha: parseFechaSoloDia(),
+            fecha: fechaMovimiento,
           },
         });
 

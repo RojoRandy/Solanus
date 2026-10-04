@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, ClipboardList, PencilLine, SlidersHorizontal } from 'lucide-react';
+import { ArrowLeft, ClipboardList, FileText, PencilLine, SlidersHorizontal } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -14,11 +14,13 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { EmptyState } from '@/components/shared/EmptyState';
 import { ComboboxField } from './ComboboxField';
 import { EditarMovimientoDialog } from './components/EditarMovimientoDialog';
+import { AsignarCfdiDialog } from './components/AsignarCfdiDialog';
 import { RegistrarAjusteDialog } from './components/RegistrarAjusteDialog';
 import { useCategorias, useMovimientos, useVariantes } from './api';
+import { useBienhechores } from '@/features/bienhechores/api';
 import { usePaginacion } from '@/lib/pagination';
-import { formatCantidad, formatFechaCorta } from './format';
-import { ETIQUETA_ESTADO, type Movimiento } from './types';
+import { formatCantidad, formatFechaCorta, formatMoneda } from './format';
+import { ETIQUETA_ESTADO, type Movimiento, type MovimientoLote } from './types';
 
 const ETIQUETA_TIPO: Record<string, string> = {
   ENTRADA: 'Entrada',
@@ -36,12 +38,15 @@ export function MovimientosPage() {
   const { data: categorias } = useCategorias();
   const [varianteId, setVarianteId] = useState<number | undefined>(undefined);
   const [categoriaId, setCategoriaId] = useState<number | undefined>(undefined);
+  const [bienhechorId, setBienhechorId] = useState<number | undefined>(undefined);
+  const { data: bienhechores } = useBienhechores();
   const [desde, setDesde] = useState<string | undefined>(undefined);
   const [hasta, setHasta] = useState<string | undefined>(undefined);
   const { page, limit, setPage, resetPagina } = usePaginacion();
 
   const [movimientoEditar, setMovimientoEditar] = useState<Movimiento | null>(null);
   const [ajusteAbierto, setAjusteAbierto] = useState(false);
+  const [loteCfdi, setLoteCfdi] = useState<MovimientoLote | null>(null);
 
   const opcionesVariantes = useMemo(
     () =>
@@ -51,21 +56,27 @@ export function MovimientosPage() {
       })),
     [variantesPag],
   );
+  const opcionesBienhechores = useMemo(
+    () => (bienhechores ?? []).map((b) => ({ value: b.id, label: b.nombre })),
+    [bienhechores],
+  );
 
   const { data, isLoading, isFetching, isError, refetch } = useMovimientos({
     varianteId,
     categoriaId,
+    bienhechorId,
     desde,
     hasta,
     page,
     limit,
   });
 
-  const hayFiltros = Boolean(varianteId || categoriaId || desde || hasta);
+  const hayFiltros = Boolean(varianteId || categoriaId || bienhechorId || desde || hasta);
 
   function limpiarFiltros() {
     setVarianteId(undefined);
     setCategoriaId(undefined);
+    setBienhechorId(undefined);
     setDesde(undefined);
     setHasta(undefined);
     resetPagina();
@@ -126,6 +137,18 @@ export function MovimientosPage() {
               ))}
             </SelectContent>
           </Select>
+        </div>
+        <div className="flex min-w-56 flex-col gap-1.5">
+          <Label>Bienhechor</Label>
+          <ComboboxField
+            options={opcionesBienhechores}
+            value={bienhechorId}
+            onValueChange={(value) => {
+              setBienhechorId(value);
+              resetPagina();
+            }}
+            placeholder="Todos los bienhechores"
+          />
         </div>
         <div className="flex flex-col gap-1.5">
           <Label>Desde</Label>
@@ -189,11 +212,16 @@ export function MovimientosPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Fecha</TableHead>
+                  <TableHead>Lote</TableHead>
                   <TableHead>Producto</TableHead>
                   <TableHead>Unidad</TableHead>
                   <TableHead>Tipo</TableHead>
                   <TableHead>Motivo</TableHead>
                   <TableHead className="text-right">Cantidad</TableHead>
+                  <TableHead className="text-right">Costo unit.</TableHead>
+                  <TableHead className="text-right">Costo total</TableHead>
+                  <TableHead>Bienhechor</TableHead>
+                  <TableHead>CFDI</TableHead>
                   <TableHead>Registró</TableHead>
                   <TableHead>Notas</TableHead>
                   {puedeEditar && <TableHead />}
@@ -203,6 +231,9 @@ export function MovimientosPage() {
                 {data.items.map((movimiento) => (
                   <TableRow key={movimiento.id} className="animate-in fade-in">
                     <TableCell>{formatFechaCorta(movimiento.fecha)}</TableCell>
+                    <TableCell className="tabular-nums">
+                      {movimiento.lote ? `#${movimiento.lote.numero}` : <span className="text-muted-foreground">—</span>}
+                    </TableCell>
                     <TableCell>
                       <Link to={`/inventario/variantes/${movimiento.variante.id}`} className="transition-colors hover:underline">
                         {movimiento.producto.nombre}
@@ -215,14 +246,31 @@ export function MovimientosPage() {
                       </Badge>
                     </TableCell>
                     <TableCell>{movimiento.motivo.nombre}</TableCell>
-                    <TableCell className="text-right">{formatCantidad(movimiento.cantidad)}</TableCell>
+                    <TableCell className="text-right tabular-nums">{formatCantidad(movimiento.cantidad)}</TableCell>
+                    <TableCell className="text-right tabular-nums">{formatMoneda(movimiento.lote?.costoUnitario)}</TableCell>
+                    <TableCell className="text-right tabular-nums">{formatMoneda(movimiento.lote?.costoTotal)}</TableCell>
+                    <TableCell className={movimiento.lote?.bienhechor ? undefined : 'text-muted-foreground'}>
+                      {movimiento.lote?.bienhechor?.nombre ?? '—'}
+                    </TableCell>
+                    <TableCell className={movimiento.lote?.cfdi ? undefined : 'text-muted-foreground'}>{movimiento.lote?.cfdi ?? '—'}</TableCell>
                     <TableCell className="text-muted-foreground">{movimiento.registradoPor.nombre}</TableCell>
                     <TableCell className="text-muted-foreground">
                       {movimiento.notas ?? '—'}
                       {movimiento.editado && <span className="ml-1 text-xs italic">(editado)</span>}
                     </TableCell>
                     {puedeEditar && (
-                      <TableCell className="text-right">
+                      <TableCell className="whitespace-nowrap text-right">
+                        {movimiento.lote && (
+                          <Button
+                            variant="ghost"
+                            size="icon-sm"
+                            onClick={() => setLoteCfdi(movimiento.lote)}
+                            title={`CFDI del lote #${movimiento.lote.numero}`}
+                            aria-label={`CFDI del lote #${movimiento.lote.numero}`}
+                          >
+                            <FileText className="size-3.5" />
+                          </Button>
+                        )}
                         <Button variant="ghost" size="icon-sm" onClick={() => setMovimientoEditar(movimiento)} title="Editar">
                           <PencilLine className="size-3.5" />
                         </Button>
@@ -239,6 +287,7 @@ export function MovimientosPage() {
 
       <EditarMovimientoDialog key={movimientoEditar?.id ?? 'cerrado'} movimiento={movimientoEditar} onOpenChange={(open) => !open && setMovimientoEditar(null)} />
       <RegistrarAjusteDialog open={ajusteAbierto} onOpenChange={setAjusteAbierto} />
+      <AsignarCfdiDialog key={`cfdi-${loteCfdi?.numero ?? 'cerrado'}`} lote={loteCfdi} onOpenChange={(open) => !open && setLoteCfdi(null)} />
     </div>
   );
 }

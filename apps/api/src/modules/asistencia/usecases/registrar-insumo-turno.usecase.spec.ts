@@ -14,6 +14,7 @@ function buildDeps(overrides: {
       : { id: 5, nombre: 'Consumo en comida' };
 
   const prisma = {
+    cierreInventario: { findFirst: jest.fn().mockResolvedValue(null) },
     turnoComida: { findUnique: jest.fn().mockResolvedValue(turno) },
     motivoMovimiento: { findUnique: jest.fn().mockResolvedValue(motivo) },
   } as unknown as PrismaService;
