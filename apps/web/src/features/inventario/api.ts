@@ -3,17 +3,17 @@ import { api } from '@/lib/api-client';
 import type { Paginated } from '@/lib/pagination';
 import type {
   ActualizarCategoriaInput,
-  ActualizarCfdiEntradaInput,
   ActualizarMovimientoInput,
   ActualizarProductoInput,
   ActualizarUnidadInput,
   ActualizarVarianteInput,
+  AsignarCfdiMovimientosInput,
+  AsignarCfdiMovimientosResponse,
   CategoriaRef,
   ClaveSat,
   CrearCategoriaInput,
   CrearProductoInput,
   CrearUnidadInput,
-  EntradaCfdiResponse,
   EstadoProducto,
   Lote,
   LoteVivo,
@@ -258,11 +258,11 @@ export function useActualizarMovimiento() {
   });
 }
 
-export function useActualizarCfdiEntrada() {
+export function useAsignarCfdiMovimientos() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, dto }: { id: number; dto: ActualizarCfdiEntradaInput }) =>
-      api.patch<EntradaCfdiResponse>(`/inventario/entradas/${id}/cfdi`, dto),
+    mutationFn: (dto: AsignarCfdiMovimientosInput) =>
+      api.patch<AsignarCfdiMovimientosResponse>('/inventario/movimientos/cfdi', dto),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['inventario', 'movimientos'] });
     },

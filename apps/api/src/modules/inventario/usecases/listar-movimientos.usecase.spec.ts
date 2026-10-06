@@ -35,12 +35,19 @@ function crearMovimiento() {
   };
 }
 
-function crearPrismaMock(movimientos: unknown[] = [crearMovimiento()]) {
+function crearPrismaMock(
+  movimientos: unknown[] = [crearMovimiento()],
+  cierres: { desde: Date; hasta: Date }[] = [],
+) {
   const movimientoInventario = {
     findMany: jest.fn().mockResolvedValue(movimientos),
     count: jest.fn().mockResolvedValue(movimientos.length),
   };
-  const prisma = { movimientoInventario } as unknown as PrismaService;
+  const cierreInventario = { findMany: jest.fn().mockResolvedValue(cierres) };
+  const prisma = {
+    movimientoInventario,
+    cierreInventario,
+  } as unknown as PrismaService;
   return { prisma, movimientoInventario };
 }
 
@@ -75,8 +82,31 @@ describe('ListarMovimientosUseCase', () => {
       fecha: movimiento.fecha,
       notas: null,
       editado: false,
+      periodoCerrado: false,
     });
   });
+
+  it.each([
+    ['2026-09-01', '2026-09-30', false],
+    ['2026-10-01', '2026-10-02', true],
+    ['2026-10-02', '2026-10-31', true],
+  ])(
+    'marca periodoCerrado con un cierre del %s al %s → %s',
+    async (desde, hasta, esperado) => {
+      const { prisma } = crearPrismaMock(
+        [crearMovimiento()],
+        [
+          {
+            desde: new Date(`${desde}T00:00:00Z`),
+            hasta: new Date(`${hasta}T00:00:00Z`),
+          },
+        ],
+      );
+      const resultado = await new ListarMovimientosUseCase(prisma).execute();
+
+      expect(resultado.items[0].periodoCerrado).toBe(esperado);
+    },
+  );
 
   it.each([7, 0])(
     'filtra la consulta y el conteo por bienhechorId=%s cuando está presente',

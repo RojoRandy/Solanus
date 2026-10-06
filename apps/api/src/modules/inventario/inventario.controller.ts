@@ -32,12 +32,14 @@ import {
   ListarVariantesQueryDto,
   VarianteResponseDto,
 } from './dto/variante.dto';
-import { ActualizarCfdiEntradaDto, EntradaCfdiResponseDto, RegistrarEntradaDto, RegistrarEntradaResponseDto } from './dto/entrada.dto';
+import { RegistrarEntradaDto, RegistrarEntradaResponseDto } from './dto/entrada.dto';
 import { LoteVivoResponseDto } from './dto/lote.dto';
 import { RegistrarSalidaDto } from './dto/salida.dto';
 import { RegistrarAjusteDto } from './dto/ajuste.dto';
 import {
   ActualizarMovimientoDto,
+  AsignarCfdiMovimientosDto,
+  AsignarCfdiMovimientosResponseDto,
   ListarMovimientosQueryDto,
   MovimientoResponseDto,
 } from './dto/movimiento.dto';
@@ -64,7 +66,7 @@ import { EliminarProductoUseCase } from './usecases/eliminar-producto.usecase';
 import { ListarVariantesUseCase } from './usecases/listar-variantes.usecase';
 import { ObtenerVarianteUseCase } from './usecases/obtener-variante.usecase';
 import { ActualizarVarianteUseCase } from './usecases/actualizar-variante.usecase';
-import { ActualizarCfdiEntradaUseCase } from './usecases/actualizar-cfdi-entrada.usecase';
+import { AsignarCfdiMovimientosUseCase } from './usecases/asignar-cfdi-movimientos.usecase';
 import { RegistrarEntradaUseCase } from './usecases/registrar-entrada.usecase';
 import { RegistrarSalidaInventarioUseCase } from './usecases/registrar-salida.usecase';
 import { RegistrarAjusteUseCase } from './usecases/registrar-ajuste.usecase';
@@ -102,7 +104,7 @@ export class InventarioController {
     @Inject(ListarVariantesUseCase) private readonly listarVariantes: ListarVariantesUseCase,
     @Inject(ObtenerVarianteUseCase) private readonly obtenerVariante: ObtenerVarianteUseCase,
     @Inject(ActualizarVarianteUseCase) private readonly actualizarVariante: ActualizarVarianteUseCase,
-    @Inject(ActualizarCfdiEntradaUseCase) private readonly actualizarCfdiEntrada: ActualizarCfdiEntradaUseCase,
+    @Inject(AsignarCfdiMovimientosUseCase) private readonly asignarCfdiMovimientos: AsignarCfdiMovimientosUseCase,
     @Inject(RegistrarEntradaUseCase) private readonly registrarEntrada: RegistrarEntradaUseCase,
     @Inject(RegistrarSalidaInventarioUseCase) private readonly registrarSalida: RegistrarSalidaInventarioUseCase,
     @Inject(RegistrarAjusteUseCase) private readonly registrarAjuste: RegistrarAjusteUseCase,
@@ -209,6 +211,12 @@ export class InventarioController {
     return this.listarMovimientos.execute(query);
   }
 
+  @Patch('movimientos/cfdi')
+  @ApiOkSchemaResponse(AsignarCfdiMovimientosResponseDto)
+  asignarCfdiMovimientosInventario(@Body() dto: AsignarCfdiMovimientosDto) {
+    return this.asignarCfdiMovimientos.execute(dto);
+  }
+
   @Patch('movimientos/:id')
   @ApiOkSchemaResponse(MovimientoResponseDto)
   actualizarMovimientoInventario(
@@ -244,15 +252,6 @@ export class InventarioController {
     @AuthUser('id') registradoPorId: number,
   ) {
     return this.registrarEntrada.execute({ dto, registradoPorId });
-  }
-
-  @Patch('entradas/:id/cfdi')
-  @ApiOkSchemaResponse(EntradaCfdiResponseDto)
-  actualizarCfdiEntradaInventario(
-    @Param() { id }: IdParamDto,
-    @Body() dto: ActualizarCfdiEntradaDto,
-  ) {
-    return this.actualizarCfdiEntrada.execute({ id: Number(id), dto });
   }
 
   // ── Variantes (existencias por producto × unidad × estado) ──

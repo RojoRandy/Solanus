@@ -10,7 +10,7 @@ import { EliminarProductoUseCase } from './usecases/eliminar-producto.usecase';
 import { ListarVariantesUseCase } from './usecases/listar-variantes.usecase';
 import { ObtenerVarianteUseCase } from './usecases/obtener-variante.usecase';
 import { ActualizarVarianteUseCase } from './usecases/actualizar-variante.usecase';
-import { ActualizarCfdiEntradaUseCase } from './usecases/actualizar-cfdi-entrada.usecase';
+import { AsignarCfdiMovimientosUseCase } from './usecases/asignar-cfdi-movimientos.usecase';
 import { RegistrarEntradaUseCase } from './usecases/registrar-entrada.usecase';
 import { RegistrarSalidaInventarioUseCase } from './usecases/registrar-salida.usecase';
 import { RegistrarAjusteUseCase } from './usecases/registrar-ajuste.usecase';
@@ -48,7 +48,7 @@ import {
     ObtenerVarianteUseCase,
     ActualizarVarianteUseCase,
     RegistrarEntradaUseCase,
-    ActualizarCfdiEntradaUseCase,
+    AsignarCfdiMovimientosUseCase,
     RegistrarSalidaInventarioUseCase,
     RegistrarAjusteUseCase,
     ListarMovimientosUseCase,

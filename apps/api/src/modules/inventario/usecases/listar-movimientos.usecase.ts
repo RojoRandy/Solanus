@@ -52,7 +52,7 @@ export class ListarMovimientosUseCase implements UseCase<
     };
 
     const { skip, take } = toSkipTake(query);
-    const [movimientos, total] = await Promise.all([
+    const [movimientos, total, cierres] = await Promise.all([
       this.prisma.movimientoInventario.findMany({
         where,
         orderBy: { fecha: 'desc' },
@@ -89,7 +89,18 @@ export class ListarMovimientosUseCase implements UseCase<
         },
       }),
       this.prisma.movimientoInventario.count({ where }),
+      // ponytail: se traen todos los cierres (uno por mes); filtrar por rango si llegan a ser miles
+      this.prisma.cierreInventario.findMany({
+        select: { desde: true, hasta: true },
+      }),
     ]);
+
+    // Misma regla que `validarPeriodoAbierto`: el día UTC del movimiento dentro de un cierre.
+    const enPeriodoCerrado = (fecha: Date) => {
+      const dia = new Date(fecha);
+      dia.setUTCHours(0, 0, 0, 0);
+      return cierres.some((c) => c.desde <= dia && dia <= c.hasta);
+    };
 
     const items = movimientos.map((movimiento) => ({
       id: movimiento.id,
@@ -127,6 +138,7 @@ export class ListarMovimientosUseCase implements UseCase<
       fecha: movimiento.fecha,
       notas: movimiento.notas,
       editado: movimiento.editadoPorId !== null,
+      periodoCerrado: enPeriodoCerrado(movimiento.fecha),
     }));
 
     return paginado(items, total, query);

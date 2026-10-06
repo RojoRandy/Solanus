@@ -11,7 +11,6 @@ import {
   IsOptional,
   IsPositive,
   IsString,
-  MaxLength,
   ValidateNested,
 } from 'class-validator';
 import { EstadoProducto, OrigenLote } from '@prisma/client';
@@ -157,20 +156,4 @@ export class RegistrarEntradaResponseDto {
 
   @ApiProperty({ type: [LoteResponseDto] })
   lotes: LoteResponseDto[];
-}
-
-export class ActualizarCfdiEntradaDto {
-  @ApiProperty({ type: String, required: false, nullable: true, maxLength: 100 })
-  @IsOptional()
-  @IsString()
-  @MaxLength(100)
-  cfdi: string | null;
-}
-
-export class EntradaCfdiResponseDto {
-  @ApiProperty()
-  id: number;
-
-  @ApiProperty({ type: String, nullable: true })
-  cfdi: string | null;
 }

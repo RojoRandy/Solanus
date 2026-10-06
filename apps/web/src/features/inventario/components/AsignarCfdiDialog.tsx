@@ -5,29 +5,35 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ApiError } from '@/lib/api-client';
-import { useActualizarCfdiEntrada } from '../api';
+import { useAsignarCfdiMovimientos } from '../api';
+import type { Movimiento } from '../types';
 
 interface AsignarCfdiDialogProps {
-  /** Lote (entrada) al que se asigna el CFDI; `null` mantiene el diálogo cerrado. */
-  lote: { numero: number; cfdi: string | null } | null;
+  /** Movimientos (mismo bienhechor) cuyos lotes reciben el CFDI; `null` mantiene el diálogo cerrado. */
+  movimientos: Movimiento[] | null;
   onOpenChange: (open: boolean) => void;
+  onGuardado?: () => void;
 }
 
 /**
  * El CFDI se emite al bienhechor a fin de mes y aplica a todos los productos
- * del lote. El padre lo monta con `key` por lote para precargar sin efecto.
+ * de cada lote. El padre lo monta con `key` por selección para precargar sin efecto.
  */
-export function AsignarCfdiDialog({ lote, onOpenChange }: AsignarCfdiDialogProps) {
-  const [cfdi, setCfdi] = React.useState(lote?.cfdi ?? '');
-  const actualizar = useActualizarCfdiEntrada();
+export function AsignarCfdiDialog({ movimientos, onOpenChange, onGuardado }: AsignarCfdiDialogProps) {
+  const lotes = [...new Set((movimientos ?? []).flatMap((m) => (m.lote ? [m.lote.numero] : [])))];
+  const cfdis = new Set((movimientos ?? []).map((m) => m.lote?.cfdi ?? ''));
+  const [cfdi, setCfdi] = React.useState(cfdis.size === 1 ? [...cfdis][0] : '');
+  const asignar = useAsignarCfdiMovimientos();
+  const etiquetaLotes = lotes.map((numero) => `#${numero}`).join(', ');
 
   function guardar() {
-    if (!lote) return;
-    actualizar.mutate(
-      { id: lote.numero, dto: { cfdi: cfdi.trim() || null } },
+    if (!movimientos) return;
+    asignar.mutate(
+      { movimientoIds: movimientos.map((m) => m.id), cfdi: cfdi.trim() || null },
       {
         onSuccess: () => {
-          toast.success(`CFDI guardado en el lote #${lote.numero}`);
+          toast.success(lotes.length === 1 ? `CFDI guardado en el lote ${etiquetaLotes}` : `CFDI guardado en ${lotes.length} lotes`);
+          onGuardado?.();
           onOpenChange(false);
         },
         onError: (error) => toast.error(error instanceof ApiError ? error.message : 'No se pudo guardar el CFDI'),
@@ -36,11 +42,13 @@ export function AsignarCfdiDialog({ lote, onOpenChange }: AsignarCfdiDialogProps
   }
 
   return (
-    <Dialog open={lote !== null} onOpenChange={onOpenChange}>
+    <Dialog open={movimientos !== null} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>CFDI del lote #{lote?.numero}</DialogTitle>
-          <DialogDescription>Se aplica a todos los productos del lote #{lote?.numero}.</DialogDescription>
+          <DialogTitle>{lotes.length === 1 ? `CFDI del lote ${etiquetaLotes}` : `CFDI de ${lotes.length} lotes`}</DialogTitle>
+          <DialogDescription>
+            Se aplica a todos los productos {lotes.length === 1 ? 'del lote' : 'de los lotes'} {etiquetaLotes}.
+          </DialogDescription>
         </DialogHeader>
         <div className="flex flex-col gap-2">
           <Label htmlFor="asignar-cfdi">CFDI (número de factura)</Label>
@@ -56,8 +64,8 @@ export function AsignarCfdiDialog({ lote, onOpenChange }: AsignarCfdiDialogProps
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancelar
           </Button>
-          <Button onClick={guardar} disabled={actualizar.isPending}>
-            {actualizar.isPending ? 'Guardando…' : 'Guardar CFDI'}
+          <Button onClick={guardar} disabled={asignar.isPending}>
+            {asignar.isPending ? 'Guardando…' : 'Guardar CFDI'}
           </Button>
         </DialogFooter>
       </DialogContent>
