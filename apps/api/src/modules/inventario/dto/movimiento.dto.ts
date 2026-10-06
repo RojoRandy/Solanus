@@ -1,10 +1,13 @@
 import { ApiProperty } from '@nestjs/swagger';
 import {
+  ArrayMinSize,
+  IsArray,
   IsDateString,
   IsEnum,
   IsInt,
   IsOptional,
   IsString,
+  MaxLength,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { EstadoProducto, OrigenLote, TipoMovimiento } from '@prisma/client';
@@ -171,4 +174,29 @@ export class MovimientoResponseDto {
   notas: string | null;
   @ApiProperty()
   editado: boolean;
+  @ApiProperty({ required: false })
+  // Solo el listado lo calcula.
+  periodoCerrado?: boolean;
+}
+
+export class AsignarCfdiMovimientosDto {
+  @ApiProperty({ type: [Number] })
+  @IsArray()
+  @ArrayMinSize(1)
+  @IsInt({ each: true })
+  movimientoIds: number[];
+
+  @ApiProperty({ type: String, required: false, nullable: true, maxLength: 100 })
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  cfdi: string | null;
+}
+
+export class AsignarCfdiMovimientosResponseDto {
+  @ApiProperty({ type: [Number] })
+  entradas: number[];
+
+  @ApiProperty({ type: String, nullable: true })
+  cfdi: string | null;
 }

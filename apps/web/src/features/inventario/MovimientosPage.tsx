@@ -4,6 +4,7 @@ import { ArrowLeft, ClipboardList, FileText, PencilLine, SlidersHorizontal } fro
 import { useAuth } from '@/lib/auth-context';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { SpinnerOverlay } from '@/components/ui/spinner';
@@ -20,7 +21,19 @@ import { useCategorias, useMovimientos, useVariantes } from './api';
 import { useBienhechores } from '@/features/bienhechores/api';
 import { usePaginacion } from '@/lib/pagination';
 import { formatCantidad, formatFechaCorta, formatMoneda } from './format';
-import { ETIQUETA_ESTADO, type Movimiento, type MovimientoLote } from './types';
+import { ETIQUETA_ESTADO, type Movimiento } from './types';
+
+/** Clave de agrupación: el CFDI solo se comparte entre lotes del mismo bienhechor (o todos sin bienhechor). */
+const claveBienhechor = (movimiento: Movimiento) => movimiento.lote?.bienhechor?.id ?? 'ninguno';
+
+/** Motivo por el que un movimiento no puede sumarse a la selección, o `null` si es elegible. */
+function motivoNoSeleccionable(movimiento: Movimiento, bienhechorSeleccion: number | 'ninguno' | undefined): string | null {
+  if (!movimiento.lote) return 'Sin lote: no lleva CFDI';
+  if (movimiento.periodoCerrado) return 'Periodo cerrado';
+  if (bienhechorSeleccion !== undefined && claveBienhechor(movimiento) !== bienhechorSeleccion)
+    return 'Es de otro bienhechor que la selección';
+  return null;
+}
 
 const ETIQUETA_TIPO: Record<string, string> = {
   ENTRADA: 'Entrada',
@@ -46,7 +59,22 @@ export function MovimientosPage() {
 
   const [movimientoEditar, setMovimientoEditar] = useState<Movimiento | null>(null);
   const [ajusteAbierto, setAjusteAbierto] = useState(false);
-  const [loteCfdi, setLoteCfdi] = useState<MovimientoLote | null>(null);
+  const [movimientosCfdi, setMovimientosCfdi] = useState<Movimiento[] | null>(null);
+  // Se conserva entre páginas y filtros para juntar movimientos de todo el histórico.
+  const [seleccion, setSeleccion] = useState<Map<number, Movimiento>>(new Map());
+  const primeroSeleccionado = seleccion.values().next().value;
+  const bienhechorSeleccion = primeroSeleccionado ? claveBienhechor(primeroSeleccionado) : undefined;
+
+  function alternarSeleccion(movimientos: Movimiento[], seleccionar: boolean) {
+    setSeleccion((previa) => {
+      const siguiente = new Map(previa);
+      for (const movimiento of movimientos) {
+        if (seleccionar) siguiente.set(movimiento.id, movimiento);
+        else siguiente.delete(movimiento.id);
+      }
+      return siguiente;
+    });
+  }
 
   const opcionesVariantes = useMemo(
     () =>
@@ -70,6 +98,11 @@ export function MovimientosPage() {
     page,
     limit,
   });
+
+  const elegiblesPagina = (data?.items ?? []).filter(
+    (movimiento) => motivoNoSeleccionable(movimiento, bienhechorSeleccion) === null,
+  );
+  const seleccionadosPagina = elegiblesPagina.filter((movimiento) => seleccion.has(movimiento.id)).length;
 
   const hayFiltros = Boolean(varianteId || categoriaId || bienhechorId || desde || hasta);
 
@@ -206,11 +239,40 @@ export function MovimientosPage() {
 
       {!isLoading && !isError && data && data.items.length > 0 && (
         <div className="flex flex-col gap-3">
+          {puedeEditar && seleccion.size > 0 && (
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border bg-muted/40 px-4 py-2.5">
+              <p className="text-sm">
+                <span className="font-medium tabular-nums">{seleccion.size}</span>{' '}
+                {seleccion.size === 1 ? 'movimiento seleccionado' : 'movimientos seleccionados'} ·{' '}
+                <span className="text-muted-foreground">{primeroSeleccionado?.lote?.bienhechor?.nombre ?? 'Sin bienhechor'}</span>
+              </p>
+              <div className="flex gap-2">
+                <Button variant="ghost" size="sm" onClick={() => setSeleccion(new Map())}>
+                  Limpiar selección
+                </Button>
+                <Button size="sm" onClick={() => setMovimientosCfdi([...seleccion.values()])}>
+                  <FileText />
+                  Asignar CFDI
+                </Button>
+              </div>
+            </div>
+          )}
           <div className="relative overflow-hidden rounded-xl border">
             {isFetching && !isLoading && <SpinnerOverlay className="absolute inset-0 z-10 bg-background/70 py-0" />}
             <Table>
               <TableHeader>
                 <TableRow>
+                  {puedeEditar && (
+                    <TableHead className="w-10">
+                      <Checkbox
+                        aria-label="Seleccionar movimientos de esta página"
+                        checked={elegiblesPagina.length > 0 && seleccionadosPagina === elegiblesPagina.length}
+                        indeterminate={seleccionadosPagina > 0 && seleccionadosPagina < elegiblesPagina.length}
+                        disabled={elegiblesPagina.length === 0}
+                        onCheckedChange={(checked) => alternarSeleccion(elegiblesPagina, checked === true)}
+                      />
+                    </TableHead>
+                  )}
                   <TableHead>Fecha</TableHead>
                   <TableHead>Lote</TableHead>
                   <TableHead>Producto</TableHead>
@@ -228,8 +290,23 @@ export function MovimientosPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {data.items.map((movimiento) => (
-                  <TableRow key={movimiento.id} className="animate-in fade-in">
+                {data.items.map((movimiento) => {
+                  const seleccionado = seleccion.has(movimiento.id);
+                  const motivo = seleccionado ? null : motivoNoSeleccionable(movimiento, bienhechorSeleccion);
+                  return (
+                  <TableRow key={movimiento.id} className="animate-in fade-in" data-state={seleccionado ? 'selected' : undefined}>
+                    {puedeEditar && (
+                      <TableCell>
+                        <span title={motivo ?? undefined} className="inline-flex">
+                          <Checkbox
+                            aria-label={`Seleccionar movimiento del ${formatFechaCorta(movimiento.fecha)}`}
+                            checked={seleccionado}
+                            disabled={motivo !== null}
+                            onCheckedChange={(checked) => alternarSeleccion([movimiento], checked === true)}
+                          />
+                        </span>
+                      </TableCell>
+                    )}
                     <TableCell>{formatFechaCorta(movimiento.fecha)}</TableCell>
                     <TableCell className="tabular-nums">
                       {movimiento.lote ? `#${movimiento.lote.numero}` : <span className="text-muted-foreground">—</span>}
@@ -260,11 +337,11 @@ export function MovimientosPage() {
                     </TableCell>
                     {puedeEditar && (
                       <TableCell className="whitespace-nowrap text-right">
-                        {movimiento.lote && (
+                        {movimiento.lote && !movimiento.periodoCerrado && (
                           <Button
                             variant="ghost"
                             size="icon-sm"
-                            onClick={() => setLoteCfdi(movimiento.lote)}
+                            onClick={() => setMovimientosCfdi([movimiento])}
                             title={`CFDI del lote #${movimiento.lote.numero}`}
                             aria-label={`CFDI del lote #${movimiento.lote.numero}`}
                           >
@@ -277,7 +354,8 @@ export function MovimientosPage() {
                       </TableCell>
                     )}
                   </TableRow>
-                ))}
+                  );
+                })}
               </TableBody>
             </Table>
           </div>
@@ -287,7 +365,12 @@ export function MovimientosPage() {
 
       <EditarMovimientoDialog key={movimientoEditar?.id ?? 'cerrado'} movimiento={movimientoEditar} onOpenChange={(open) => !open && setMovimientoEditar(null)} />
       <RegistrarAjusteDialog open={ajusteAbierto} onOpenChange={setAjusteAbierto} />
-      <AsignarCfdiDialog key={`cfdi-${loteCfdi?.numero ?? 'cerrado'}`} lote={loteCfdi} onOpenChange={(open) => !open && setLoteCfdi(null)} />
+      <AsignarCfdiDialog
+        key={`cfdi-${movimientosCfdi?.map((m) => m.id).join('-') ?? 'cerrado'}`}
+        movimientos={movimientosCfdi}
+        onOpenChange={(open) => !open && setMovimientosCfdi(null)}
+        onGuardado={() => setSeleccion(new Map())}
+      />
     </div>
   );
 }

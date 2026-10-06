@@ -102,12 +102,13 @@ export interface RegistrarEntradaResponse {
   lotes: Lote[];
 }
 
-export interface ActualizarCfdiEntradaInput {
+export interface AsignarCfdiMovimientosInput {
+  movimientoIds: number[];
   cfdi: string | null;
 }
 
-export interface EntradaCfdiResponse {
-  id: number;
+export interface AsignarCfdiMovimientosResponse {
+  entradas: number[];
   cfdi: string | null;
 }
 
@@ -205,6 +206,8 @@ export interface Movimiento {
   fecha: string;
   notas: string | null;
   editado: boolean;
+  /** El día del movimiento cae en un cierre de inventario: no se puede editar ni asignar CFDI. */
+  periodoCerrado: boolean;
 }
 
 export interface ActualizarMovimientoInput {

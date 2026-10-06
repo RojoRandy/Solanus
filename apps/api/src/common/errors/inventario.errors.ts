@@ -63,6 +63,10 @@ const Exceptions = {
     new NotFoundException(Responses.MOVIMIENTO_NOT_FOUND(data)),
   MOVIMIENTO_CAMPO_NO_EDITABLE: (data?: any) =>
     new BadRequestException(Responses.MOVIMIENTO_CAMPO_NO_EDITABLE(data)),
+  MOVIMIENTO_SIN_LOTE: (data?: any) =>
+    new BadRequestException(Responses.MOVIMIENTO_SIN_LOTE(data)),
+  CFDI_BIENHECHORES_DISTINTOS: (data?: any) =>
+    new ConflictException(Responses.CFDI_BIENHECHORES_DISTINTOS(data)),
   AJUSTE_REQUIERE_LOTE: (data?: any) =>
     new BadRequestException(Responses.AJUSTE_REQUIERE_LOTE(data)),
   AJUSTE_CANTIDAD_CERO: (data?: any) =>
@@ -228,6 +232,18 @@ const Responses = {
     new ErrorResponseDto(
       'MOVIMIENTO_CAMPO_NO_EDITABLE',
       'Solo se pueden editar la fecha, el motivo y las notas de un movimiento; para corregir la cantidad registra un ajuste',
+      data,
+    ),
+  MOVIMIENTO_SIN_LOTE: (data?: any) =>
+    new ErrorResponseDto(
+      'MOVIMIENTO_SIN_LOTE',
+      'El movimiento no está ligado a un lote, no se le puede asignar CFDI',
+      data,
+    ),
+  CFDI_BIENHECHORES_DISTINTOS: (data?: any) =>
+    new ErrorResponseDto(
+      'CFDI_BIENHECHORES_DISTINTOS',
+      'Los movimientos seleccionados deben ser del mismo bienhechor para compartir el CFDI',
       data,
     ),
   AJUSTE_REQUIERE_LOTE: (data?: any) =>
