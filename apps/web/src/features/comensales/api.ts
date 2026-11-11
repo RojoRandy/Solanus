@@ -101,12 +101,32 @@ export function useActualizarComensal(
   });
 }
 
-export function useEliminarComensal(): UseMutationResult<void, ApiError, number> {
+export function useEliminarComensal(): UseMutationResult<
+  void,
+  ApiError,
+  { id: number; incluirMenores: boolean }
+> {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: number) => api.delete<void>(`/comensales/${id}`),
+    mutationFn: ({ id, incluirMenores }) =>
+      api.delete<void>(`/comensales/${id}${incluirMenores ? '?incluirMenores=true' : ''}`),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['comensales'] });
+    },
+  });
+}
+
+export function useReactivarComensal(
+  id: number,
+): UseMutationResult<void, ApiError, { incluirMenores: boolean }> {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ incluirMenores }) =>
+      api.post<void>(`/comensales/${id}/reactivar${incluirMenores ? '?incluirMenores=true' : ''}`),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['comensales', 'lista'] });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.tutores });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.detalle(id) });
     },
   });
 }

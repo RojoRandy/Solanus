@@ -16,6 +16,17 @@ import {
 import { PaginationQueryDto } from '@/common/dto/pagination.dto';
 import type { GrupoEdad } from '../utils/edad.util';
 
+export class IncluirMenoresQueryDto {
+  @ApiProperty({
+    required: false,
+    description:
+      "'true' para aplicar también la baja/reactivación a los menores a cargo del tutor",
+  })
+  @IsOptional()
+  @IsBooleanString()
+  incluirMenores?: string;
+}
+
 export class CrearComensalDto {
   @ApiProperty({ example: 'María' })
   @IsNotEmpty()
@@ -228,6 +239,10 @@ export class ComensalDetalleResponseDto extends ComensalResponseDto {
   ineBackPath: string | null;
   @ApiProperty({ type: [ComensalTutorResumenDto] })
   menores: ComensalTutorResumenDto[];
+  @ApiProperty({ description: 'Menores activos a cargo (se darían de baja con el tutor)' })
+  menoresActivos: number;
+  @ApiProperty({ description: 'Menores inactivos a cargo (se reactivarían con el tutor)' })
+  menoresInactivos: number;
   @ApiProperty({ type: CartaUsoImagenResponseDto, nullable: true })
   cartaUsoImagen: CartaUsoImagenResponseDto | null;
   @ApiProperty()

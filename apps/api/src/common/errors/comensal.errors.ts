@@ -10,6 +10,8 @@ const Exceptions = {
     new NotFoundException(Responses.COMENSAL_NOT_FOUND(data)),
   TUTOR_NOT_FOUND: (data?: any) =>
     new NotFoundException(Responses.TUTOR_NOT_FOUND(data)),
+  TUTOR_INACTIVO: (data?: any) =>
+    new BadRequestException(Responses.TUTOR_INACTIVO(data)),
   TUTOR_DEBE_SER_MAYOR_DE_EDAD: (data?: any) =>
     new BadRequestException(Responses.TUTOR_DEBE_SER_MAYOR_DE_EDAD(data)),
   MENOR_NO_PUEDE_SER_TUTOR: (data?: any) =>
@@ -43,6 +45,12 @@ const Responses = {
     new ErrorResponseDto(
       'TUTOR_NOT_FOUND',
       'No se encontró el tutor indicado',
+      data,
+    ),
+  TUTOR_INACTIVO: (data?: any) =>
+    new ErrorResponseDto(
+      'TUTOR_INACTIVO',
+      'El tutor de este menor está inactivo',
       data,
     ),
   TUTOR_DEBE_SER_MAYOR_DE_EDAD: (data?: any) =>

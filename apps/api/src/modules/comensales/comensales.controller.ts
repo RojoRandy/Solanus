@@ -30,6 +30,7 @@ import {
   ComensalResponseDto,
   CrearComensalDto,
   FirmarCartaUsoImagenDto,
+  IncluirMenoresQueryDto,
   ListarComensalesQueryDto,
   TutorResponseDto,
 } from './dto/comensal.dto';
@@ -39,6 +40,7 @@ import { ListarTutoresUseCase } from './usecases/listar-tutores.usecase';
 import { ObtenerComensalUseCase } from './usecases/obtener-comensal.usecase';
 import { ActualizarComensalUseCase } from './usecases/actualizar-comensal.usecase';
 import { EliminarComensalUseCase } from './usecases/eliminar-comensal.usecase';
+import { ReactivarComensalUseCase } from './usecases/reactivar-comensal.usecase';
 import { SubirFotoComensalUseCase } from './usecases/subir-foto-comensal.usecase';
 import { SubirIneFrenteComensalUseCase } from './usecases/subir-ine-frente-comensal.usecase';
 import { SubirIneReversoComensalUseCase } from './usecases/subir-ine-reverso-comensal.usecase';
@@ -71,6 +73,8 @@ export class ComensalesController {
     private readonly actualizarComensal: ActualizarComensalUseCase,
     @Inject(EliminarComensalUseCase)
     private readonly eliminarComensal: EliminarComensalUseCase,
+    @Inject(ReactivarComensalUseCase)
+    private readonly reactivarComensal: ReactivarComensalUseCase,
     @Inject(SubirFotoComensalUseCase)
     private readonly subirFotoComensal: SubirFotoComensalUseCase,
     @Inject(SubirIneFrenteComensalUseCase)
@@ -153,8 +157,26 @@ export class ComensalesController {
 
   @Delete(':id')
   @Auth(UserRoles.ADMINISTRADOR)
-  remove(@Param() { id }: IdParamDto) {
-    return this.eliminarComensal.execute(Number(id));
+  remove(
+    @Param() { id }: IdParamDto,
+    @Query() { incluirMenores }: IncluirMenoresQueryDto,
+  ) {
+    return this.eliminarComensal.execute({
+      id: Number(id),
+      incluirMenores: incluirMenores === 'true',
+    });
+  }
+
+  @Post(':id/reactivar')
+  @Auth(UserRoles.ADMINISTRADOR)
+  reactivar(
+    @Param() { id }: IdParamDto,
+    @Query() { incluirMenores }: IncluirMenoresQueryDto,
+  ) {
+    return this.reactivarComensal.execute({
+      id: Number(id),
+      incluirMenores: incluirMenores === 'true',
+    });
   }
 
   @Post(':id/foto')
