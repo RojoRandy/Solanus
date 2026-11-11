@@ -38,7 +38,10 @@ export const comensalDetalleSelect = {
   ineFrontPath: true,
   ineBackPath: true,
   updatedAt: true,
-  menores: { select: tutorResumenSelect, orderBy: { apellidos: 'asc' } },
+  menores: {
+    select: { ...tutorResumenSelect, activo: true, fechaNacimiento: true },
+    orderBy: { apellidos: 'asc' },
+  },
   cartaUsoImagen: {
     select: { id: true, autoriza: true, fechaFirma: true, firmanteId: true },
   },
@@ -78,7 +81,17 @@ export function mapComensalDetalleResponse(
     ...mapComensalResponse(comensal),
     ineFrontPath: comensal.ineFrontPath,
     ineBackPath: comensal.ineBackPath,
-    menores: comensal.menores,
+    menores: comensal.menores.map(({ id, folio, nombres, apellidos }) => ({
+      id,
+      folio,
+      nombres,
+      apellidos,
+    })),
+    menoresActivos: comensal.menores.filter((m) => m.activo).length,
+    // Un menor que ya cumplió 18 no se reactiva en bloque: conserva un tutorId obsoleto.
+    menoresInactivos: comensal.menores.filter(
+      (m) => !m.activo && calcularEdad(m.fechaNacimiento) < 18,
+    ).length,
     cartaUsoImagen: comensal.cartaUsoImagen,
     updatedAt: comensal.updatedAt,
   };

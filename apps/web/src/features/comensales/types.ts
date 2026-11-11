@@ -43,6 +43,8 @@ export interface ComensalDetalle extends Comensal {
   ineFrontPath: string | null;
   ineBackPath: string | null;
   menores: ComensalTutorResumen[];
+  menoresActivos: number;
+  menoresInactivos: number;
   cartaUsoImagen: CartaUsoImagen | null;
   updatedAt: string;
 }

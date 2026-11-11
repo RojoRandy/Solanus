@@ -7,6 +7,7 @@ import { ListarTutoresUseCase } from './usecases/listar-tutores.usecase';
 import { ObtenerComensalUseCase } from './usecases/obtener-comensal.usecase';
 import { ActualizarComensalUseCase } from './usecases/actualizar-comensal.usecase';
 import { EliminarComensalUseCase } from './usecases/eliminar-comensal.usecase';
+import { ReactivarComensalUseCase } from './usecases/reactivar-comensal.usecase';
 import { SubirFotoComensalUseCase } from './usecases/subir-foto-comensal.usecase';
 import { SubirIneFrenteComensalUseCase } from './usecases/subir-ine-frente-comensal.usecase';
 import { SubirIneReversoComensalUseCase } from './usecases/subir-ine-reverso-comensal.usecase';
@@ -29,6 +30,7 @@ import { ExportarComensalesPdfUseCase } from './usecases/exportar-comensales-pdf
     ObtenerComensalUseCase,
     ActualizarComensalUseCase,
     EliminarComensalUseCase,
+    ReactivarComensalUseCase,
     SubirFotoComensalUseCase,
     SubirIneFrenteComensalUseCase,
     SubirIneReversoComensalUseCase,

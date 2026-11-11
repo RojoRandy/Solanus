@@ -9,6 +9,7 @@ import {
   IdCard,
   Loader2,
   Pencil,
+  RotateCcw,
   Trash2,
   UserRound,
 } from 'lucide-react';
@@ -30,7 +31,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
@@ -44,6 +44,7 @@ import {
   useComensal,
   useEliminarComensal,
   useFirmarCartaUsoImagen,
+  useReactivarComensal,
   useSubirFotoComensal,
   useSubirIneFrenteComensal,
   useSubirIneReversoComensal,
@@ -65,12 +66,14 @@ export function ComensalDetalleView() {
 
   const { data: comensal, isLoading, isError, refetch } = useComensal(comensalId);
   const eliminarComensal = useEliminarComensal();
+  const reactivarComensal = useReactivarComensal(comensalId);
   const firmarCarta = useFirmarCartaUsoImagen(comensalId);
   const subirFoto = useSubirFotoComensal(comensalId);
   const subirIneFrente = useSubirIneFrenteComensal(comensalId);
   const subirIneReverso = useSubirIneReversoComensal(comensalId);
 
   const [descargando, setDescargando] = React.useState(false);
+  const [dialogo, setDialogo] = React.useState<'baja' | 'reactivar' | null>(null);
 
   const fotoInputRef = React.useRef<HTMLInputElement>(null);
   const ineFrenteInputRef = React.useRef<HTMLInputElement>(null);
@@ -114,14 +117,27 @@ export function ComensalDetalleView() {
     }
   }
 
-  async function handleEliminar() {
+  async function handleEliminar(incluirMenores: boolean) {
+    setDialogo(null);
     try {
-      await eliminarComensal.mutateAsync(comensalId);
-      toast.success('Comensal dado de baja');
+      await eliminarComensal.mutateAsync({ id: comensalId, incluirMenores });
+      toast.success(incluirMenores ? 'Comensal y menores dados de baja' : 'Comensal dado de baja');
       navigate('/comensales');
     } catch (error) {
       manejarErrorMutacion(error, 'No se pudo dar de baja al comensal');
     }
+  }
+
+  function handleReactivar(incluirMenores: boolean) {
+    setDialogo(null);
+    reactivarComensal.mutate(
+      { incluirMenores },
+      {
+        onSuccess: () =>
+          toast.success(incluirMenores ? 'Comensal y menores reactivados' : 'Comensal reactivado'),
+        onError: (error) => manejarErrorMutacion(error, 'No se pudo reactivar al comensal'),
+      },
+    );
   }
 
   function handleFirmarCarta(autoriza: boolean) {
@@ -191,29 +207,82 @@ export function ComensalDetalleView() {
               Editar
             </Button>
           )}
-          {puedeEliminar && comensal.activo && (
-            <AlertDialog>
-              <AlertDialogTrigger render={<Button variant="destructive" />}>
-                <Trash2 data-icon="inline-start" />
-                Dar de baja
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>¿Dar de baja a este comensal?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    El expediente de {comensal.nombres} {comensal.apellidos} se marcará como inactivo. No se
-                    elimina información; puede reactivarse más adelante si es necesario.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                  <AlertDialogAction variant="destructive" onClick={() => void handleEliminar()}>
-                    Dar de baja
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
+          {puedeEliminar && !comensal.activo && (
+            <Button
+              onClick={() => (comensal.menoresInactivos > 0 ? setDialogo('reactivar') : handleReactivar(false))}
+              disabled={reactivarComensal.isPending}>
+              {reactivarComensal.isPending ? (
+                <Loader2 data-icon="inline-start" className="animate-spin" />
+              ) : (
+                <RotateCcw data-icon="inline-start" />
+              )}
+              Reactivar
+            </Button>
           )}
+          {puedeEliminar && comensal.activo && (
+            <Button variant="destructive" onClick={() => setDialogo('baja')}>
+              <Trash2 data-icon="inline-start" />
+              Dar de baja
+            </Button>
+          )}
+          <AlertDialog open={dialogo !== null} onOpenChange={(abierto) => !abierto && setDialogo(null)}>
+            <AlertDialogContent>
+              {dialogo === 'reactivar' ? (
+                <>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>¿Reactivar también a los menores a cargo?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      {comensal.nombres} {comensal.apellidos} tiene {comensal.menoresInactivos}{' '}
+                      {comensal.menoresInactivos === 1 ? 'menor inactivo' : 'menores inactivos'} a cargo.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                    <AlertDialogAction variant="outline" onClick={() => handleReactivar(false)}>
+                      Solo el tutor
+                    </AlertDialogAction>
+                    <AlertDialogAction onClick={() => handleReactivar(true)}>Tutor y menores</AlertDialogAction>
+                  </AlertDialogFooter>
+                </>
+              ) : comensal.menoresActivos > 0 ? (
+                <>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>¿Dar de baja también a los menores a cargo?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      {comensal.nombres} {comensal.apellidos} tiene {comensal.menoresActivos}{' '}
+                      {comensal.menoresActivos === 1 ? 'menor activo' : 'menores activos'} a cargo. No se elimina
+                      información; pueden reactivarse más adelante.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                    <AlertDialogAction variant="outline" onClick={() => void handleEliminar(false)}>
+                      Solo el tutor
+                    </AlertDialogAction>
+                    <AlertDialogAction variant="destructive" onClick={() => void handleEliminar(true)}>
+                      Tutor y menores
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </>
+              ) : (
+                <>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>¿Dar de baja a este comensal?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      El expediente de {comensal.nombres} {comensal.apellidos} se marcará como inactivo. No se
+                      elimina información; puede reactivarse más adelante si es necesario.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                    <AlertDialogAction variant="destructive" onClick={() => void handleEliminar(false)}>
+                      Dar de baja
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </>
+              )}
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       </div>
 
